@@ -1,0 +1,30 @@
+{
+  "name": "@neuroloom/studio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "NeuroLoom editor UI (web build; wrapped by Electron from M1)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@neuroloom/core": "*",
+    "@xyflow/react": "^12.12.0",
+    "elkjs": "^0.12.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.5"
+  }
+}

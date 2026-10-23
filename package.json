@@ -1,0 +1,22 @@
+{
+  "name": "neuroloom",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "brand"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @neuroloom/studio",
+    "build": "npm run build -w @neuroloom/studio",
+    "test": "npm run test --workspaces --if-present",
+    "test:py": "node scripts/py.mjs -m pytest -q",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "brand": "npm run build -w @neuroloom/brand"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

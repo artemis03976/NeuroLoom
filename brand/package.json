@@ -1,0 +1,16 @@
+{
+  "name": "@neuroloom/brand",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "NeuroLoom logo, palette and generated brand assets",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/noto-sans-sc": "^5.3.1",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "opentype.js": "^1.3.4"
+  }
+}

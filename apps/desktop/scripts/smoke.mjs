@@ -16,8 +16,10 @@ const check = (label, ok, detail = '') => {
   if (!ok) process.exitCode = 1;
 };
 
+// The app starts in English whatever the machine's language, so every run
+// (a Chinese desktop, an English CI runner) takes the same path.
 const app = await _electron.launch({
-  args: ['.'],
+  args: ['.', '--lang=en-US'],
   cwd: desktopRoot,
   env: { ...process.env, NEUROLOOM_USER_DATA: userData },
 });
@@ -165,16 +167,24 @@ try {
   await win.waitForFunction(hasNode, 'blk');
   check('Alt+← goes back up', true);
 
-  // Native menus follow the interface language.
+  // Native menus follow the interface language. The editor re-renders in the new
+  // language before telling the main process, which can take a while on a slow
+  // runner, so wait for the menu instead of a fixed time.
   const menuLabels = () => app.evaluate(({ Menu }) => Menu.getApplicationMenu()?.items.map((i) => i.label) ?? []);
   const send = (command) => app.evaluate(({ BrowserWindow }, c) => BrowserWindow.getAllWindows()[0].webContents.send('nl:command', c), command);
-  await send('locale:en');
-  await win.waitForTimeout(300);
-  const english = await menuLabels();
-  await send('locale:zh');
-  await win.waitForTimeout(300);
-  const chinese = await menuLabels();
-  check('menus switch language with the editor', english.includes('Module') && chinese.includes('模块'), `${english.join('/')} | ${chinese.join('/')}`);
+  const menuIn = async (command, label) => {
+    await send(command);
+    const deadline = Date.now() + 10_000;
+    let labels = await menuLabels();
+    while (!labels.includes(label) && Date.now() < deadline) {
+      await win.waitForTimeout(200);
+      labels = await menuLabels();
+    }
+    return labels;
+  };
+  const chinese = await menuIn('locale:zh', '模块');
+  const english = await menuIn('locale:en', 'Module');
+  check('menus switch language with the editor', chinese.includes('模块') && english.includes('Module'), `${chinese.join('/')} | ${english.join('/')}`);
 
   const candidates = await win.evaluate(() => window.neuroloom.env.list());
   check('environment scan finds a ready interpreter', candidates.some((c) => c.status === 'ready'), `${candidates.length} found`);

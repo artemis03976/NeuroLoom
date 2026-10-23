@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { fail, IN, inplaceParam, L, num, ok, OUT, P, rankError, resolveParams } from './helpers';
 import type { NodeSpec } from './types';
 
@@ -15,7 +16,7 @@ function dropout(cls: string, zh: string, ranks: number[] | undefined, summary: 
     defaultName: 'dropout',
     infer([x], params) {
       const p = num(params, 'p');
-      if (p < 0 || p > 1) return fail('p 必须在 0 到 1 之间');
+      if (p < 0 || p > 1) return fail(msg('p 必须在 0 到 1 之间', 'p must be between 0 and 1'));
       const bad = ranks && rankError(x!, ranks, cls);
       return bad ? fail(bad) : ok([x!], resolveParams(params));
     },

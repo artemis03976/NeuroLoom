@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { isAuto } from '../ir';
 import { dimEq } from '../shape';
 import { fail, feature, IN, L, lit, num, ok, OUT, P, rankError, resolveParams, tuple } from './helpers';
@@ -32,12 +33,12 @@ function channelNorm(cls: string, zh: string, ranks: number[], kind: 'batch' | '
       if (bad) return fail(bad);
       // Unbatched instance-norm input has the channel first.
       const channelAxis = !isBatch && x!.shape.length === ranks[0]! - 1 ? 0 : 1;
-      const c = feature(params, 'num_features', x!.shape[channelAxis], '通道数');
+      const c = feature(params, 'num_features', x!.shape[channelAxis], msg('通道数', 'the number of channels'));
       if (typeof c === 'string') return fail(c);
       return ok([x!], resolveParams(params, { num_features: c }));
     },
     paramCount: (r) => (r.affine ? 2 * (r.num_features as number) : 0),
-    describe: (r) => `${r.num_features ?? '?'} 通道`,
+    describe: (r) => msg(`${r.num_features ?? '?'} 通道`, `${r.num_features ?? '?'} channels`),
     codegen: { ctor: `nn.${cls}` },
     example,
   };
@@ -47,12 +48,23 @@ function channelNorm(cls: string, zh: string, ranks: number[], kind: 'batch' | '
 function trailing(params: Parameters<NodeSpec['infer']>[1], shape: (number | string)[]): number[] | string {
   if (isAuto(params.normalized_shape)) {
     const last = shape.at(-1);
-    return typeof last === 'number' ? [last] : `无法从符号维度 ${last} 推断 normalized_shape，请填写具体数值`;
+    return typeof last === 'number'
+      ? [last]
+      : msg(
+          `无法从符号维度 ${last} 推断 normalized_shape，请填写具体数值`,
+          `cannot infer normalized_shape from the symbolic dimension ${last}; enter a concrete value`,
+        );
   }
   const ns = tuple(lit(params, 'normalized_shape'), 1);
-  if (ns.length > shape.length) return 'normalized_shape 的维数比输入还多';
+  if (ns.length > shape.length) return msg('normalized_shape 的维数比输入还多', 'normalized_shape has more dimensions than the input');
   for (let i = 1; i <= ns.length; i++) {
-    if (dimEq(shape.at(-i)!, ns.at(-i)!) === false) return `normalized_shape ${JSON.stringify(ns)} 与输入末尾的维度 [${shape.slice(-ns.length).join(', ')}] 不一致`;
+    if (dimEq(shape.at(-i)!, ns.at(-i)!) === false) {
+      const tail = shape.slice(-ns.length).join(', ');
+      return msg(
+        `normalized_shape ${JSON.stringify(ns)} 与输入末尾的维度 [${tail}] 不一致`,
+        `normalized_shape ${JSON.stringify(ns)} does not match the trailing input dimensions [${tail}]`,
+      );
+    }
   }
   return ns;
 }
@@ -120,14 +132,15 @@ const groupNorm: NodeSpec = {
   outputs: OUT,
   defaultName: 'norm',
   infer([x], params) {
-    if (x!.shape.length < 2) return fail('GroupNorm 需要至少 2 维输入');
-    const c = feature(params, 'num_channels', x!.shape[1], '通道数');
+    if (x!.shape.length < 2) return fail(msg('GroupNorm 需要至少 2 维输入', 'GroupNorm expects at least 2-D input'));
+    const c = feature(params, 'num_channels', x!.shape[1], msg('通道数', 'the number of channels'));
     if (typeof c === 'string') return fail(c);
-    if (c % num(params, 'num_groups') !== 0) return fail(`通道数 ${c} 不能被 num_groups=${num(params, 'num_groups')} 整除`);
+    const groups = num(params, 'num_groups');
+    if (c % groups !== 0) return fail(msg(`通道数 ${c} 不能被 num_groups=${groups} 整除`, `the number of channels (${c}) is not divisible by num_groups=${groups}`));
     return ok([x!], resolveParams(params, { num_channels: c }));
   },
   paramCount: (r) => (r.affine ? 2 * (r.num_channels as number) : 0),
-  describe: (r) => `${r.num_groups} 组 · ${r.num_channels ?? '?'} 通道`,
+  describe: (r) => msg(`${r.num_groups} 组 · ${r.num_channels ?? '?'} 通道`, `${r.num_groups} groups · ${r.num_channels ?? '?'} channels`),
   codegen: { ctor: 'nn.GroupNorm' },
   example: { inputs: [{ shape: 'B, 8, 4, 4' }], params: { num_groups: 2 } },
 };

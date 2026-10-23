@@ -2,9 +2,9 @@
 
 Which layers and ops are understood, and how their arguments map to node
 parameters, comes from specs.json, exported from the TypeScript NodeSpecs
-(`npm run specs`). User-defined submodules are traced through (flattened);
-keeping them as module nodes is M2 work, as is the code-block fallback for
-unsupported operations.
+(`npm run specs`). User-defined submodules are traced through (flattened).
+The default import is static (static.py); tracing is the alternative for code
+whose structure only exists at run time.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from . import SCHEMA_VERSION
+from .i18n import t, using_locale
 
 # Symbolic dimensions (e.g. B) are given this size when shapes are probed.
 BATCH_PROBE = 2
@@ -57,7 +58,7 @@ def parse_dims(text: str) -> Dims:
             continue
         dims.append(int(token) if token.isdigit() else token)
     if not dims:
-        raise ImportFailure(f"无法解析形状：{text!r}")
+        raise ImportFailure(t(f"无法解析形状：{text!r}", f"cannot parse shape {text!r}"))
     return dims
 
 
@@ -66,7 +67,7 @@ def parse_input(text: str) -> InputSpec:
     dims, _, dtype = text.partition(":")
     dtype = dtype.strip() or "float32"
     if dtype not in DTYPES:
-        raise ImportFailure(f"不支持的数据类型 {dtype}（可用：{'、'.join(DTYPES)}）")
+        raise ImportFailure(t(f"不支持的数据类型 {dtype}（可用：{'、'.join(DTYPES)}）", f"unsupported dtype {dtype} (available: {', '.join(DTYPES)})"))
     return InputSpec(parse_dims(dims), dtype)
 
 
@@ -127,7 +128,7 @@ def _plain(value: Any) -> Any:
         return [_plain(v) for v in value]
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
-    raise ImportFailure(f"无法表示的参数值 {value!r}")
+    raise ImportFailure(t(f"无法表示的参数值 {value!r}", f"cannot represent parameter value {value!r}"))
 
 
 def _normalize(value: Any, param: dict) -> Any:
@@ -192,7 +193,7 @@ def _layer_params(spec: dict, module) -> dict:
         elif hasattr(module, name):
             value = getattr(module, name)
         else:
-            raise ImportFailure(f"无法读取 {type(module).__name__}.{name}")
+            raise ImportFailure(t(f"无法读取 {type(module).__name__}.{name}", f"cannot read {type(module).__name__}.{name}"))
         params[name] = _normalize(value, p)
     return params
 
@@ -229,7 +230,7 @@ def _op_params(spec: dict, node) -> tuple[dict, list[tuple[str, Any]]]:
     bound: dict[str, Any] = {}
     for i, value in enumerate(args):
         if i >= len(signature):
-            raise ImportFailure(f"{_describe(node)} 的参数过多")
+            raise ImportFailure(t(f"{_describe(node)} 的参数过多", f"too many arguments to {_describe(node)}"))
         entry = signature[i]
         spread = "param" in entry and params_by_name[entry["param"]].get("spread")
         if spread and not isinstance(value, (tuple, list)):
@@ -242,7 +243,7 @@ def _op_params(spec: dict, node) -> tuple[dict, list[tuple[str, Any]]]:
             # fx records some functions' defaults explicitly (F.softmax adds _stacklevel=3, dtype=None).
             if name in defaults and defaults[name] == value:
                 continue
-            raise ImportFailure(f"{_describe(node)} 的参数 {name} 暂不支持")
+            raise ImportFailure(t(f"{_describe(node)} 的参数 {name} 暂不支持", f"argument {name} of {_describe(node)} is not supported yet"))
         bound[name] = value
 
     params: dict[str, Any] = {}
@@ -252,7 +253,7 @@ def _op_params(spec: dict, node) -> tuple[dict, list[tuple[str, Any]]]:
         value = bound.get(name)
         if "ports" in entry:
             if not isinstance(value, (tuple, list)) or not all(isinstance(v, fx.Node) for v in value):
-                raise ImportFailure(f"{_describe(node)} 的 {name} 必须是张量列表")
+                raise ImportFailure(t(f"{_describe(node)} 的 {name} 必须是张量列表", f"{name} of {_describe(node)} must be a list of tensors"))
             edges += [(f"{entry['ports']}{i}", v) for i, v in enumerate(value)]
         elif "port" in entry:
             if isinstance(value, fx.Node):
@@ -260,16 +261,21 @@ def _op_params(spec: dict, node) -> tuple[dict, list[tuple[str, Any]]]:
             elif entry.get("scalarParam") and isinstance(value, (int, float)) and not isinstance(value, bool):
                 params[entry["scalarParam"]] = float(value)
             else:
-                raise ImportFailure(f"{_describe(node)} 的参数 {name} 必须是张量")
+                raise ImportFailure(t(f"{_describe(node)} 的参数 {name} 必须是张量", f"argument {name} of {_describe(node)} must be a tensor"))
         elif name in bound:
             if isinstance(value, fx.Node) or (isinstance(value, (tuple, list)) and any(isinstance(v, fx.Node) for v in value)):
-                raise ImportFailure(f"{_describe(node)} 的参数 {name} 依赖运行时的值（如 x.size(0)），M2 起支持")
+                raise ImportFailure(
+                    t(
+                        f"{_describe(node)} 的参数 {name} 依赖运行时的值（如 x.size(0)）；静态解析会把这类语句保留为代码块",
+                        f"argument {name} of {_describe(node)} depends on run-time values (such as x.size(0)); reading the code instead keeps such statements as code blocks",
+                    )
+                )
             params[entry["param"]] = _normalize(value, params_by_name[entry["param"]])
 
     for p in spec["params"]:
         if p["name"] not in params:
             if "default" not in p:
-                raise ImportFailure(f"{_describe(node)} 缺少参数 {p['name']}")
+                raise ImportFailure(t(f"{_describe(node)} 缺少参数 {p['name']}", f"{_describe(node)} is missing argument {p['name']}"))
             params[p["name"]] = p["default"]
     return params, edges
 
@@ -307,7 +313,7 @@ class _Graph:
         source = self.value_of.get(producer)
         if source is None:
             if producer in self.tuple_of:
-                self.unsupported.append("把整个元组结果作为输入")
+                self.unsupported.append(t("把整个元组结果作为输入", "a whole tuple result used as an input"))
             return  # otherwise the producer was unsupported and is already reported
         self.edges.append(
             {
@@ -321,9 +327,14 @@ class _Graph:
 def _module_name(target: str, graph: _Graph) -> str:
     name = target.replace(".", "_")
     if name != target:
-        graph.warnings.append(f"子模块 {target} 被展平为 {name}，state_dict 键名会变化（M2 将保留层级）")
+        graph.warnings.append(
+            t(
+                f"子模块 {target} 被展平为 {name}，state_dict 键名会变化（静态解析会保留层级）",
+                f"submodule {target} is flattened to {name}, so state_dict keys change (reading the code instead keeps the hierarchy)",
+            )
+        )
     if not name.isidentifier() or keyword.iskeyword(name):
-        raise ImportFailure(f"子模块名 {target} 无法作为变量名")
+        raise ImportFailure(t(f"子模块名 {target} 无法作为变量名", f"submodule name {target} cannot be used as a variable name"))
     return name
 
 
@@ -336,12 +347,13 @@ def _pick_class(namespace: dict[str, Any], module_name: str, class_name: str | N
         if isinstance(v, type) and issubclass(v, nn.Module) and v.__module__ == module_name
     ]
     if not candidates:
-        raise ImportFailure("代码中没有找到 nn.Module 的子类")
+        raise ImportFailure(t("代码中没有找到 nn.Module 的子类", "no nn.Module subclass found in the code"))
     if class_name:
         for cls in candidates:
             if cls.__name__ == class_name:
                 return cls
-        raise ImportFailure(f"找不到类 {class_name}；可选：{', '.join(c.__name__ for c in candidates)}")
+        available = ", ".join(c.__name__ for c in candidates)
+        raise ImportFailure(t(f"找不到类 {class_name}；可选：{available}", f"class {class_name} not found; available: {available}"))
     # Default to the last class defined: model files usually define the top-level model last.
     return candidates[-1]
 
@@ -365,17 +377,17 @@ def import_source(
         try:
             exec(compile(source, filename, "exec"), namespace)
         except SyntaxError as e:
-            raise ImportFailure(f"语法错误（第 {e.lineno} 行）：{e.msg}") from e
+            raise ImportFailure(t(f"语法错误（第 {e.lineno} 行）：{e.msg}", f"syntax error (line {e.lineno}): {e.msg}")) from e
         cls = _pick_class(namespace, module_name, class_name)
         try:
             with torch.device("meta"):
                 model = cls()
         except TypeError as e:
-            raise ImportFailure(f"无法用默认参数实例化 {cls.__name__}：{e}") from e
+            raise ImportFailure(t(f"无法用默认参数实例化 {cls.__name__}：{e}", f"cannot instantiate {cls.__name__} with default arguments: {e}")) from e
         try:
             graph = fx.Tracer().trace(model)
         except Exception as e:  # fx raises many types; all mean "cannot trace"
-            raise ImportFailure(f"torch.fx 追踪失败：{e}", {"exception": type(e).__name__}) from e
+            raise ImportFailure(t(f"torch.fx 追踪失败：{e}", f"torch.fx tracing failed: {e}"), {"exception": type(e).__name__}) from e
     gm = fx.GraphModule(model, graph)
 
     g = _Graph()
@@ -387,7 +399,8 @@ def import_source(
             g.unsupported.append(str(e))
 
     if g.unsupported:
-        raise ImportFailure("暂不支持以下内容：" + "；".join(dict.fromkeys(g.unsupported)), {"unsupported": g.unsupported})
+        items = list(dict.fromkeys(g.unsupported))
+        raise ImportFailure(t("暂不支持以下内容：" + "；".join(items), "not supported yet: " + "; ".join(items)), {"unsupported": g.unsupported})
 
     for node, node_id in placeholders:
         spec = inputs.get(str(node.target)) or _guess_input(node, gm, g)
@@ -423,18 +436,24 @@ def _add_node(g: _Graph, gm, node, catalog: _Catalog, placeholders: list) -> Non
         module = gm.get_submodule(node.target)
         spec = catalog.layers.get(type(module))
         if spec is None:
-            raise ImportFailure(f"{type(module).__module__}.{type(module).__name__}（self.{node.target}）")
+            qualname = f"{type(module).__module__}.{type(module).__name__}"
+            raise ImportFailure(t(f"{qualname}（self.{node.target}）", f"{qualname} (self.{node.target})"))
         params = _layer_params(spec, module)
         node_id = g.add("layer", spec["type"], _module_name(str(node.target), g), params)
         if node.kwargs or len(node.args) > len(spec["inputs"]):
-            raise ImportFailure(f"self.{node.target} 的额外参数（如 mask、初始状态）暂不支持")
+            raise ImportFailure(
+                t(
+                    f"self.{node.target} 的额外参数（如 mask、初始状态）暂不支持",
+                    f"extra arguments to self.{node.target} (such as a mask or an initial state) are not supported yet",
+                )
+            )
         for port, arg in zip(spec["inputs"], node.args):
             g.link(arg, node_id, port["name"])
         g.produces(node, node_id, _outputs(spec, params))
     elif node.op == "call_function" and node.target is operator.getitem:
         source, index = node.args
         if source not in g.tuple_of or not isinstance(index, int):
-            raise ImportFailure("张量切片或索引（如 x[:, 0]）")
+            raise ImportFailure(t("张量切片或索引（如 x[:, 0]）", "tensor slicing or indexing (such as x[:, 0])"))
         node_id, path, outputs = g.tuple_of[source]
         path = [*path, index]
         match = [o for o in outputs if o.get("path") == path]
@@ -443,7 +462,7 @@ def _add_node(g: _Graph, gm, node, catalog: _Catalog, placeholders: list) -> Non
         elif any(o.get("path", [])[: len(path)] == path for o in outputs):
             g.tuple_of[node] = (node_id, path, outputs)
         else:
-            raise ImportFailure(f"元组下标 {index} 超出范围")
+            raise ImportFailure(t(f"元组下标 {index} 超出范围", f"tuple index {index} is out of range"))
     elif node.op in ("call_function", "call_method"):
         spec = catalog.methods.get(node.target) if node.op == "call_method" else catalog.functions.get(node.target)
         if spec is None:
@@ -458,7 +477,7 @@ def _add_node(g: _Graph, gm, node, catalog: _Catalog, placeholders: list) -> Non
         results = list(results) if isinstance(results, (tuple, list)) else [results]
         for i, value in enumerate(results):
             if not isinstance(value, fx.Node):
-                raise ImportFailure(f"返回值中的非张量 {value!r}")
+                raise ImportFailure(t(f"返回值中的非张量 {value!r}", f"non-tensor return value {value!r}"))
             out_id = g.add("output", OUTPUT, "output" if i == 0 else f"output_{i}", {})
             g.link(value, out_id, "in")
     else:
@@ -473,9 +492,17 @@ def _guess_input(node, gm, g: _Graph) -> InputSpec:
     module = gm.get_submodule(first.target) if first is not None and first.op == "call_module" else None
     if isinstance(module, nn.Linear):
         dims: Dims = ["B", module.in_features]
-        g.warnings.append(f"输入 {node.target} 的形状由 {first.target} 推断为 [{_shape_text(dims)}]")
+        shape = _shape_text(dims)
+        g.warnings.append(
+            t(f"输入 {node.target} 的形状由 {first.target} 推断为 [{shape}]", f"shape of input {node.target} inferred from {first.target} as [{shape}]")
+        )
         return InputSpec(dims)
-    raise ImportFailure(f"请提供输入 {node.target} 的形状，例如 {node.target}=B,3,224,224")
+    raise ImportFailure(
+        t(
+            f"请提供输入 {node.target} 的形状，例如 {node.target}=B,3,224,224",
+            f"provide the shape of input {node.target}, for example {node.target}=B,3,224,224",
+        )
+    )
 
 
 def _probe_shapes(gm, cls, graph, placeholders, inputs: dict[str, InputSpec], g: _Graph) -> dict[str, dict[str, list[int]]]:
@@ -504,7 +531,7 @@ def _probe_shapes(gm, cls, graph, placeholders, inputs: dict[str, InputSpec], g:
                 cpu = fx.GraphModule(cls(), graph)
                 ShapeProp(cpu).propagate(*examples("cpu"))
         except Exception as e:
-            raise ImportFailure(f"按声明的输入形状运行模型失败：{e}") from e
+            raise ImportFailure(t(f"按声明的输入形状运行模型失败：{e}", f"running the model with the declared input shapes failed: {e}")) from e
 
     observed: dict[str, dict[str, list[int]]] = {}
     for fx_node, (node_id, port) in g.value_of.items():
@@ -514,13 +541,28 @@ def _probe_shapes(gm, cls, graph, placeholders, inputs: dict[str, InputSpec], g:
     return observed
 
 
+def import_code(source: str, class_name: str | None = None, inputs: dict[str, InputSpec] | None = None, mode: str = "static", filename: str = "<model.py>") -> dict[str, Any]:
+    """`static` reads the source without running it (L1 + L3); `trace` runs it under torch.fx (L2, flattened)."""
+    if mode == "trace":
+        return import_source(source, class_name, inputs, filename)
+    if mode != "static":
+        raise ImportFailure(t(f"未知的导入方式 {mode}", f"unknown import mode {mode}"))
+    from .static import import_static
+
+    return import_static(source, class_name, inputs, filename)
+
+
 def import_many(requests: list[dict]) -> list[dict]:
-    """Imports several sources in one process (used by the round-trip tests)."""
+    """Imports several sources in one process (used by the round-trip tests).
+
+    A request may carry a "locale" for its messages; otherwise the process's applies.
+    """
     results = []
     for request in requests:
-        try:
-            inputs = {k: parse_input(v) for k, v in (request.get("inputShapes") or {}).items()}
-            results.append(import_source(request["source"], request.get("className"), inputs))
-        except ImportFailure as e:
-            results.append({"error": {"message": str(e), "details": e.details}})
+        with using_locale(request.get("locale")):
+            try:
+                inputs = {k: parse_input(v) for k, v in (request.get("inputShapes") or {}).items()}
+                results.append(import_code(request["source"], request.get("className"), inputs, request.get("mode", "static")))
+            except ImportFailure as e:
+                results.append({"error": {"message": str(e), "details": e.details}})
     return results

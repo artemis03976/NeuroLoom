@@ -16,12 +16,16 @@ import {
   setLayout,
   setParam,
 } from '../src';
-import { mlp, mlpFunctional, twoHeads, twoInputs } from './fixtures';
+import { editEntry, mlp, mlpFunctional, twoHeads, twoInputs } from './fixtures';
 
 describe('parseShape', () => {
   it('accepts symbols, numbers and optional brackets', () => {
     expect(parseShape('[B, 3, 224, 224]')).toEqual({ ok: true, shape: ['B', 3, 224, 224] });
     expect(parseShape('B,784')).toEqual({ ok: true, shape: ['B', 784] });
+  });
+  it('accepts products of symbols in canonical form', () => {
+    expect(parseShape('T*B, 4*B, 8')).toEqual({ ok: true, shape: ['B*T', 'B*4', 8] });
+    expect(parseShape('B*T*').ok).toBe(false);
   });
   it('rejects zero and junk', () => {
     expect(parseShape('B, 0').ok).toBe(false);
@@ -32,8 +36,7 @@ describe('parseShape', () => {
 
 describe('analyzeModule', () => {
   it('propagates shapes and resolves auto parameters', () => {
-    const mod = entryModule(mlp());
-    const a = analyzeModule(mod);
+    const a = analyzeModule(mlp());
     expect(a.diagnostics).toEqual([]);
     expect(a.nodes.fc1?.outputs?.[0]?.shape).toEqual(['B', 256]);
     expect(a.nodes.fc2?.resolved).toEqual({ in_features: 256, out_features: 10, bias: true });
@@ -42,31 +45,28 @@ describe('analyzeModule', () => {
   });
 
   it('reports a feature-count mismatch on the offending node', () => {
-    const mod = setParam(entryModule(mlp()), 'fc2', 'in_features', literal(128));
-    const errors = analyzeModule(mod).diagnostics.filter((d) => d.severity === 'error');
+    const p = editEntry(mlp(), (m) => setParam(m, 'fc2', 'in_features', literal(128)));
+    const errors = analyzeModule(p).diagnostics.filter((d) => d.severity === 'error');
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ nodeId: 'fc2' });
     expect(errors[0]!.message).toContain('in_features = 128');
   });
 
   it('does not cascade an upstream failure', () => {
-    const mod = setParam(entryModule(mlp()), 'x', 'shape', literal('B, T'));
-    const errors = analyzeModule(mod).diagnostics.filter((d) => d.severity === 'error');
+    const p = editEntry(mlp(), (m) => setParam(m, 'x', 'shape', literal('B, T')));
+    const errors = analyzeModule(p).diagnostics.filter((d) => d.severity === 'error');
     expect(errors.map((e) => e.nodeId)).toEqual(['fc1']);
   });
 
   it('warns about values nothing consumes', () => {
-    let mod = entryModule(mlp());
-    mod = { ...mod, edges: mod.edges.filter((e) => e.id !== 'e3') };
-    const warnings = analyzeModule(mod).diagnostics.filter((d) => d.severity === 'warning');
+    const p = editEntry(mlp(), (m) => ({ ...m, edges: m.edges.filter((e) => e.id !== 'e3') }));
+    const warnings = analyzeModule(p).diagnostics.filter((d) => d.severity === 'warning');
     expect(warnings.map((w) => `${w.nodeId}: ${w.message}`)).toContain('fc2: 输出未被使用');
   });
 
   it('flags unconnected inputs and invalid names', () => {
-    let mod = entryModule(mlp());
-    mod = { ...mod, edges: mod.edges.filter((e) => e.id !== 'e1') };
-    mod = renameNode(mod, 'fc2', 'class');
-    const messages = analyzeModule(mod).diagnostics.map((d) => `${d.nodeId}: ${d.message}`);
+    const p = editEntry(mlp(), (m) => renameNode({ ...m, edges: m.edges.filter((e) => e.id !== 'e1') }, 'fc2', 'class'));
+    const messages = analyzeModule(p).diagnostics.map((d) => `${d.nodeId}: ${d.message}`);
     expect(messages).toContain('act1: 输入端口 in 未连接');
     expect(messages.some((m) => m.startsWith('fc2:') && m.includes('不是合法'))).toBe(true);
   });
@@ -120,7 +120,7 @@ class MLP(nn.Module):
   it('maps each node to its constructor and forward lines', () => {
     const { code, lineMap } = generateCode(mlp());
     const lines = code.split('\n');
-    expect(lineMap.fc1!.map((n) => lines[n - 1]!.trim())).toEqual(['self.fc1 = nn.Linear(784, 256)', 'x = self.fc1(x)  # [B, 256]']);
+    expect(lineMap.main!.fc1!.map((n) => lines[n - 1]!.trim())).toEqual(['self.fc1 = nn.Linear(784, 256)', 'x = self.fc1(x)  # [B, 256]']);
   });
 
   it('writes shape errors next to the offending call', () => {
@@ -186,7 +186,7 @@ describe('.loom serialization', () => {
     v01.schemaVersion = '0.1';
     delete v01.modules.main.interface;
     const loaded = parseProject(v01);
-    expect(loaded.schemaVersion).toBe('0.2');
+    expect(loaded.schemaVersion).toBe('0.3');
     expect(entryModule(loaded).interface).toEqual({ inputs: ['a', 'b'], outputs: ['output', 'output_1'] });
   });
 
@@ -214,12 +214,14 @@ describe('parseProject', () => {
 
 describe('clipboard', () => {
   it('copies nodes with the edges between them and pastes them with fresh names', () => {
-    const mod = entryModule(mlp());
-    const clip = parseClip(JSON.stringify(copyNodes(mod, ['fc1', 'act1'])))!;
+    const p = mlp();
+    const mod = entryModule(p);
+    const clip = parseClip(JSON.stringify(copyNodes(p, mod, ['fc1', 'act1'])))!;
     expect(clip.nodes.map((n) => n.name)).toEqual(['fc1', 'act1']);
     expect(clip.edges).toHaveLength(1);
 
-    const { mod: pasted, nodeIds } = pasteClip(mod, clip, { x: 40, y: 40 });
+    const { project, nodeIds } = pasteClip(p, 'main', clip, { x: 40, y: 40 });
+    const pasted = entryModule(project);
     const names = nodeIds.map((id) => pasted.nodes[id]!.name);
     expect(names).toEqual(['fc3', 'act2']);
     expect(pasted.edges.filter((e) => nodeIds.includes(e.source.node) && nodeIds.includes(e.target.node))).toHaveLength(1);
@@ -227,9 +229,9 @@ describe('clipboard', () => {
   });
 
   it('keeps names that are free and adds pasted inputs to the interface', () => {
-    const source = entryModule(mlp());
-    const target = entryModule(twoInputs());
-    const { mod, nodeIds } = pasteClip(target, copyNodes(source, ['x', 'fc2']), { x: 0, y: 0 });
+    const source = mlp();
+    const { project, nodeIds } = pasteClip(twoInputs(), 'main', copyNodes(source, entryModule(source), ['x', 'fc2']), { x: 0, y: 0 });
+    const mod = entryModule(project);
     expect(nodeIds.map((id) => mod.nodes[id]!.name)).toEqual(['x', 'fc2']);
     expect(mod.interface.inputs).toEqual(['a', 'b', nodeIds[0]]);
   });

@@ -7,6 +7,7 @@ import {
   allSpecs,
   analyzeModule,
   diffSignatures,
+  emptyModule,
   entryModule,
   generateCode,
   initialParams,
@@ -30,7 +31,7 @@ const testable = allSpecs().filter((s) => s.kind === 'layer' || s.kind === 'op')
 /** Inputs -> the spec's node -> one output per output port. */
 export function exampleProject(spec: NodeSpec): LoomProject {
   const example = spec.example!;
-  const mod: ModuleDef = { id: 'main', className: 'Example', nodes: {}, edges: [], layout: {}, interface: { inputs: [], outputs: [] } };
+  const mod: ModuleDef = emptyModule('main', 'Example');
 
   example.inputs.forEach((input, i) => {
     const id = `in${i}`;
@@ -81,7 +82,7 @@ describe('node library', () => {
 
   it('has a valid graph for every example', () => {
     const broken = testable.flatMap((s) => {
-      const errors = analyzeModule(entryModule(exampleProject(s))).diagnostics.filter((d) => d.severity === 'error');
+      const errors = analyzeModule(exampleProject(s)).diagnostics.filter((d) => d.severity === 'error');
       return errors.map((d) => `${s.type}: ${d.message}`);
     });
     expect(broken).toEqual([]);
@@ -97,25 +98,30 @@ describe.skipIf(!hasTorch)('every spec round-trips through PyTorch', () => {
     const project = exampleProject(spec);
     return { spec, project, code: generateCode(project).code };
   });
-  let results: ImportResult[] = [];
+  let statics: ImportResult[] = [];
+  let traces: ImportResult[] = [];
 
   beforeAll(() => {
-    results = importMany(cases.map((c) => ({ source: c.code, inputShapes: inputShapesOf(c.project) })));
+    const requests = cases.map((c) => ({ source: c.code, inputShapes: inputShapesOf(c.project) }));
+    statics = importMany(requests);
+    traces = importMany(requests.map((r) => ({ ...r, mode: 'trace' as const })));
   }, 300_000);
 
   cases.forEach(({ spec, project, code }, i) => {
     it(spec.type, () => {
-      const result = results[i]!;
+      // Read back statically: the same graph, and the same code when generated again.
+      const result = statics[i]!;
       expect(result.error?.message, code).toBeUndefined();
       const imported = parseProject(result.project);
-      const analysis = analyzeModule(entryModule(imported));
-
-      expect(diffSignatures(structuralSignature(entryModule(project)), structuralSignature(entryModule(imported), analysis))).toEqual({
-        onlyInA: [],
-        onlyInB: [],
-      });
+      expect(diffSignatures(structuralSignature(project), structuralSignature(imported))).toEqual({ onlyInA: [], onlyInB: [] });
       expect(generateCode(imported).code).toBe(code);
-      for (const pair of shapePairs(imported, analysis, result)) expect(pair.ts, pair.label).toEqual(pair.torch);
+
+      // Traced by PyTorch: the same graph, and every shape agrees with inference.
+      const trace = traces[i]!;
+      expect(trace.error?.message, code).toBeUndefined();
+      const traced = parseProject(trace.project);
+      expect(diffSignatures(structuralSignature(project), structuralSignature(traced))).toEqual({ onlyInA: [], onlyInB: [] });
+      for (const pair of shapePairs(traced, analyzeModule(traced), trace)) expect(pair.ts, pair.label).toEqual(pair.torch);
     });
   });
 });

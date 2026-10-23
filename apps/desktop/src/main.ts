@@ -43,6 +43,11 @@ let settings: SettingsStore;
 let docDirty = false;
 let allowClose = false;
 
+/** The editor's language; menus and native dialogs follow it. */
+const locale = () => settings?.data.locale ?? (app.getLocale().toLowerCase().startsWith('zh') ? 'zh' : 'en');
+const t = (zh: string, en: string) => (locale() === 'en' ? en : zh);
+const rebuildMenu = () => buildMenu(settings.recent(), locale());
+
 // ---------------------------------------------------------------- backend
 
 const managedEnvDir = () => join(app.getPath('userData'), 'python-env');
@@ -62,7 +67,7 @@ function backend(): Promise<PythonBackend> {
 }
 
 async function selectPython(path: string): Promise<void> {
-  if (!existsSync(path)) throw new Error(`找不到解释器：${path}`);
+  if (!existsSync(path)) throw new Error(t(`找不到解释器：${path}`, `Interpreter not found: ${path}`));
   settings.data.pythonPath = path;
   settings.save();
   (await backend()).setInterpreter(path);
@@ -86,10 +91,10 @@ const windowOf = (e: IpcMainInvokeEvent) => BrowserWindow.fromWebContents(e.send
 const recoveryFile = () => join(app.getPath('userData'), 'recovery.json');
 
 function readProjectFile(path: string) {
-  if (!['.loom', '.json'].includes(extname(path).toLowerCase())) throw new Error('只能打开 .loom 或 .json 文件');
+  if (!['.loom', '.json'].includes(extname(path).toLowerCase())) throw new Error(t('只能打开 .loom 或 .json 文件', 'Only .loom or .json files can be opened'));
   const text = readFileSync(path, 'utf8');
   settings.addRecent(path);
-  buildMenu(settings.recent());
+  rebuildMenu();
   return { path, name: basename(path), text };
 }
 
@@ -111,7 +116,7 @@ function registerIpc(): void {
   handle(CHANNELS.envCreate, async (e) => {
     const candidates = await discoverPythons({ projectVenv: projectVenv() });
     const base = candidates.find((c) => c.status !== 'old-python' && c.status !== 'broken');
-    if (!base) throw new Error('没有找到 Python 3.10 或更新的版本，请先安装 Python');
+    if (!base) throw new Error(t('没有找到 Python 3.10 或更新的版本，请先安装 Python', 'No Python 3.10 or newer was found; install Python first'));
     const python = await createEnvironment({
       base: base.path,
       target: managedEnvDir(),
@@ -125,7 +130,7 @@ function registerIpc(): void {
     const result = await dialog.showOpenDialog(windowOf(e)!, {
       properties: ['openFile'],
       filters: [
-        { name: 'NeuroLoom 项目', extensions: ['loom'] },
+        { name: t('NeuroLoom 项目', 'NeuroLoom project'), extensions: ['loom'] },
         { name: 'JSON', extensions: ['json'] },
       ],
     });
@@ -137,14 +142,14 @@ function registerIpc(): void {
     if (!path) {
       const result = await dialog.showSaveDialog(windowOf(e)!, {
         defaultPath: join(app.getPath('documents'), `${args.suggestedName}.loom`),
-        filters: [{ name: 'NeuroLoom 项目', extensions: ['loom'] }],
+        filters: [{ name: t('NeuroLoom 项目', 'NeuroLoom project'), extensions: ['loom'] }],
       });
       if (result.canceled || !result.filePath) return null;
       path = extname(result.filePath) ? result.filePath : `${result.filePath}.loom`;
     }
     writeAtomic(path, args.text);
     settings.addRecent(path);
-    buildMenu(settings.recent());
+    rebuildMenu();
     return path;
   });
   handle(CHANNELS.fileExportPython, async (e, args: { text: string; suggestedName: string }) => {
@@ -178,6 +183,12 @@ function registerIpc(): void {
   ipcMain.on(CHANNELS.docCloseAfterSave, (e) => {
     allowClose = true;
     BrowserWindow.fromWebContents(e.sender)?.close();
+  });
+  ipcMain.on(CHANNELS.locale, (_e, value: unknown) => {
+    if ((value !== 'zh' && value !== 'en') || value === settings.data.locale) return;
+    settings.data.locale = value;
+    settings.save();
+    rebuildMenu();
   });
 }
 
@@ -230,11 +241,11 @@ function createWindow(): BrowserWindow {
     e.preventDefault();
     const choice = dialog.showMessageBoxSync(win, {
       type: 'warning',
-      buttons: ['保存', '不保存', '取消'],
+      buttons: [t('保存', 'Save'), t('不保存', "Don't save"), t('取消', 'Cancel')],
       defaultId: 0,
       cancelId: 2,
-      message: '当前项目有未保存的更改',
-      detail: '关闭前要保存吗？',
+      message: t('当前项目有未保存的更改', 'The project has unsaved changes'),
+      detail: t('关闭前要保存吗？', 'Save before closing?'),
     });
     if (choice === 0) win.webContents.send(CHANNELS.command, 'saveAndClose');
     else if (choice === 1) {
@@ -251,7 +262,7 @@ app.whenReady().then(() => {
   settings = new SettingsStore(app.getPath('userData'));
   serveStudio();
   registerIpc();
-  buildMenu(settings.recent());
+  rebuildMenu();
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

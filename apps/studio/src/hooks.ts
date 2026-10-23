@@ -1,4 +1,4 @@
-import { copyNodes, entryModule, parseClip, serializeProject } from '@neuroloom/core';
+import { copyNodes, parseClip, serializeProject } from '@neuroloom/core';
 import type { MenuCommand } from '@neuroloom/host-api';
 import { useEffect } from 'react';
 import { runCommand } from './commands';
@@ -15,8 +15,12 @@ const isEditable = (target: EventTarget | null) =>
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
 function shortcut(e: KeyboardEvent): MenuCommand | undefined {
+  // Alt+← goes up one module level (PRD F4.2).
+  if (e.altKey && !e.ctrlKey && !e.metaKey && e.key === 'ArrowLeft') return 'goUp';
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return undefined;
   switch (e.key.toLowerCase()) {
+    case 'g':
+      return e.shiftKey ? 'unpackModule' : 'packModule';
     case 'z':
       return e.shiftKey ? 'redo' : 'undo';
     case 'y':
@@ -56,8 +60,8 @@ export function useCommands(): void {
       }
       const command = shortcut(e);
       if (!command) return;
-      // Inside a text field, undo/redo belong to the field.
-      if ((command === 'undo' || command === 'redo') && isEditable(e.target)) return;
+      // Inside a text field, undo/redo and Alt+← belong to the field.
+      if ((command === 'undo' || command === 'redo' || command === 'goUp') && isEditable(e.target)) return;
       e.preventDefault();
       runCommand(command);
     };
@@ -82,7 +86,8 @@ export function useClipboard(): void {
     const selection = () => useStudio.getState().flowNodes.filter((n) => n.selected).map((n) => n.id);
     const clipOfSelection = () => {
       const ids = selection();
-      return ids.length > 0 ? copyNodes(entryModule(useStudio.getState().project), ids) : null;
+      const { project, view } = useStudio.getState();
+      return ids.length > 0 ? copyNodes(project, project.modules[view.moduleId]!, ids) : null;
     };
     const onCopy = (e: ClipboardEvent) => {
       if (isEditable(document.activeElement)) return;

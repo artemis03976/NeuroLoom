@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { dimDiv, UNKNOWN, type Dim } from '../shape';
 import { convLength } from './conv';
 import { fail, flag, IN, L, lit, ok, OUT, P, rankError, resolveParams, showTuple, tuple } from './helpers';
@@ -47,7 +48,7 @@ function pool(n: 1 | 2 | 3, kind: 'Max' | 'Avg'): NodeSpec {
       const s = strideValue === null || strideValue === undefined ? k : tuple(strideValue, n);
       const p = tuple(lit(params, 'padding'), n);
       const d = kind === 'Max' ? tuple(lit(params, 'dilation'), n) : Array<number>(n).fill(1);
-      if (p.some((v, i) => v > k[i]! / 2)) return fail('padding 不能超过窗口大小的一半');
+      if (p.some((v, i) => v > k[i]! / 2)) return fail(msg('padding 不能超过窗口大小的一半', 'padding must be at most half of kernel_size'));
       const lead = x!.shape.length - n;
       const spatial: Dim[] = [];
       for (let i = 0; i < n; i++) {

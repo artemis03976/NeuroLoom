@@ -1,4 +1,5 @@
 // Upsampling (PRD appendix: 上采样与填充).
+import { msg } from '../i18n';
 import { dimMul, UNKNOWN, type Dim } from '../shape';
 import { fail, IN, L, lit, num, ok, OUT, P, rankError, resolveParams } from './helpers';
 import type { NodeSpec } from './types';
@@ -24,11 +25,11 @@ const upsample: NodeSpec = {
     const n = x!.shape.length - 2;
     const size = lit(params, 'size');
     const scale = lit(params, 'scale_factor');
-    if ((size === null) === (scale === null)) return fail('size 和 scale_factor 必须且只能设置一个');
+    if ((size === null) === (scale === null)) return fail(msg('size 和 scale_factor 必须且只能设置一个', 'set exactly one of size and scale_factor'));
     let spatial: Dim[];
     if (size !== null) {
       spatial = Array.isArray(size) ? (size as number[]) : Array<number>(n).fill(size as number);
-      if (spatial.length !== n) return fail(`size 需要 ${n} 个值`);
+      if (spatial.length !== n) return fail(msg(`size 需要 ${n} 个值`, `size needs ${n} values`));
     } else {
       const s = scale as number;
       spatial = x!.shape.slice(2).map((d) =>
@@ -58,7 +59,9 @@ const pixelShuffle: NodeSpec = {
     if (bad) return fail(bad);
     const r = num(params, 'upscale_factor');
     const [b, c, h, w] = x!.shape as [Dim, Dim, Dim, Dim];
-    if (typeof c === 'number' && c % (r * r) !== 0) return fail(`通道数 ${c} 不能被 r²=${r * r} 整除`);
+    if (typeof c === 'number' && c % (r * r) !== 0) {
+      return fail(msg(`通道数 ${c} 不能被 r²=${r * r} 整除`, `the number of channels (${c}) is not divisible by r²=${r * r}`));
+    }
     return ok(
       [{ shape: [b, typeof c === 'number' ? c / (r * r) : UNKNOWN, dimMul(h, r), dimMul(w, r)], dtype: x!.dtype }],
       resolveParams(params),

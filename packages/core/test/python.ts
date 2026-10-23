@@ -24,6 +24,8 @@ export function runPython(args: string[], input: string): string {
 
 export interface ImportResult {
   project: unknown;
+  report?: { className: string; level: string; codeBlocks: number; notes: string[] }[];
+  warnings?: string[];
   observedShapes: Record<string, Record<string, number[]>>;
   batchProbe: number;
   error?: { message: string };
@@ -39,15 +41,17 @@ export const inputShapesOf = (p: LoomProject): Record<string, string> =>
       .map((n) => [n.name, inputArg(String(literalOf(n.params.shape)), literalOf(n.params.dtype) as string | undefined)]),
   );
 
-export function importCode(code: string, inputShapes: Record<string, string> = {}): ImportResult {
-  const args = ['-m', 'neuroloom', 'import', '-'];
+export type ImportMode = 'static' | 'trace';
+
+export function importCode(code: string, inputShapes: Record<string, string> = {}, mode: ImportMode = 'static'): ImportResult {
+  const args = ['-m', 'neuroloom', 'import', '-', '--mode', mode];
   for (const [name, spec] of Object.entries(inputShapes)) args.push('--input', `${name}=${spec}`);
   const out = JSON.parse(runPython(args, code));
   if (out.error) throw new Error(out.error.message);
   return out;
 }
 
-export function importMany(requests: { source: string; inputShapes: Record<string, string> }[]): ImportResult[] {
+export function importMany(requests: { source: string; inputShapes: Record<string, string>; mode?: ImportMode }[]): ImportResult[] {
   return JSON.parse(runPython(['-m', 'neuroloom', 'import-batch'], JSON.stringify(requests)));
 }
 

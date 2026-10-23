@@ -1,22 +1,41 @@
 // IR -> PyTorch source (PRD section 10). Output is deterministic: the same graph
 // always produces byte-identical code, and every value has one canonical spelling
 // so that code -> graph -> code is a fixed point.
-import { analyzeModule, variadicEdges, withDefaults, type Analysis } from './analyze';
+import { analyzeModule, analyzeProject, sequentialChain, variadicEdges, withDefaults, type Analysis, type ProjectAnalysis } from './analyze';
+import { asOperand, renameInExpr, subtractOne } from './expr';
 import { consumers, incomingByPort, interfaceOrder, portKey } from './graph';
-import { entryModule, literalOf, type Literal, type LoomProject, type ModuleId, type NodeId, type NodeInst } from './ir';
+import { msg } from './i18n';
+import { exprOf, literalOf, type Literal, type LoomProject, type ModuleDef, type ModuleId, type NodeId, type NodeInst, type ParamValue } from './ir';
+import { dependencyOrder, portsOf } from './project';
 import { formatShape } from './shape';
-import { getSpec, outputsOf, type NodeSpec, type ParamSpec, type Resolved } from './specs';
+import { getSpec, type NodeSpec, type ParamSpec, type Resolved } from './specs';
+
+export interface CodegenOptions {
+  /** Records the shape of every code-block and opaque-module output when the code runs (see `PROBE_PRELUDE`). */
+  probe?: boolean;
+}
 
 export interface CodegenResult {
   code: string;
-  /** 1-based line numbers per node: its constructor line and its forward line. */
-  lineMap: Record<NodeId, number[]>;
+  /** Per module: 1-based line numbers per node, its constructor line and its forward lines. */
+  lineMap: Record<ModuleId, Record<NodeId, number[]>>;
+  /** Per module: the line of its `class` statement. */
+  classLines: Record<ModuleId, number>;
   /** Number of TODO(neuroloom) markers written for unfinished parts of the graph. */
   todos: number;
 }
 
 const I1 = '    ';
 const I2 = I1 + I1;
+
+/** Defines `_nl_probe`, which instrumented code calls with every value inference cannot see. */
+export const PROBE_PRELUDE = `_NL_SHAPES = {}
+
+
+def _nl_probe(module, node, port, value):
+    if isinstance(value, torch.Tensor):
+        _NL_SHAPES.setdefault(f"{module}/{node}/{port}", [list(value.shape), str(value.dtype).replace("torch.", "")])
+    return value`;
 
 /** Canonical form of a parameter value: uniform tuples collapse to a scalar (kernel_size (3, 3) -> 3). */
 export function canonicalValue(value: Literal | undefined, p: ParamSpec): Literal | undefined {
@@ -36,35 +55,29 @@ function pyNumber(value: number, float: boolean): string {
   return String(value);
 }
 
-export function pyLiteral(value: Literal | undefined, p?: ParamSpec): string {
+export function pyLiteral(value: Literal | undefined, p?: ParamSpec, float = p?.type === 'float'): string {
   const v = p ? canonicalValue(value, p) : value;
   if (v === undefined || v === null) return 'None';
   if (typeof v === 'boolean') return v ? 'True' : 'False';
-  if (typeof v === 'number') return pyNumber(v, p?.type === 'float');
+  if (typeof v === 'number') return pyNumber(v, float);
   if (typeof v === 'string') return JSON.stringify(v);
   const items = v.map((item) => pyLiteral(item));
   return items.length === 1 ? `(${items[0]},)` : `(${items.join(', ')})`;
 }
 
-function paramValue(spec: NodeSpec, node: NodeInst, resolved: Resolved | undefined, p: ParamSpec): Literal | undefined {
-  return resolved?.[p.name] ?? literalOf(withDefaults(spec, node.params)[p.name]);
+/** Simple assignment targets in a block of statements; code blocks may set more names than they export. */
+function assignedNames(source: string): string[] {
+  const names = new Set<string>();
+  for (const line of source.split('\n')) {
+    const m = /^\s*(?:for\s+(.+?)\s+in\b|([A-Za-z_][\w\s,()*]*?)\s*(?:[-+*/%@&|^]|\/\/|\*\*|<<|>>)?=(?!=))/.exec(line);
+    const targets = m?.[1] ?? m?.[2];
+    for (const name of targets?.match(/[A-Za-z_]\w*/g) ?? []) names.add(name);
+  }
+  return [...names];
 }
 
-/** Constructor arguments: required params positionally, optional ones as keywords when not default. */
-function ctorArgs(spec: NodeSpec, node: NodeInst, resolved: Resolved | undefined): { args: string[]; missing: string[] } {
-  const args: string[] = [];
-  const missing: string[] = [];
-  for (const p of spec.params) {
-    const value = paramValue(spec, node, resolved, p);
-    if (p.default === undefined) {
-      if (value === undefined) missing.push(p.name);
-      args.push(pyLiteral(value, p));
-    } else if (value !== undefined && !sameValue(value, p.default, p)) {
-      args.push(`${p.name}=${pyLiteral(value, p)}`);
-    }
-  }
-  return { args, missing };
-}
+/** Indents every non-empty line. */
+const indent = (text: string, prefix: string) => text.split('\n').map((l) => (l.trim() ? prefix + l : ''));
 
 /**
  * Builds an op call from the spec's Python signature. Arguments are positional
@@ -72,199 +85,567 @@ function ctorArgs(spec: NodeSpec, node: NodeInst, resolved: Resolved | undefined
  */
 function opCall(
   spec: NodeSpec,
-  node: NodeInst,
-  resolved: Resolved | undefined,
+  value: (p: ParamSpec) => { literal: Literal | undefined } | { expr: string },
   portExpr: (port: string) => string | undefined,
   variadicExprs: (base: string) => string[],
 ): string {
   const py = spec.python!;
   const paramOf = (name: string) => spec.params.find((p) => p.name === name)!;
+  const render = (p: ParamSpec) => {
+    const v = value(p);
+    return 'expr' in v ? v.expr : pyLiteral(v.literal, p);
+  };
   const parts: string[] = [];
   let receiver: string | undefined;
   let keywordsOnly = false;
-  const push = (name: string, expr: string, keyword: boolean) => {
+  const push = (name: string, text: string, keyword: boolean) => {
     if (keyword || keywordsOnly) {
-      parts.push(`${name}=${expr}`);
+      parts.push(`${name}=${text}`);
       keywordsOnly = true;
-    } else parts.push(expr);
+    } else parts.push(text);
   };
 
   py.args.forEach((arg, i) => {
     if ('ports' in arg) {
       push(arg.name, `[${variadicExprs(arg.ports).join(', ')}]`, false);
     } else if ('port' in arg) {
-      const expr = portExpr(arg.port);
-      if (expr !== undefined) {
-        if (spec.codegen.method && i === 0) receiver = expr;
-        else push(arg.name, expr, false);
+      const text = portExpr(arg.port);
+      if (text !== undefined) {
+        if (spec.codegen.method && i === 0) receiver = text;
+        else push(arg.name, text, false);
       } else if (arg.scalarParam) {
-        push(arg.name, pyLiteral(paramValue(spec, node, resolved, paramOf(arg.scalarParam)), paramOf(arg.scalarParam)), false);
+        push(arg.name, render(paramOf(arg.scalarParam)), false);
       } else {
         keywordsOnly = true;
       }
     } else {
       const p = paramOf(arg.param);
-      const value = paramValue(spec, node, resolved, p);
-      if (p.default !== undefined && sameValue(value, p.default, p)) {
+      const v = value(p);
+      if ('literal' in v && p.default !== undefined && sameValue(v.literal, p.default, p)) {
         keywordsOnly = true;
         return;
       }
-      if (p.spread && Array.isArray(value) && !keywordsOnly) {
-        parts.push(...value.map((v) => pyLiteral(v)));
+      if ('literal' in v && p.spread && Array.isArray(v.literal) && !keywordsOnly) {
+        parts.push(...v.literal.map((item) => pyLiteral(item)));
         return;
       }
-      push(arg.name, pyLiteral(value, p), p.keyword === true || (p.default !== undefined && !p.positional));
+      push(arg.name, render(p), p.keyword === true || (p.default !== undefined && !p.positional));
     }
   });
 
   // Operators take exactly two operands: a tensor and a tensor or constant.
-  if (spec.codegen.operator) return `${parts[0]} ${spec.codegen.operator} ${parts[1]}`;
+  if (spec.codegen.operator) return `${parts[0]} ${spec.codegen.operator} ${asOperand(parts[1] ?? '', spec.codegen.operator)}`;
   if (spec.codegen.method) return `${receiver}.${spec.codegen.method}(${parts.join(', ')})`;
   return `${spec.codegen.fn}(${parts.join(', ')})`;
 }
 
-export function generateCode(project: LoomProject, analyses: Record<ModuleId, Analysis> = {}): CodegenResult {
-  const mod = entryModule(project);
-  const analysis = analyses[mod.id] ?? analyzeModule(mod);
-  const incoming = incomingByPort(mod);
-  const ordered = analysis.order.map((id) => mod.nodes[id]!);
-  const specOf = (n: NodeInst) => getSpec(n.type);
+/** A loop variable for a repeat: "blocks" -> "block". */
+function singular(name: string): string {
+  return name.length > 1 && name.endsWith('s') && !name.endsWith('ss') ? name.slice(0, -1) : `${name}_i`;
+}
 
-  const lines: string[] = [];
-  const lineMap: Record<NodeId, number[]> = {};
-  let todos = 0;
-  const emit = (line: string, ...nodeIds: NodeId[]) => {
-    lines.push(line);
-    for (const id of nodeIds) (lineMap[id] ??= []).push(lines.length);
-  };
+class ClassWriter {
+  private readonly hyperparams: Set<string>;
+  private readonly constants: Set<string>;
 
-  // isort order: plain imports first, then from-imports.
-  emit('import torch');
-  if (ordered.some((n) => specOf(n)?.codegen.fn?.startsWith('F.'))) emit('import torch.nn.functional as F');
-  emit('from torch import nn');
-  emit('');
-  emit('');
-  emit(`class ${mod.className}(nn.Module):`);
-  emit(`${I1}def __init__(self):`);
-  emit(`${I2}super().__init__()`);
-  for (const node of ordered) {
-    const spec = specOf(node);
-    if (spec?.kind !== 'layer' || !spec.codegen.ctor) continue;
-    const { args, missing } = ctorArgs(spec, node, analysis.nodes[node.id]?.resolved);
-    let line = `${I2}self.${node.name} = ${spec.codegen.ctor}(${args.join(', ')})`;
-    if (missing.length > 0) {
-      line += `  # TODO(neuroloom): 无法确定 ${missing.join(', ')}`;
-      todos++;
-    }
-    emit(line, node.id);
+  constructor(
+    private readonly gen: Generator,
+    private readonly mod: ModuleDef,
+    private readonly analyses: Analysis[],
+  ) {
+    this.hyperparams = new Set(mod.hyperparams.map((h) => h.name));
+    this.constants = new Set((mod.constants ?? []).map((c) => c.name));
   }
-  emit('');
 
-  // Signature and return order are part of the model's interface, so they follow
-  // the declared interface and never canvas position.
-  const inputs = interfaceOrder(mod, 'input');
-  const outputs = interfaceOrder(mod, 'output');
-  const returnType =
-    outputs.length === 0 ? 'None' : outputs.length === 1 ? 'torch.Tensor' : `tuple[${outputs.map(() => 'torch.Tensor').join(', ')}]`;
-  const signature = ['self', ...inputs.map((n) => `${n.name}: torch.Tensor`)].join(', ');
-  emit(`${I1}def forward(${signature}) -> ${returnType}:`);
-  const bodyStart = lines.length;
-
-  // Variable naming: a value consumed exactly once hands its variable name on
-  // (x = self.fc1(x)); a value used several times keeps its own name.
-  const varOf = new Map<string, string>();
-  const sourceVar = (nodeId: NodeId, port: string): string | undefined => {
-    const e = incoming.get(portKey(nodeId, port));
-    return e ? varOf.get(portKey(e.source.node, e.source.port)) : undefined;
-  };
-  const errorsOf = new Map<NodeId, string>();
-  for (const d of analysis.diagnostics) {
-    if (d.severity === 'error' && d.nodeId && !errorsOf.has(d.nodeId)) errorsOf.set(d.nodeId, d.message);
+  private get a0(): Analysis {
+    return this.analyses[0]!;
   }
-  let returned = false;
 
-  for (const node of ordered) {
-    const spec = specOf(node);
-    if (!spec) continue;
-    if (node.kind === 'input') {
-      varOf.set(portKey(node.id, 'out'), node.name);
-      continue;
-    }
-    if (node.kind === 'output') continue;
+  /** An expression as written in __init__ (constants are attributes there) or forward (everything is). */
+  expr(text: string, where: 'init' | 'forward'): string {
+    return renameInExpr(text, (n) => (this.constants.has(n) || (where === 'forward' && this.hyperparams.has(n)) ? `self.${n}` : undefined));
+  }
 
-    const variadicExprs = (base: string) =>
-      variadicEdges(mod, node.id, base).map((e) => varOf.get(portKey(e.source.node, e.source.port)) ?? 'None');
-    const connected = spec.inputs.filter((p) => !p.optional);
-    const missingInput = connected.some((p) => (p.variadic ? variadicExprs(p.name).length === 0 : sourceVar(node.id, p.name) === undefined));
-    if (missingInput) {
-      emit(`${I2}# TODO(neuroloom): ${node.name} 的输入未连接`, node.id);
-      todos++;
-      continue;
-    }
-
-    const resolved = analysis.nodes[node.id]?.resolved;
-    let expr: string;
-    if (spec.kind === 'layer') {
-      const args: string[] = [];
-      let keywordsOnly = false;
-      for (const p of spec.inputs) {
-        const v = sourceVar(node.id, p.name);
-        if (v === undefined) keywordsOnly = true;
-        else args.push(keywordsOnly ? `${p.name}=${v}` : v);
+  /** Hyperparameters forward() needs, so __init__ keeps them as attributes. */
+  private storedHyperparams(): string[] {
+    const used = new Set<string>();
+    for (const node of Object.values(this.mod.nodes)) {
+      if (node.kind === 'op') {
+        for (const v of Object.values(node.params)) {
+          const text = exprOf(v);
+          if (text) renameInExpr(text, (n) => void used.add(n));
+        }
       }
-      expr = `self.${node.name}(${args.join(', ')})`;
-    } else {
-      expr = opCall(spec, node, resolved, (port) => sourceVar(node.id, port), variadicExprs);
     }
-
-    const shape = analysis.nodes[node.id]?.outputs?.[0]?.shape;
-    const problem = errorsOf.get(node.id);
-    let comment = shape ? `  # ${formatShape(shape)}` : '';
-    if (problem) {
-      comment = `  # TODO(neuroloom): ${problem}`;
-      todos++;
-    }
-
-    const outs = outputsOf(spec, withDefaults(spec, node.params));
-    if (outs.length !== 1) {
-      // Tuple results: one name per used output, "_" for the rest.
-      const names = outs.map((o) => (consumers(mod, node.id, o.name).length > 0 ? `${node.name}_${o.name}` : '_'));
-      outs.forEach((o, i) => names[i] !== '_' && varOf.set(portKey(node.id, o.name), names[i]!));
-      const lhs = spec.codegen.unpack
-        ? outs.reduce((text, o, i) => text.replace(`{${o.name}}`, names[i]!), spec.codegen.unpack)
-        : names.join(', ');
-      emit(names.every((n) => n === '_') ? `${I2}${expr}${comment}` : `${I2}${lhs} = ${expr}${comment}`, node.id);
-      continue;
-    }
-
-    const outPort = outs[0]!.name;
-    const uses = consumers(mod, node.id, outPort);
-    if (outputs.length === 1 && uses.length === 1 && uses[0]!.target.node === outputs[0]!.id) {
-      emit(`${I2}return ${expr}${comment}`, node.id, outputs[0]!.id);
-      returned = true;
-      continue;
-    }
-    let target = node.name;
-    const tensorInputs = spec.inputs.flatMap((p) => (p.variadic ? variadicEdges(mod, node.id, p.name) : [incoming.get(portKey(node.id, p.name))])).filter((e) => e);
-    const only = tensorInputs.length === 1 ? tensorInputs[0] : undefined;
-    if (only && consumers(mod, only.source.node, only.source.port).length === 1) {
-      target = varOf.get(portKey(only.source.node, only.source.port))!;
-    }
-    emit(`${I2}${target} = ${expr}${comment}`, node.id);
-    varOf.set(portKey(node.id, outPort), target);
+    const verbatim = [this.mod.initCode, this.mod.members, ...Object.values(this.mod.nodes).map((n) => n.code?.source)].join('\n');
+    for (const m of verbatim.matchAll(/\bself\.([A-Za-z_]\w*)/g)) used.add(m[1]!);
+    return this.mod.hyperparams.map((h) => h.name).filter((n) => used.has(n) && !this.constants.has(n));
   }
 
-  if (!returned && outputs.length > 0) {
-    const values = outputs.map((o) => sourceVar(o.id, 'in'));
-    if (values.some((v) => v === undefined)) {
-      emit(`${I2}return None  # TODO(neuroloom): 有输出节点未连接`, ...outputs.map((o) => o.id));
-      todos++;
-    } else {
-      emit(`${I2}return ${values.join(', ')}`, ...outputs.map((o) => o.id));
-    }
-  } else if (lines.length === bodyStart) {
-    emit(`${I2}pass`);
+  /** A hyperparameter value or default: a literal (floats per annotation) or an expression. */
+  private value(v: ParamValue | { literal: Literal } | { expr: string }, where: 'init' | 'forward', float = false): string {
+    if ('expr' in v) return this.expr(v.expr, where);
+    if ('literal' in v) return pyLiteral(v.literal, undefined, float);
+    return 'None';
   }
 
-  return { code: `${lines.join('\n')}\n`, lineMap, todos };
+  /**
+   * Parameter values for a node's constructor, agreed by every context the
+   * module is analyzed in. An `auto` parameter that resolves differently in
+   * different instances cannot be written once; it is reported instead.
+   */
+  private resolvedFor(nodeId: NodeId, which: 'resolved' | 'resolvedFirst' = 'resolved'): { resolved?: Resolved; conflicts: string[] } {
+    const node = this.mod.nodes[nodeId]!;
+    const all = this.analyses.map((a) => a.nodes[nodeId]?.[which] ?? (which === 'resolvedFirst' ? a.nodes[nodeId]?.resolved : undefined)).filter((r): r is Resolved => !!r);
+    const resolved = all[0];
+    const conflicts: string[] = [];
+    for (const [name, v] of Object.entries(node.params)) {
+      if (!('auto' in v) || !resolved) continue;
+      const values = [...new Set(all.map((r) => JSON.stringify(r[name] ?? null)))];
+      if (values.length > 1) conflicts.push(msg(`${name} 在不同实例中推断为 ${values.join(' / ')}，请改用超参数表达式`, `${name} is inferred as ${values.join(' / ')} in different instances; use a hyperparameter expression`));
+    }
+    return { resolved, conflicts };
+  }
+
+  /** `nn.Conv2d(3, 16, 3, padding=1)`: required params positionally, optional ones as keywords when not default. */
+  layerCtor(spec: NodeSpec, node: NodeInst, resolved: Resolved | undefined, overrides: Record<string, ParamValue> = {}): { text: string; missing: string[] } {
+    const args: string[] = [];
+    const missing: string[] = [];
+    const params = withDefaults(spec, { ...node.params, ...overrides });
+    for (const p of spec.params) {
+      const raw = params[p.name];
+      const text = exprOf(raw);
+      if (text !== undefined) {
+        args.push(p.default === undefined ? this.expr(text, 'init') : `${p.name}=${this.expr(text, 'init')}`);
+        continue;
+      }
+      const value = resolved?.[p.name] ?? literalOf(raw);
+      if (p.default === undefined) {
+        if (value === undefined || value === null) {
+          if (value === undefined || !p.nullable) missing.push(p.name);
+        }
+        args.push(pyLiteral(value, p));
+      } else if (value !== undefined && !sameValue(value, p.default, p)) {
+        args.push(`${p.name}=${pyLiteral(value, p)}`);
+      }
+    }
+    return { text: `${spec.codegen.ctor}(${args.join(', ')})`, missing };
+  }
+
+  /** `Block(64, stride=2)` for a module instance, or the inline nn.Sequential(...) of a sequential module. */
+  moduleCtor(node: NodeInst, overrides: Record<string, ParamValue> = {}, child?: Analysis): { text: string; missing: string[] } {
+    const def = this.gen.project.modules[node.type];
+    if (!def) return { text: 'None', missing: [node.type] };
+    if (def.sequential) {
+      const missing: string[] = [];
+      const inner = new ClassWriter(this.gen, { ...def, hyperparams: this.mod.hyperparams, constants: this.mod.constants }, child ? [child] : this.gen.analysesOf(def.id));
+      const items = sequentialChain(def).map((n) => {
+        const r = inner.ctorOf(n, child);
+        missing.push(...r.missing);
+        return r.text;
+      });
+      return { text: `nn.Sequential(${items.join(', ')})`, missing };
+    }
+    const verbatim = !!def.opaque && (!def.opaque.source || !!def.opaque.verbatimArgs);
+    const given = { ...node.params, ...overrides };
+    const args: string[] = [];
+    const missing: string[] = [];
+    for (const hp of def.hyperparams) {
+      const v = given[hp.name];
+      const float = hp.annotation === 'float';
+      if (hp.name.startsWith('#')) {
+        if (v) args.push(this.value(v, 'init', float));
+      } else if (verbatim) {
+        if (v) args.push(`${hp.name}=${this.value(v, 'init', float)}`);
+      } else if (!hp.default) {
+        if (!v) missing.push(hp.name);
+        args.push(v ? this.value(v, 'init', float) : 'None');
+      } else if (v && JSON.stringify(v) !== JSON.stringify(hp.default)) {
+        args.push(`${hp.name}=${this.value(v, 'init', float)}`);
+      }
+    }
+    return { text: `${def.className}(${args.join(', ')})`, missing };
+  }
+
+  /** Constructor expression of a layer or module node (no repeat). */
+  ctorOf(node: NodeInst, context?: Analysis): { text: string; missing: string[] } {
+    if (node.kind === 'module') return this.moduleCtor(node, {}, context?.nodes[node.id]?.children?.[0] ?? this.a0.nodes[node.id]?.children?.[0]);
+    const spec = getSpec(node.type)!;
+    const resolved = context ? context.nodes[node.id]?.resolved : this.resolvedFor(node.id).resolved;
+    return this.layerCtor(spec, node, resolved);
+  }
+
+  /** The `self.name = ...` line of a layer or module node. */
+  private initLine(node: NodeInst): { line: string; problems: string[] } {
+    const problems: string[] = [];
+    let text: string;
+    if (node.repeat) {
+      const { count, first } = node.repeat;
+      const countText = 'expr' in count ? this.expr(count.expr, 'init') : String(literalOf(count) ?? 1);
+      let rest: { text: string; missing: string[] };
+      let head: { text: string; missing: string[] } | undefined;
+      if (node.kind === 'module') {
+        const children = this.a0.nodes[node.id]?.children;
+        rest = this.moduleCtor(node, {}, children?.[1] ?? children?.[0]);
+        if (first) head = this.moduleCtor(node, first, children?.[0]);
+      } else {
+        const spec = getSpec(node.type)!;
+        const r = this.resolvedFor(node.id);
+        const f = this.resolvedFor(node.id, 'resolvedFirst');
+        problems.push(...r.conflicts);
+        rest = this.layerCtor(spec, node, r.resolved);
+        const firstCtor = this.layerCtor(spec, node, f.resolved, first);
+        if (first || firstCtor.text !== rest.text) head = firstCtor;
+      }
+      problems.push(...rest.missing.map((m) => msg(`无法确定 ${m}`, `cannot determine ${m}`)));
+      if (head) {
+        const restCount = 'expr' in count ? subtractOne(countText) : String(Number(countText) - 1);
+        text = `nn.ModuleList([${head.text}] + [${rest.text} for _ in range(${restCount})])`;
+      } else {
+        text = `nn.ModuleList([${rest.text} for _ in range(${countText})])`;
+      }
+    } else {
+      if (node.kind === 'layer') problems.push(...this.resolvedFor(node.id).conflicts);
+      const r = this.ctorOf(node);
+      problems.push(...r.missing.map((m) => msg(`无法确定 ${m}`, `cannot determine ${m}`)));
+      text = r.text;
+    }
+    return { line: `${I2}self.${node.name} = ${text}`, problems };
+  }
+
+  write(): void {
+    const { gen, mod } = this;
+    const a0 = this.a0;
+    const order = a0.order.map((id) => mod.nodes[id]!).filter((n) => n);
+    gen.classStart(mod.id);
+    gen.emit(`class ${mod.className}(nn.Module):`);
+
+    const signature = ['self', ...mod.hyperparams.map((hp) => {
+      const head = hp.annotation ? `${hp.name}: ${hp.annotation}` : hp.name;
+      if (!hp.default) return head;
+      const value = this.value(hp.default, 'init', hp.annotation === 'float');
+      return hp.annotation ? `${head} = ${value}` : `${head}=${value}`;
+    })];
+    gen.emit(`${I1}def __init__(${signature.join(', ')}):`);
+    gen.emit(`${I2}super().__init__()`);
+    for (const name of this.storedHyperparams()) gen.emit(`${I2}self.${name} = ${name}`);
+    for (const c of mod.constants ?? []) gen.emit(`${I2}self.${c.name} = ${this.expr(c.expr, 'init')}`);
+    for (const node of order) {
+      if (node.kind !== 'layer' && node.kind !== 'module') continue;
+      const { line, problems } = this.initLine(node);
+      gen.emit(problems.length > 0 ? `${line}  # TODO(neuroloom): ${problems.join('; ')}` : line, mod.id, node.id);
+      gen.todos += problems.length > 0 ? 1 : 0;
+    }
+    if (mod.initCode?.trim()) for (const line of indent(mod.initCode.trimEnd(), I2)) gen.emit(line);
+    gen.emit('');
+    this.writeForward(order);
+    if (mod.members?.trim()) {
+      gen.emit('');
+      for (const line of indent(mod.members.trimEnd(), I1)) gen.emit(line);
+    }
+  }
+
+  private writeForward(ordered: NodeInst[]): void {
+    const { gen, mod } = this;
+    const analysis = this.a0;
+    const incoming = incomingByPort(mod);
+
+    // Signature and return order are part of the model's interface, so they follow
+    // the declared interface and never canvas position.
+    const inputs = interfaceOrder(mod, 'input');
+    const outputs = interfaceOrder(mod, 'output');
+    const returnType =
+      outputs.length === 0 ? 'None' : outputs.length === 1 ? 'torch.Tensor' : `tuple[${outputs.map(() => 'torch.Tensor').join(', ')}]`;
+    const signature = ['self', ...inputs.map((n) => `${n.name}: torch.Tensor`)].join(', ');
+    gen.emit(`${I1}def forward(${signature}) -> ${returnType}:`);
+    const bodyStart = gen.lines.length;
+
+    // Variable naming: a value consumed exactly once hands its variable name on
+    // (x = self.fc1(x)); a value used several times keeps its own name. A name is
+    // never reassigned while another value in it is still needed.
+    const varOf = new Map<string, string>();
+    const holder = new Map<string, string>();
+    const remaining = new Map<string, number>();
+    for (const e of mod.edges) {
+      const key = portKey(e.source.node, e.source.port);
+      remaining.set(key, (remaining.get(key) ?? 0) + 1);
+    }
+    const taken = new Set([...Object.values(mod.nodes).map((n) => n.name), ...inputs.map((n) => n.name)]);
+    const assign = (key: string, name: string) => {
+      varOf.set(key, name);
+      holder.set(name, key);
+      taken.add(name);
+    };
+    const fresh = (base: string) => {
+      for (let i = 1; ; i++) if (!taken.has(`${base}_${i}`)) return `${base}_${i}`;
+    };
+    /** Moves a still-needed value out of `name` before something else is assigned to it. */
+    const ensureFree = (name: string, except?: string) => {
+      const held = holder.get(name);
+      if (!held || held === except || (remaining.get(held) ?? 0) === 0 || varOf.get(held) !== name) return;
+      const moved = fresh(name);
+      gen.emit(`${I2}${moved} = ${name}`);
+      assign(held, moved);
+    };
+    const consume = (nodeId: NodeId) => {
+      for (const e of mod.edges) {
+        if (e.target.node !== nodeId) continue;
+        const key = portKey(e.source.node, e.source.port);
+        remaining.set(key, (remaining.get(key) ?? 1) - 1);
+      }
+    };
+    const sourceVar = (nodeId: NodeId, port: string): string | undefined => {
+      const e = incoming.get(portKey(nodeId, port));
+      return e ? varOf.get(portKey(e.source.node, e.source.port)) : undefined;
+    };
+    const errorsOf = new Map<NodeId, string>();
+    for (const d of analysis.diagnostics) {
+      if (d.severity === 'error' && d.nodeId && !errorsOf.has(d.nodeId)) errorsOf.set(d.nodeId, d.message);
+    }
+    const probe = (node: NodeInst, port: string, variable: string) => {
+      if (gen.options.probe) gen.emit(`${I2}_nl_probe(${JSON.stringify(mod.id)}, ${JSON.stringify(node.id)}, ${JSON.stringify(port)}, ${variable})`);
+    };
+    const opaqueModule = (node: NodeInst) => node.kind === 'module' && !!gen.project.modules[node.type]?.opaque;
+    const calledFromCode = new Set<string>();
+    for (const n of ordered) for (const m of n.code?.source.matchAll(/\bself\.([A-Za-z_]\w*)/g) ?? []) calledFromCode.add(m[1]!);
+    let returned = false;
+
+    for (const node of ordered) {
+      if (node.kind === 'input') {
+        assign(portKey(node.id, 'out'), node.name);
+        continue;
+      }
+      if (node.kind === 'output') continue;
+      const ports = portsOf(gen.project, node);
+      if (!ports) continue;
+
+      if (node.kind === 'code') {
+        this.writeCode(node, { incoming, varOf, holder, ensureFree, consume, assign, taken });
+        for (const name of node.code?.outputs ?? []) probe(node, name, name);
+        continue;
+      }
+
+      const variadicExprs = (base: string) =>
+        variadicEdges(mod, node.id, base).map((e) => varOf.get(portKey(e.source.node, e.source.port)) ?? 'None');
+      const connected = ports.inputs.filter((p) => !p.optional);
+      const hasEdges = mod.edges.some((e) => e.target.node === node.id);
+      if ((node.kind === 'layer' || node.kind === 'module') && !hasEdges && calledFromCode.has(node.name)) continue;
+      const missingInput = connected.some((p) => (p.variadic ? variadicExprs(p.name).length === 0 : sourceVar(node.id, p.name) === undefined));
+      if (missingInput) {
+        gen.emit(`${I2}# TODO(neuroloom): ${msg(`${node.name} 的输入未连接`, `${node.name} has unconnected inputs`)}`, mod.id, node.id);
+        gen.todos++;
+        continue;
+      }
+
+      const info = analysis.nodes[node.id];
+      const shape = info?.outputs?.[0]?.shape;
+      const problem = errorsOf.get(node.id);
+      let comment = shape ? `  # ${formatShape(shape)}` : '';
+      if (problem) {
+        comment = `  # TODO(neuroloom): ${problem}`;
+        gen.todos++;
+      }
+
+      // Positional arguments until an optional input is skipped, then keywords.
+      const callArgs = () => {
+        const args: string[] = [];
+        let keywordsOnly = false;
+        for (const p of ports.inputs) {
+          const v = sourceVar(node.id, p.name);
+          if (v === undefined) keywordsOnly = true;
+          else args.push(keywordsOnly ? `${p.label}=${v}` : v);
+        }
+        return args;
+      };
+
+      if (node.repeat && (node.kind === 'layer' || node.kind === 'module')) {
+        const first = mod.edges.find((e) => e.target.node === node.id && e.target.port === ports.inputs[0]?.name);
+        const firstKey = first && portKey(first.source.node, first.source.port);
+        const firstVar = firstKey ? varOf.get(firstKey)! : 'None';
+        const args = callArgs();
+        consume(node.id);
+        let target = firstVar;
+        if (!firstKey || (remaining.get(firstKey) ?? 0) > 0 || !holder.has(firstVar)) {
+          target = node.name;
+          ensureFree(target);
+          gen.emit(`${I2}${target} = ${firstVar}`, mod.id, node.id);
+        }
+        let loop = singular(node.name);
+        if (taken.has(loop)) loop = fresh(loop);
+        taken.add(loop);
+        gen.emit(`${I2}for ${loop} in self.${node.name}:`, mod.id, node.id);
+        gen.emit(`${I2}${I1}${target} = ${loop}(${[target, ...args.slice(1)].join(', ')})${comment}`, mod.id, node.id);
+        assign(portKey(node.id, ports.outputs[0]!.name), target);
+        continue;
+      }
+
+      let call: string;
+      if (node.kind === 'layer' || node.kind === 'module') {
+        call = `self.${node.name}(${callArgs().join(', ')})`;
+      } else {
+        const spec = getSpec(node.type)!;
+        const params = withDefaults(spec, node.params);
+        const resolved = info?.resolved;
+        call = opCall(
+          spec,
+          (p) => {
+            const text = exprOf(params[p.name]);
+            return text !== undefined ? { expr: this.expr(text, 'forward') } : { literal: resolved?.[p.name] ?? literalOf(params[p.name]) };
+          },
+          (port) => sourceVar(node.id, port),
+          variadicExprs,
+        );
+      }
+      const tensorInputs = ports.inputs
+        .flatMap((p) => (p.variadic ? variadicEdges(mod, node.id, p.name) : [incoming.get(portKey(node.id, p.name))]))
+        .filter((e) => e);
+      consume(node.id);
+
+      const outs = ports.outputs;
+      if (outs.length !== 1) {
+        // Tuple results: one name per used output, "_" for the rest.
+        const names = outs.map((o) => (consumers(mod, node.id, o.name).length > 0 ? `${node.name}_${o.label}` : '_'));
+        const spec = getSpec(node.type);
+        for (const n of names) if (n !== '_') ensureFree(n);
+        const lhs = spec?.codegen.unpack ? outs.reduce((text, o, i) => text.replace(`{${o.name}}`, names[i]!), spec.codegen.unpack) : names.join(', ');
+        gen.emit(names.every((n) => n === '_') ? `${I2}${call}${comment}` : `${I2}${lhs} = ${call}${comment}`, mod.id, node.id);
+        outs.forEach((o, i) => {
+          if (names[i] === '_') return;
+          assign(portKey(node.id, o.name), names[i]!);
+          if (opaqueModule(node)) probe(node, o.name, names[i]!);
+        });
+        continue;
+      }
+
+      const outPort = outs[0]!.name;
+      const uses = consumers(mod, node.id, outPort);
+      if (outputs.length === 1 && uses.length === 1 && uses[0]!.target.node === outputs[0]!.id && !(gen.options.probe && opaqueModule(node))) {
+        gen.emit(`${I2}return ${call}${comment}`, mod.id, node.id, outputs[0]!.id);
+        returned = true;
+        continue;
+      }
+      let target = node.name;
+      const only = tensorInputs.length === 1 ? tensorInputs[0] : undefined;
+      if (only && consumers(mod, only.source.node, only.source.port).length === 1) {
+        target = varOf.get(portKey(only.source.node, only.source.port))!;
+      }
+      ensureFree(target);
+      gen.emit(`${I2}${target} = ${call}${comment}`, mod.id, node.id);
+      assign(portKey(node.id, outPort), target);
+      if (opaqueModule(node)) probe(node, outPort, target);
+    }
+
+    if (!returned && outputs.length > 0) {
+      const values = outputs.map((o) => sourceVar(o.id, 'in'));
+      if (values.some((v) => v === undefined)) {
+        gen.emit(`${I2}return None  # TODO(neuroloom): ${msg('有输出节点未连接', 'an output is not connected')}`, mod.id, ...outputs.map((o) => o.id));
+        gen.todos++;
+      } else {
+        gen.emit(`${I2}return ${values.join(', ')}`, mod.id, ...outputs.map((o) => o.id));
+      }
+    } else if (gen.lines.length === bodyStart) {
+      gen.emit(`${I2}pass`);
+    }
+  }
+
+  /** A code block: inputs bound to the names it reads, then its statements verbatim. */
+  private writeCode(
+    node: NodeInst,
+    s: {
+      incoming: Map<string, { source: { node: NodeId; port: string } }>;
+      varOf: Map<string, string>;
+      holder: Map<string, string>;
+      ensureFree: (name: string, except?: string) => void;
+      consume: (nodeId: NodeId) => void;
+      assign: (key: string, name: string) => void;
+      taken: Set<string>;
+    },
+  ): void {
+    const { gen, mod } = this;
+    const code = node.code!;
+    for (const name of code.inputs) {
+      const e = s.incoming.get(portKey(node.id, name));
+      if (!e) continue;
+      const key = portKey(e.source.node, e.source.port);
+      const v = s.varOf.get(key);
+      if (v === undefined || v === name) continue;
+      s.ensureFree(name, key);
+      gen.emit(`${I2}${name} = ${v}`, mod.id, node.id);
+      s.holder.set(name, key);
+      s.taken.add(name);
+    }
+    s.consume(node.id);
+    for (const name of new Set([...code.outputs, ...assignedNames(code.source)])) s.ensureFree(name);
+    for (const line of indent(code.source.trimEnd(), I2)) gen.emit(line, mod.id, node.id);
+    for (const name of code.outputs) s.assign(portKey(node.id, name), name);
+  }
+}
+
+class Generator {
+  readonly lines: string[] = [];
+  readonly lineMap: Record<ModuleId, Record<NodeId, number[]>> = {};
+  readonly classLines: Record<ModuleId, number> = {};
+  todos = 0;
+
+  constructor(
+    readonly project: LoomProject,
+    private readonly analysis: ProjectAnalysis,
+    readonly options: CodegenOptions,
+  ) {}
+
+  emit(line: string, moduleId?: ModuleId, ...nodeIds: NodeId[]): void {
+    this.lines.push(line);
+    if (!moduleId) return;
+    const map = (this.lineMap[moduleId] ??= {});
+    for (const id of nodeIds) (map[id] ??= []).push(this.lines.length);
+  }
+
+  classStart(moduleId: ModuleId): void {
+    this.classLines[moduleId] = this.lines.length + 1;
+  }
+
+  analysesOf(moduleId: ModuleId): Analysis[] {
+    const list = this.analysis.byModule[moduleId];
+    return list && list.length > 0 ? list : [analyzeModule(this.project, moduleId)];
+  }
+
+  run(): void {
+    const { project } = this;
+    const modules = dependencyOrder(project).map((id) => project.modules[id]!);
+    const verbatim = [project.preamble, ...modules.flatMap((m) => [m.opaque?.source, m.initCode, m.members, ...Object.values(m.nodes).map((n) => n.code?.source)])].join('\n');
+    const usesF =
+      /\bF\./.test(verbatim) ||
+      modules.some((m) => Object.values(m.nodes).some((n) => n.kind === 'op' && getSpec(n.type)?.codegen.fn?.startsWith('F.')));
+
+    // isort order: plain imports first, then from-imports.
+    this.emit('import torch');
+    if (usesF) this.emit('import torch.nn.functional as F');
+    this.emit('from torch import nn');
+    if (project.preamble?.trim()) {
+      this.emit('');
+      for (const line of project.preamble.trimEnd().split('\n')) this.emit(line);
+    }
+    if (this.options.probe) {
+      this.emit('');
+      this.emit('');
+      for (const line of PROBE_PRELUDE.split('\n')) this.emit(line);
+    }
+    for (const mod of modules) {
+      if (mod.sequential || (mod.opaque && !mod.opaque.source)) continue;
+      this.emit('');
+      this.emit('');
+      if (mod.opaque) {
+        this.classStart(mod.id);
+        for (const line of mod.opaque.source!.trimEnd().split('\n')) this.emit(line);
+        continue;
+      }
+      new ClassWriter(this, mod, this.analysesOf(mod.id)).write();
+    }
+  }
+}
+
+export function generateCode(project: LoomProject, analysis: ProjectAnalysis = analyzeProject(project), options: CodegenOptions = {}): CodegenResult {
+  const gen = new Generator(project, analysis, options);
+  gen.run();
+  return { code: `${gen.lines.join('\n')}\n`, lineMap: gen.lineMap, classLines: gen.classLines, todos: gen.todos };
 }

@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { isAuto, literalOf, type Literal } from '../ir';
 import { dimEq, type Dim, type TensorType } from '../shape';
 import type { Bilingual, InferResult, ParamSpec, ParamType, Params, Resolved } from './types';
@@ -47,19 +48,26 @@ export function resolveParams(params: Params, auto: Resolved = {}): Resolved {
 /**
  * A feature size that can be inferred: `auto` takes the actual dimension,
  * a literal must agree with it. Returns the size, or an error message.
+ * `what` names the dimension and must already be localized with msg().
  */
 export function feature(params: Params, name: string, actual: Dim | undefined, what: string): number | string {
-  if (actual === undefined) return `缺少${what}`;
+  if (actual === undefined) return msg(`缺少${what}`, `${what} is missing`);
   if (isAuto(params[name])) {
-    return typeof actual === 'number' ? actual : `无法从符号维度 ${actual} 推断 ${name}，请填写具体数值`;
+    return typeof actual === 'number'
+      ? actual
+      : msg(`无法从符号维度 ${actual} 推断 ${name}，请填写具体数值`, `cannot infer ${name} from the symbolic dimension ${actual}; enter a concrete value`);
   }
   const value = literalOf(params[name]) as number;
-  return dimEq(actual, value) === false ? `${what}为 ${actual}，但 ${name} = ${value}` : value;
+  return dimEq(actual, value) === false ? msg(`${what}为 ${actual}，但 ${name} = ${value}`, `${what} is ${actual}, but ${name} = ${value}`) : value;
 }
 
+/** `what` is a code name (a class or port name), the same in every locale. */
 export function rankError(x: TensorType, ranks: number[], what: string): string | undefined {
   if (ranks.includes(x.shape.length)) return undefined;
-  return `${what}需要 ${ranks.join(' 或 ')} 维输入，收到 ${x.shape.length} 维`;
+  return msg(
+    `${what}需要 ${ranks.join(' 或 ')} 维输入，收到 ${x.shape.length} 维`,
+    `${what} expects ${ranks.map((r) => `${r}-D`).join(' or ')} input, got ${x.shape.length}-D`,
+  );
 }
 
 /** Shows a tuple compactly: 3, or 3×5. */

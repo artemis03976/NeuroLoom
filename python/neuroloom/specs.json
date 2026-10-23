@@ -1,9 +1,10 @@
 {
-  "schemaVersion": "0.2",
+  "schemaVersion": "0.3",
   "specs": [
     {
       "type": "torch.nn.Linear",
       "kind": "layer",
+      "defaultName": "fc",
       "params": [
         {
           "name": "in_features",
@@ -34,6 +35,7 @@
     {
       "type": "torch.nn.Identity",
       "kind": "layer",
+      "defaultName": "identity",
       "params": [],
       "inputs": [
         {
@@ -50,6 +52,7 @@
     {
       "type": "torch.nn.Embedding",
       "kind": "layer",
+      "defaultName": "embed",
       "params": [
         {
           "name": "num_embeddings",
@@ -81,6 +84,7 @@
     {
       "type": "torch.nn.Conv1d",
       "kind": "layer",
+      "defaultName": "conv",
       "params": [
         {
           "name": "in_channels",
@@ -144,6 +148,7 @@
     {
       "type": "torch.nn.Conv2d",
       "kind": "layer",
+      "defaultName": "conv",
       "params": [
         {
           "name": "in_channels",
@@ -207,6 +212,7 @@
     {
       "type": "torch.nn.Conv3d",
       "kind": "layer",
+      "defaultName": "conv",
       "params": [
         {
           "name": "in_channels",
@@ -270,6 +276,7 @@
     {
       "type": "torch.nn.ConvTranspose1d",
       "kind": "layer",
+      "defaultName": "deconv",
       "params": [
         {
           "name": "in_channels",
@@ -334,6 +341,7 @@
     {
       "type": "torch.nn.ConvTranspose2d",
       "kind": "layer",
+      "defaultName": "deconv",
       "params": [
         {
           "name": "in_channels",
@@ -398,6 +406,7 @@
     {
       "type": "torch.nn.ConvTranspose3d",
       "kind": "layer",
+      "defaultName": "deconv",
       "params": [
         {
           "name": "in_channels",
@@ -462,6 +471,7 @@
     {
       "type": "torch.nn.Upsample",
       "kind": "layer",
+      "defaultName": "upsample",
       "params": [
         {
           "name": "size",
@@ -496,6 +506,7 @@
     {
       "type": "torch.nn.PixelShuffle",
       "kind": "layer",
+      "defaultName": "shuffle",
       "params": [
         {
           "name": "upscale_factor",
@@ -517,6 +528,7 @@
     {
       "type": "torch.nn.MaxPool1d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "kernel_size",
@@ -563,6 +575,7 @@
     {
       "type": "torch.nn.MaxPool2d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "kernel_size",
@@ -609,6 +622,7 @@
     {
       "type": "torch.nn.MaxPool3d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "kernel_size",
@@ -655,6 +669,7 @@
     {
       "type": "torch.nn.AvgPool1d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "kernel_size",
@@ -700,6 +715,7 @@
     {
       "type": "torch.nn.AvgPool2d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "kernel_size",
@@ -745,6 +761,7 @@
     {
       "type": "torch.nn.AvgPool3d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "kernel_size",
@@ -790,6 +807,7 @@
     {
       "type": "torch.nn.AdaptiveAvgPool1d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "output_size",
@@ -812,6 +830,7 @@
     {
       "type": "torch.nn.AdaptiveAvgPool2d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "output_size",
@@ -834,6 +853,7 @@
     {
       "type": "torch.nn.AdaptiveAvgPool3d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "output_size",
@@ -856,6 +876,7 @@
     {
       "type": "torch.nn.AdaptiveMaxPool1d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "output_size",
@@ -878,6 +899,7 @@
     {
       "type": "torch.nn.AdaptiveMaxPool2d",
       "kind": "layer",
+      "defaultName": "pool",
       "params": [
         {
           "name": "output_size",
@@ -900,6 +922,7 @@
     {
       "type": "torch.nn.BatchNorm1d",
       "kind": "layer",
+      "defaultName": "bn",
       "params": [
         {
           "name": "num_features",
@@ -942,6 +965,7 @@
     {
       "type": "torch.nn.BatchNorm2d",
       "kind": "layer",
+      "defaultName": "bn",
       "params": [
         {
           "name": "num_features",
@@ -984,6 +1008,7 @@
     {
       "type": "torch.nn.BatchNorm3d",
       "kind": "layer",
+      "defaultName": "bn",
       "params": [
         {
           "name": "num_features",
@@ -1026,6 +1051,7 @@
     {
       "type": "torch.nn.InstanceNorm1d",
       "kind": "layer",
+      "defaultName": "norm",
       "params": [
         {
           "name": "num_features",
@@ -1068,6 +1094,7 @@
     {
       "type": "torch.nn.InstanceNorm2d",
       "kind": "layer",
+      "defaultName": "norm",
       "params": [
         {
           "name": "num_features",
@@ -1110,6 +1137,7 @@
     {
       "type": "torch.nn.LayerNorm",
       "kind": "layer",
+      "defaultName": "norm",
       "params": [
         {
           "name": "normalized_shape",
@@ -1146,6 +1174,7 @@
     {
       "type": "torch.nn.RMSNorm",
       "kind": "layer",
+      "defaultName": "norm",
       "params": [
         {
           "name": "normalized_shape",
@@ -1178,6 +1207,7 @@
     {
       "type": "torch.nn.GroupNorm",
       "kind": "layer",
+      "defaultName": "norm",
       "params": [
         {
           "name": "num_groups",
@@ -1213,6 +1243,7 @@
     {
       "type": "torch.nn.ReLU",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "inplace",
@@ -1235,6 +1266,7 @@
     {
       "type": "torch.nn.ReLU6",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "inplace",
@@ -1257,6 +1289,7 @@
     {
       "type": "torch.nn.LeakyReLU",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "negative_slope",
@@ -1284,6 +1317,7 @@
     {
       "type": "torch.nn.PReLU",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "num_parameters",
@@ -1306,6 +1340,7 @@
     {
       "type": "torch.nn.ELU",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "alpha",
@@ -1333,6 +1368,7 @@
     {
       "type": "torch.nn.GELU",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "approximate",
@@ -1355,6 +1391,7 @@
     {
       "type": "torch.nn.SiLU",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "inplace",
@@ -1377,6 +1414,7 @@
     {
       "type": "torch.nn.Mish",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "inplace",
@@ -1399,6 +1437,7 @@
     {
       "type": "torch.nn.Sigmoid",
       "kind": "layer",
+      "defaultName": "act",
       "params": [],
       "inputs": [
         {
@@ -1415,6 +1454,7 @@
     {
       "type": "torch.nn.Tanh",
       "kind": "layer",
+      "defaultName": "act",
       "params": [],
       "inputs": [
         {
@@ -1431,6 +1471,7 @@
     {
       "type": "torch.nn.Softmax",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "dim",
@@ -1454,6 +1495,7 @@
     {
       "type": "torch.nn.LogSoftmax",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "dim",
@@ -1477,6 +1519,7 @@
     {
       "type": "torch.nn.Hardswish",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "inplace",
@@ -1499,6 +1542,7 @@
     {
       "type": "torch.nn.Softplus",
       "kind": "layer",
+      "defaultName": "act",
       "params": [
         {
           "name": "beta",
@@ -1526,6 +1570,7 @@
     {
       "type": "torch.nn.functional.relu",
       "kind": "op",
+      "defaultName": "relu",
       "params": [
         {
           "name": "inplace",
@@ -1566,6 +1611,7 @@
     {
       "type": "torch.nn.functional.gelu",
       "kind": "op",
+      "defaultName": "gelu",
       "params": [
         {
           "name": "approximate",
@@ -1602,6 +1648,7 @@
     {
       "type": "torch.nn.functional.silu",
       "kind": "op",
+      "defaultName": "silu",
       "params": [
         {
           "name": "inplace",
@@ -1638,6 +1685,7 @@
     {
       "type": "torch.sigmoid",
       "kind": "op",
+      "defaultName": "sigmoid",
       "params": [],
       "inputs": [
         {
@@ -1668,6 +1716,7 @@
     {
       "type": "torch.tanh",
       "kind": "op",
+      "defaultName": "tanh",
       "params": [],
       "inputs": [
         {
@@ -1698,6 +1747,7 @@
     {
       "type": "torch.nn.functional.softmax",
       "kind": "op",
+      "defaultName": "softmax",
       "params": [
         {
           "name": "dim",
@@ -1737,6 +1787,7 @@
     {
       "type": "torch.nn.functional.log_softmax",
       "kind": "op",
+      "defaultName": "log_softmax",
       "params": [
         {
           "name": "dim",
@@ -1776,6 +1827,7 @@
     {
       "type": "torch.nn.functional.leaky_relu",
       "kind": "op",
+      "defaultName": "leaky_relu",
       "params": [
         {
           "name": "negative_slope",
@@ -1821,6 +1873,7 @@
     {
       "type": "torch.nn.Dropout",
       "kind": "layer",
+      "defaultName": "dropout",
       "params": [
         {
           "name": "p",
@@ -1848,6 +1901,7 @@
     {
       "type": "torch.nn.Dropout1d",
       "kind": "layer",
+      "defaultName": "dropout",
       "params": [
         {
           "name": "p",
@@ -1875,6 +1929,7 @@
     {
       "type": "torch.nn.Dropout2d",
       "kind": "layer",
+      "defaultName": "dropout",
       "params": [
         {
           "name": "p",
@@ -1902,6 +1957,7 @@
     {
       "type": "torch.nn.Dropout3d",
       "kind": "layer",
+      "defaultName": "dropout",
       "params": [
         {
           "name": "p",
@@ -1929,6 +1985,7 @@
     {
       "type": "torch.nn.AlphaDropout",
       "kind": "layer",
+      "defaultName": "dropout",
       "params": [
         {
           "name": "p",
@@ -1956,6 +2013,7 @@
     {
       "type": "torch.nn.RNN",
       "kind": "layer",
+      "defaultName": "rnn",
       "params": [
         {
           "name": "input_size",
@@ -2020,6 +2078,7 @@
     {
       "type": "torch.nn.LSTM",
       "kind": "layer",
+      "defaultName": "lstm",
       "params": [
         {
           "name": "input_size",
@@ -2087,6 +2146,7 @@
     {
       "type": "torch.nn.GRU",
       "kind": "layer",
+      "defaultName": "gru",
       "params": [
         {
           "name": "input_size",
@@ -2146,6 +2206,7 @@
     {
       "type": "torch.nn.MultiheadAttention",
       "kind": "layer",
+      "defaultName": "attn",
       "params": [
         {
           "name": "embed_dim",
@@ -2201,6 +2262,7 @@
     {
       "type": "torch.nn.TransformerEncoderLayer",
       "kind": "layer",
+      "defaultName": "encoder_layer",
       "params": [
         {
           "name": "d_model",
@@ -2261,6 +2323,7 @@
     {
       "type": "torch.nn.TransformerDecoderLayer",
       "kind": "layer",
+      "defaultName": "decoder_layer",
       "params": [
         {
           "name": "d_model",
@@ -2324,6 +2387,7 @@
     {
       "type": "torch.nn.Flatten",
       "kind": "layer",
+      "defaultName": "flatten",
       "params": [
         {
           "name": "start_dim",
@@ -2351,6 +2415,7 @@
     {
       "type": "torch.nn.Unflatten",
       "kind": "layer",
+      "defaultName": "unflatten",
       "params": [
         {
           "name": "dim",
@@ -2376,6 +2441,7 @@
     {
       "type": "torch.flatten",
       "kind": "op",
+      "defaultName": "flatten",
       "params": [
         {
           "name": "start_dim",
@@ -2424,6 +2490,7 @@
     {
       "type": "torch.Tensor.reshape",
       "kind": "op",
+      "defaultName": "reshape",
       "params": [
         {
           "name": "shape",
@@ -2464,6 +2531,7 @@
     {
       "type": "torch.Tensor.permute",
       "kind": "op",
+      "defaultName": "permute",
       "params": [
         {
           "name": "dims",
@@ -2503,6 +2571,7 @@
     {
       "type": "torch.Tensor.transpose",
       "kind": "op",
+      "defaultName": "transpose",
       "params": [
         {
           "name": "dim0",
@@ -2549,6 +2618,7 @@
     {
       "type": "torch.Tensor.unsqueeze",
       "kind": "op",
+      "defaultName": "unsqueeze",
       "params": [
         {
           "name": "dim",
@@ -2587,6 +2657,7 @@
     {
       "type": "torch.Tensor.squeeze",
       "kind": "op",
+      "defaultName": "squeeze",
       "params": [
         {
           "name": "dim",
@@ -2627,6 +2698,7 @@
     {
       "type": "torch.Tensor.contiguous",
       "kind": "op",
+      "defaultName": "contiguous",
       "params": [],
       "inputs": [
         {
@@ -2653,6 +2725,7 @@
     {
       "type": "torch.cat",
       "kind": "op",
+      "defaultName": "cat",
       "params": [
         {
           "name": "dim",
@@ -2691,6 +2764,7 @@
     {
       "type": "torch.stack",
       "kind": "op",
+      "defaultName": "stack",
       "params": [
         {
           "name": "dim",
@@ -2728,6 +2802,7 @@
     {
       "type": "torch.chunk",
       "kind": "op",
+      "defaultName": "chunk",
       "params": [
         {
           "name": "chunks",
@@ -2775,6 +2850,7 @@
     {
       "type": "torch.add",
       "kind": "op",
+      "defaultName": "add",
       "params": [
         {
           "name": "other",
@@ -2818,6 +2894,7 @@
     {
       "type": "torch.sub",
       "kind": "op",
+      "defaultName": "sub",
       "params": [
         {
           "name": "other",
@@ -2861,6 +2938,7 @@
     {
       "type": "torch.mul",
       "kind": "op",
+      "defaultName": "mul",
       "params": [
         {
           "name": "other",
@@ -2904,6 +2982,7 @@
     {
       "type": "torch.div",
       "kind": "op",
+      "defaultName": "div",
       "params": [
         {
           "name": "other",
@@ -2947,6 +3026,7 @@
     {
       "type": "torch.matmul",
       "kind": "op",
+      "defaultName": "matmul",
       "params": [],
       "inputs": [
         {
@@ -2984,6 +3064,7 @@
     {
       "type": "torch.Tensor.mean",
       "kind": "op",
+      "defaultName": "mean",
       "params": [
         {
           "name": "dim",
@@ -3033,6 +3114,7 @@
     {
       "type": "torch.Tensor.sum",
       "kind": "op",
+      "defaultName": "sum",
       "params": [
         {
           "name": "dim",

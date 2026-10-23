@@ -16,8 +16,10 @@ const check = (label, ok, detail = '') => {
   if (!ok) process.exitCode = 1;
 };
 
+// The app starts in English whatever the machine's language, so every run
+// (a Chinese desktop, an English CI runner) takes the same path.
 const app = await _electron.launch({
-  args: ['.'],
+  args: ['.', '--lang=en-US'],
   cwd: desktopRoot,
   env: { ...process.env, NEUROLOOM_USER_DATA: userData },
 });
@@ -102,11 +104,93 @@ try {
   await win.waitForFunction(() => document.querySelectorAll('.react-flow__node').length === 3);
   check('Ctrl+Z restores the node and the unsaved mark', (await windowTitle()).startsWith('● '));
 
+  // Static import reads the code without running it and reports per class.
+  const imported = await win.evaluate(() =>
+    window.neuroloom.rpc('import_code', {
+      source: 'from torch import nn\nclass M(nn.Module):\n    def __init__(self, d=4):\n        super().__init__()\n        self.fc = nn.Linear(d, 2)\n    def forward(self, x):\n        return self.fc(x)\n',
+      inputShapes: { x: 'B,4' },
+      mode: 'static',
+    }),
+  );
+  check('static import over IPC', imported?.report?.[0]?.level === 'L1', JSON.stringify(imported?.report));
+
+  // Modules: double-click drills in, Alt+← comes back (the dirty document is discarded).
+  win.on('dialog', (d) => void d.accept());
+  const nested = join(userData, 'smoke-nested.loom');
+  const io = (shape) => ({
+    x: { id: 'x', kind: 'input', type: 'neuroloom.Input', name: 'x', params: { shape: { literal: shape } } },
+    out: { id: 'out', kind: 'output', type: 'neuroloom.Output', name: 'output', params: {} },
+  });
+  // A module node's ports are the ids of its definition's input and output nodes ("x", "out").
+  const wire = (inner) => [
+    { id: 'e1', source: { node: 'x', port: 'out' }, target: { node: inner, port: inner === 'blk' ? 'x' : 'in' } },
+    { id: 'e2', source: { node: inner, port: 'out' }, target: { node: 'out', port: 'in' } },
+  ];
+  const place = (inner) => ({ x: { x: 0, y: 0 }, [inner]: { x: 260, y: 0 }, out: { x: 520, y: 0 } });
+  writeFileSync(
+    nested,
+    JSON.stringify({
+      schemaVersion: '0.3',
+      name: 'Nested',
+      entry: 'main',
+      modules: {
+        Block: {
+          id: 'Block',
+          className: 'Block',
+          hyperparams: [{ name: 'width' }],
+          nodes: { ...io(''), fc: { id: 'fc', kind: 'layer', type: 'torch.nn.Linear', name: 'fc', params: { in_features: { auto: true }, out_features: { expr: 'width' } } } },
+          edges: wire('fc'),
+          layout: place('fc'),
+          interface: { inputs: ['x'], outputs: ['out'] },
+        },
+        main: {
+          id: 'main',
+          className: 'Nested',
+          hyperparams: [],
+          nodes: { ...io('B, 8'), blk: { id: 'blk', kind: 'module', type: 'Block', name: 'blk', params: { width: { literal: 4 } } } },
+          edges: wire('blk'),
+          layout: place('blk'),
+          interface: { inputs: ['x'], outputs: ['out'] },
+        },
+      },
+    }),
+  );
+  await app.evaluate(({ BrowserWindow }, path) => BrowserWindow.getAllWindows()[0].webContents.send('nl:command', `openRecent:${path}`), nested);
+  const hasNode = (name) => [...document.querySelectorAll('.react-flow__node .nl-node-name')].some((n) => n.textContent === name);
+  await win.waitForFunction(hasNode, 'blk');
+  check('opens a 0.3 project with a module', (await windowTitle()) === 'smoke-nested — NeuroLoom', await windowTitle());
+  await win.locator('.react-flow__node', { hasText: 'blk' }).dblclick();
+  await win.waitForFunction(hasNode, 'fc');
+  const crumb = await win.locator('nav').first().textContent();
+  check('double-click opens a module, with a breadcrumb', crumb?.includes('Nested') && crumb.includes('blk'), crumb ?? '');
+  await win.keyboard.press('Alt+ArrowLeft');
+  await win.waitForFunction(hasNode, 'blk');
+  check('Alt+← goes back up', true);
+
+  // Native menus follow the interface language. The editor re-renders in the new
+  // language before telling the main process, which can take a while on a slow
+  // runner, so wait for the menu instead of a fixed time.
+  const menuLabels = () => app.evaluate(({ Menu }) => Menu.getApplicationMenu()?.items.map((i) => i.label) ?? []);
+  const send = (command) => app.evaluate(({ BrowserWindow }, c) => BrowserWindow.getAllWindows()[0].webContents.send('nl:command', c), command);
+  const menuIn = async (command, label) => {
+    await send(command);
+    const deadline = Date.now() + 10_000;
+    let labels = await menuLabels();
+    while (!labels.includes(label) && Date.now() < deadline) {
+      await win.waitForTimeout(200);
+      labels = await menuLabels();
+    }
+    return labels;
+  };
+  const chinese = await menuIn('locale:zh', '模块');
+  const english = await menuIn('locale:en', 'Module');
+  check('menus switch language with the editor', chinese.includes('模块') && english.includes('Module'), `${chinese.join('/')} | ${english.join('/')}`);
+
   const candidates = await win.evaluate(() => window.neuroloom.env.list());
   check('environment scan finds a ready interpreter', candidates.some((c) => c.status === 'ready'), `${candidates.length} found`);
 
   await win.locator('header button', { hasText: 'torch' }).click();
-  await win.waitForSelector('text=本机找到的解释器');
+  await win.waitForSelector('#env-title');
   await win.waitForSelector('[role=dialog] li', { timeout: 60_000 });
   await win.waitForTimeout(300);
   await win.screenshot({ path: screenshot });

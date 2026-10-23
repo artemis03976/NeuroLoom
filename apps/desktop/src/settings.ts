@@ -4,6 +4,8 @@ import { dirname, join } from 'node:path';
 export interface Settings {
   pythonPath?: string;
   recent: string[];
+  /** Interface language, as last chosen in the editor. */
+  locale?: 'zh' | 'en';
 }
 
 const MAX_RECENT = 10;

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "brand",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4180", "--directory", "brand"],
+      "port": 4180
+    }
+  ]
+}

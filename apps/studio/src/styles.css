@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-bg: var(--nl-bg);
+  --color-surface: var(--nl-surface);
+  --color-surface-2: var(--nl-surface-2);
+  --color-line: var(--nl-border);
+  --color-line-strong: var(--nl-border-strong);
+  --color-fg: var(--nl-text);
+  --color-muted: var(--nl-text-muted);
+  --color-primary: var(--nl-primary);
+  --color-primary-hover: var(--nl-primary-hover);
+  --color-primary-fg: var(--nl-primary-fg);
+  --color-primary-soft: var(--nl-primary-soft);
+  --color-flow: var(--nl-flow);
+  --color-flow-soft: var(--nl-flow-soft);
+  --color-error: var(--nl-error);
+  --color-warning: var(--nl-warning);
+  --color-success: var(--nl-success);
+  --color-code: var(--nl-code-bg);
+  --font-sans: 'Segoe UI Variable', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--nl-bg);
+  color: var(--nl-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- React Flow, themed with brand tokens ---- */
+.react-flow {
+  --xy-background-color: var(--nl-canvas-bg);
+  --xy-background-pattern-dots-color-default: var(--nl-canvas-dot);
+  --xy-edge-stroke-default: var(--nl-border-strong);
+  --xy-connectionline-stroke-default: var(--nl-primary);
+  --xy-handle-background-color-default: var(--nl-surface);
+  --xy-handle-border-color-default: var(--nl-border-strong);
+  --xy-minimap-background-color-default: var(--nl-surface);
+  --xy-minimap-mask-background-color-default: color-mix(in srgb, var(--nl-bg) 70%, transparent);
+  --xy-controls-button-background-color-default: var(--nl-surface);
+  --xy-controls-button-background-color-hover-default: var(--nl-surface-2);
+  --xy-controls-button-color-default: var(--nl-text);
+  --xy-controls-button-border-color-default: var(--nl-border);
+  --xy-attribution-background-color-default: transparent;
+}
+
+/* ---- Nodes ---- */
+.nl-node {
+  min-width: 168px;
+  border-radius: 10px;
+  background: var(--nl-surface);
+  border: 1px solid var(--nl-border);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+  font-size: 12px;
+  overflow: visible;
+}
+.nl-node.selected {
+  border-color: var(--nl-primary);
+  box-shadow: 0 0 0 3px var(--nl-primary-soft);
+}
+.nl-node.has-error {
+  border-color: var(--nl-error);
+}
+.nl-node.has-error.selected {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--nl-error) 22%, transparent);
+}
+.nl-node-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 6px;
+  border-top: 3px solid var(--cat);
+  border-radius: 10px 10px 0 0;
+}
+.nl-node-glyph {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font: 700 10px/1 var(--font-mono);
+  color: #fff;
+  background: var(--cat);
+}
+.nl-node-name {
+  font: 600 12.5px/1.2 var(--font-mono);
+  color: var(--nl-text);
+}
+.nl-node-type {
+  font-size: 11px;
+  color: var(--nl-text-muted);
+}
+.nl-node-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 8px 38px;
+  font: 11.5px/1.4 var(--font-mono);
+  color: var(--nl-text-muted);
+}
+.nl-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--nl-surface-2);
+  font-size: 10.5px;
+  color: var(--nl-text-muted);
+}
+.nl-node-error {
+  margin: 0 8px 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--nl-error) 12%, transparent);
+  color: var(--nl-error);
+  font-size: 11px;
+  line-height: 1.4;
+  max-width: 240px;
+}
+.react-flow__handle.nl-handle {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+}
+.react-flow__handle.nl-handle.connectingto,
+.react-flow__handle.nl-handle:hover {
+  border-color: var(--nl-primary);
+}
+
+/* ---- Edges ---- */
+.nl-edge-label {
+  position: absolute;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--nl-surface);
+  border: 1px solid var(--nl-border);
+  font: 10.5px/1.5 var(--font-mono);
+  color: var(--nl-text-muted);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ---- Code ---- */
+.nl-code {
+  font: 12.5px/1.65 var(--font-mono);
+  tab-size: 4;
+}
+.nl-code .ln {
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1.5ch;
+  text-align: right;
+  color: var(--nl-text-muted);
+  opacity: 0.6;
+  user-select: none;
+}
+.nl-code .hl {
+  background: var(--nl-primary-soft);
+}
+.tok-kw {
+  color: var(--nl-primary);
+  font-weight: 600;
+}
+.tok-str {
+  color: var(--nl-success);
+}
+.tok-num {
+  color: var(--nl-cat-activation);
+}
+.tok-com {
+  color: var(--nl-text-muted);
+  font-style: italic;
+}
+.tok-fn {
+  color: var(--nl-flow);
+}
+.tok-self {
+  color: var(--nl-cat-attention);
+}

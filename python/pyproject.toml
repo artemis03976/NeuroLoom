@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neuroloom"
+version = "0.0.1"
+description = "NeuroLoom backend: imports PyTorch code into NeuroLoom graphs"
+requires-python = ">=3.10"
+# torch comes from the user's own environment; it is only needed for import/trace.
+dependencies = []
+
+[project.optional-dependencies]
+torch = ["torch>=2.4"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+neuroloom = "neuroloom.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["neuroloom*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

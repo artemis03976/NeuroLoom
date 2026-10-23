@@ -1,60 +1,18 @@
 // M0 gate: graph -> code -> graph and code -> graph -> code, through the real
 // Python backend. Skipped when no Python with torch is available.
-import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   analyzeModule,
-  concretize,
   diffSignatures,
   entryModule,
   generateCode,
-  literalOf,
   parseProject,
   parseShape,
   structuralSignature,
   type LoomProject,
 } from '../src';
 import { ROUND_TRIP_FIXTURES } from './fixtures';
-
-const pythonDir = join(dirname(fileURLToPath(import.meta.url)), '../../../python');
-const venvPython = join(pythonDir, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
-const python = process.env.NEUROLOOM_PYTHON ?? (existsSync(venvPython) ? venvPython : 'python');
-const hasTorch = spawnSync(python, ['-c', 'import torch'], { encoding: 'utf8' }).status === 0;
-
-function runPython(args: string[], input: string): string {
-  const proc = spawnSync(python, args, {
-    cwd: pythonDir,
-    input,
-    encoding: 'utf8',
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-  });
-  if (proc.error) throw proc.error;
-  return proc.stdout.trim().split('\n').at(-1) ?? '';
-}
-
-interface ImportResult {
-  project: unknown;
-  observedShapes: Record<string, number[][]>;
-  batchProbe: number;
-}
-
-function importCode(code: string, inputShapes: Record<string, string> = {}): ImportResult {
-  const args = ['-m', 'neuroloom', 'import', '-'];
-  for (const [name, dims] of Object.entries(inputShapes)) args.push('--input', `${name}=${dims.replace(/\s/g, '')}`);
-  const out = JSON.parse(runPython(args, code));
-  if (out.error) throw new Error(out.error.message);
-  return out;
-}
-
-const inputShapesOf = (p: LoomProject) =>
-  Object.fromEntries(
-    Object.values(entryModule(p).nodes)
-      .filter((n) => n.kind === 'input')
-      .map((n) => [n.name, String(literalOf(n.params.shape))]),
-  );
+import { hasTorch, importCode, inputShapesOf, runPython, shapePairs } from './python';
 
 describe.skipIf(!hasTorch)('graph -> code -> graph', () => {
   for (const [name, make] of Object.entries(ROUND_TRIP_FIXTURES)) {
@@ -77,11 +35,8 @@ describe.skipIf(!hasTorch)('graph -> code -> graph', () => {
       });
       // Regenerating from the imported graph gives byte-identical code.
       expect(generateCode(imported).code).toBe(code);
-      // TypeScript shape inference agrees with PyTorch running on the meta device.
-      for (const [id, shapes] of Object.entries(result.observedShapes)) {
-        const ts = analysis2.nodes[id]?.outputs?.map((t) => concretize(t.shape, result.batchProbe));
-        expect(ts, `shape of ${mod2.nodes[id]?.name}`).toEqual(shapes);
-      }
+      // TypeScript shape inference agrees with PyTorch running the model.
+      for (const pair of shapePairs(imported, analysis2, result)) expect(pair.ts, pair.label).toEqual(pair.torch);
     });
   }
 });
@@ -173,7 +128,7 @@ describe.skipIf(!hasTorch)('code -> graph -> code', () => {
       const shapes = Object.values(inputShapesOf(first)).map((text) => {
         const parsed = parseShape(text);
         if (!parsed.ok) throw new Error(parsed.error);
-        return concretize(parsed.shape, 3);
+        return parsed.shape.map((d) => (typeof d === 'number' ? d : 3));
       });
       const check = JSON.parse(
         runPython(

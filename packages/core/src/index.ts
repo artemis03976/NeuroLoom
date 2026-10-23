@@ -7,3 +7,6 @@ export * from './codegen';
 export * from './compare';
 export * from './edit';
 export * from './validate';
+export * from './serialize';
+export * from './manifest';
+export * from './clipboard';

@@ -1,3 +1,5 @@
+import type { RpcFailure } from '@neuroloom/host-api';
+
 export class RpcError extends Error {
   constructor(
     message: string,
@@ -7,8 +9,20 @@ export class RpcError extends Error {
   }
 }
 
-/** Calls the Python backend through the dev server's /api/rpc bridge. */
+/**
+ * Calls the Python backend: over IPC in the desktop app, or through the dev
+ * server's /api/rpc bridge in the browser.
+ */
 export async function rpc<T>(method: string, params: Record<string, unknown> = {}): Promise<T> {
+  if (window.neuroloom) {
+    try {
+      return (await window.neuroloom.rpc(method, params)) as T;
+    } catch (e) {
+      const failure = e as Partial<RpcFailure>;
+      throw new RpcError(failure.message ?? String(e), failure.data);
+    }
+  }
+
   let res: Response;
   try {
     res = await fetch('/api/rpc', {
@@ -28,6 +42,7 @@ export async function rpc<T>(method: string, params: Record<string, unknown> = {
 export interface EnvInfo {
   backend: string;
   python: string;
+  executable: string;
   torch: string | null;
   cuda: boolean;
 }

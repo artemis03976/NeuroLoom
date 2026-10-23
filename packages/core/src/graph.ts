@@ -55,9 +55,10 @@ export function topoOrder(mod: ModuleDef): { order: NodeId[]; cyclic: NodeId[] }
   return { order, cyclic: ids.filter((id) => !placed.has(id)) };
 }
 
-/** forward() arguments or return values, in creation order (the IR's insertion order). */
+/** forward() arguments or return values, in the module's declared interface order. */
 export function interfaceOrder(mod: ModuleDef, kind: 'input' | 'output'): NodeInst[] {
-  return Object.values(mod.nodes).filter((n) => n.kind === kind);
+  const ids = kind === 'input' ? mod.interface.inputs : mod.interface.outputs;
+  return ids.map((id) => mod.nodes[id]).filter((n): n is NodeInst => n?.kind === kind);
 }
 
 /** True if adding source -> target would close a cycle. */
@@ -85,12 +86,16 @@ export function isValidIdentifier(name: string): boolean {
   return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) && !PY_KEYWORDS.has(name);
 }
 
-/** "fc" -> "fc1", "fc2", ...; with `bare`, the first one is just "x". */
-export function uniqueName(mod: ModuleDef, base: string, bare = false): string {
+/**
+ * A free node name. Layers count from 1 ("fc1", "fc2"); ops follow torch.fx
+ * ("cat", "cat_1") so imported code keeps the same names; with `bare` the first
+ * one is the base itself ("x").
+ */
+export function uniqueName(mod: ModuleDef, base: string, style: 'numbered' | 'bare' | 'fx' = 'numbered'): string {
   const taken = new Set(Object.values(mod.nodes).map((n) => n.name));
-  if (bare && !taken.has(base)) return base;
+  if (style !== 'numbered' && !taken.has(base)) return base;
   for (let i = 1; ; i++) {
-    const name = `${base}${i}`;
+    const name = style === 'fx' ? `${base}_${i}` : `${base}${i}`;
     if (!taken.has(name)) return name;
   }
 }

@@ -1,16 +1,9 @@
 import { entryModule } from '@neuroloom/core';
+import { useReactFlow } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { runCommand } from '../commands';
 import { tokenizeLine } from '../lib/highlight';
 import { useSelectedNodeId, useStudio } from '../store';
-
-export function downloadCode(code: string, className: string) {
-  const url = URL.createObjectURL(new Blob([code], { type: 'text/x-python' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${className.replace(/[^A-Za-z0-9_]/g, '').toLowerCase() || 'model'}.py`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export function CodePanel() {
   const { code, lineMap, todos } = useStudio((s) => s.codegen);
@@ -20,6 +13,19 @@ export function CodePanel() {
   const scroller = useRef<HTMLDivElement>(null);
 
   const lines = useMemo(() => code.replace(/\n$/, '').split('\n').map(tokenizeLine), [code]);
+  const nodeOfLine = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const [nodeId, nums] of Object.entries(lineMap)) for (const n of nums) if (!map.has(n)) map.set(n, nodeId);
+    return map;
+  }, [lineMap]);
+  const selectNode = useStudio((s) => s.selectNode);
+  const { fitView } = useReactFlow();
+  const reveal = (line: number) => {
+    const nodeId = nodeOfLine.get(line);
+    if (!nodeId) return;
+    selectNode(nodeId);
+    void fitView({ nodes: [{ id: nodeId }], duration: 300, maxZoom: 1.2, padding: 0.6 });
+  };
   const highlighted = useMemo(() => new Set(selected ? lineMap[selected] ?? [] : []), [selected, lineMap]);
 
   // Bring the selected node's code into view (PRD F5.2).
@@ -50,14 +56,20 @@ export function CodePanel() {
         <button type="button" className={button} onClick={copy}>
           {copied ? '已复制' : '复制'}
         </button>
-        <button type="button" className={button} onClick={() => downloadCode(code, className)}>
-          下载 .py
+        <button type="button" className={button} onClick={() => runCommand('exportPy')}>
+          导出 .py
         </button>
       </header>
       <div ref={scroller} className="min-h-0 flex-1 overflow-auto bg-code py-2">
         <pre className="nl-code m-0">
           {lines.map((tokens, i) => (
-            <div key={i} data-line={i + 1} className={`px-3 ${highlighted.has(i + 1) ? 'hl' : ''}`}>
+            <div
+              key={i}
+              data-line={i + 1}
+              onClick={() => reveal(i + 1)}
+              title={nodeOfLine.has(i + 1) ? '在画布中定位该节点' : undefined}
+              className={`px-3 ${highlighted.has(i + 1) ? 'hl' : ''} ${nodeOfLine.has(i + 1) ? 'cursor-pointer hover:bg-surface-2' : ''}`}
+            >
               <span className="ln">{i + 1}</span>
               {tokens.map((t, j) => (
                 <span key={j} className={t.kind ? `tok-${t.kind}` : undefined}>

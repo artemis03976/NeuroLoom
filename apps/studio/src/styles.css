@@ -136,6 +136,20 @@ body {
   border-color: var(--nl-primary);
 }
 
+.nl-node-port {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  height: 20px;
+  padding: 0 12px;
+  font: 10.5px/20px var(--font-mono);
+  color: var(--nl-text-muted);
+}
+.react-flow__handle.nl-handle.optional {
+  border-style: dashed;
+}
+
 /* ---- Edges ---- */
 .nl-edge-label {
   position: absolute;

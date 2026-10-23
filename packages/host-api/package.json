@@ -1,0 +1,13 @@
+{
+  "name": "@neuroloom/host-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Contract between the editor UI and its host (Electron main process or the web dev server)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

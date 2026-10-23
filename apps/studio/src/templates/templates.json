@@ -1,0 +1,2428 @@
+[
+  {
+    "id": "lenet5",
+    "title": "LeNet-5",
+    "titleZh": "LeNet-5 卷积网络",
+    "description": "The classic convolutional network for handwritten digits.",
+    "descriptionZh": "经典的手写数字卷积网络。",
+    "project": {
+      "schemaVersion": "0.2",
+      "name": "LeNet5",
+      "entry": "main",
+      "modules": {
+        "main": {
+          "id": "main",
+          "className": "LeNet5",
+          "nodes": {
+            "n1": {
+              "id": "n1",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 1, 28, 28"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "conv1",
+              "params": {
+                "in_channels": {
+                  "literal": 1
+                },
+                "out_channels": {
+                  "literal": 6
+                },
+                "kernel_size": {
+                  "literal": 5
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 2
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act1",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "layer",
+              "type": "torch.nn.MaxPool2d",
+              "name": "pool1",
+              "params": {
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": null
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "ceil_mode": {
+                  "literal": false
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "conv2",
+              "params": {
+                "in_channels": {
+                  "literal": 6
+                },
+                "out_channels": {
+                  "literal": 16
+                },
+                "kernel_size": {
+                  "literal": 5
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act2",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.MaxPool2d",
+              "name": "pool2",
+              "params": {
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": null
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "ceil_mode": {
+                  "literal": false
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "layer",
+              "type": "torch.nn.Flatten",
+              "name": "flatten",
+              "params": {
+                "start_dim": {
+                  "literal": 1
+                },
+                "end_dim": {
+                  "literal": -1
+                }
+              }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc1",
+              "params": {
+                "in_features": {
+                  "literal": 400
+                },
+                "out_features": {
+                  "literal": 120
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n10": {
+              "id": "n10",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act3",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n11": {
+              "id": "n11",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc2",
+              "params": {
+                "in_features": {
+                  "literal": 120
+                },
+                "out_features": {
+                  "literal": 84
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n12": {
+              "id": "n12",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act4",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n13": {
+              "id": "n13",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc3",
+              "params": {
+                "in_features": {
+                  "literal": 84
+                },
+                "out_features": {
+                  "literal": 10
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n14": {
+              "id": "n14",
+              "kind": "output",
+              "type": "neuroloom.Output",
+              "name": "output",
+              "params": {}
+            }
+          },
+          "edges": [
+            {
+              "id": "e1",
+              "source": {
+                "node": "n1",
+                "port": "out"
+              },
+              "target": {
+                "node": "n2",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "source": {
+                "node": "n2",
+                "port": "out"
+              },
+              "target": {
+                "node": "n3",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n4",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "source": {
+                "node": "n4",
+                "port": "out"
+              },
+              "target": {
+                "node": "n5",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "source": {
+                "node": "n5",
+                "port": "out"
+              },
+              "target": {
+                "node": "n6",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n7",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "source": {
+                "node": "n7",
+                "port": "out"
+              },
+              "target": {
+                "node": "n8",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e8",
+              "source": {
+                "node": "n8",
+                "port": "out"
+              },
+              "target": {
+                "node": "n9",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e9",
+              "source": {
+                "node": "n9",
+                "port": "out"
+              },
+              "target": {
+                "node": "n10",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e10",
+              "source": {
+                "node": "n10",
+                "port": "out"
+              },
+              "target": {
+                "node": "n11",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e11",
+              "source": {
+                "node": "n11",
+                "port": "out"
+              },
+              "target": {
+                "node": "n12",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e12",
+              "source": {
+                "node": "n12",
+                "port": "out"
+              },
+              "target": {
+                "node": "n13",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e13",
+              "source": {
+                "node": "n13",
+                "port": "out"
+              },
+              "target": {
+                "node": "n14",
+                "port": "in"
+              }
+            }
+          ],
+          "layout": {},
+          "interface": {
+            "inputs": [
+              "n1"
+            ],
+            "outputs": [
+              "n14"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "lstm_classifier",
+    "title": "LSTM text classifier",
+    "titleZh": "LSTM 文本分类",
+    "description": "Token embeddings, a bidirectional LSTM, mean pooling over time and a linear head.",
+    "descriptionZh": "词嵌入、双向 LSTM、按时间步平均池化，再接线性分类头。",
+    "project": {
+      "schemaVersion": "0.2",
+      "name": "LSTMClassifier",
+      "entry": "main",
+      "modules": {
+        "main": {
+          "id": "main",
+          "className": "LSTMClassifier",
+          "nodes": {
+            "n1": {
+              "id": "n1",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "tokens",
+              "params": {
+                "shape": {
+                  "literal": "B, T"
+                },
+                "dtype": {
+                  "literal": "int64"
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Embedding",
+              "name": "embed",
+              "params": {
+                "num_embeddings": {
+                  "literal": 10000
+                },
+                "embedding_dim": {
+                  "literal": 128
+                },
+                "padding_idx": {
+                  "literal": 0
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.LSTM",
+              "name": "lstm",
+              "params": {
+                "input_size": {
+                  "literal": 128
+                },
+                "hidden_size": {
+                  "literal": 128
+                },
+                "num_layers": {
+                  "literal": 2
+                },
+                "bias": {
+                  "literal": true
+                },
+                "batch_first": {
+                  "literal": true
+                },
+                "dropout": {
+                  "literal": 0.2
+                },
+                "bidirectional": {
+                  "literal": true
+                }
+              }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "op",
+              "type": "torch.Tensor.mean",
+              "name": "mean",
+              "params": {
+                "dim": {
+                  "literal": 1
+                },
+                "keepdim": {
+                  "literal": false
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Dropout",
+              "name": "drop",
+              "params": {
+                "p": {
+                  "literal": 0.3
+                },
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc",
+              "params": {
+                "in_features": {
+                  "literal": 256
+                },
+                "out_features": {
+                  "literal": 4
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "output",
+              "type": "neuroloom.Output",
+              "name": "output",
+              "params": {}
+            }
+          },
+          "edges": [
+            {
+              "id": "e1",
+              "source": {
+                "node": "n1",
+                "port": "out"
+              },
+              "target": {
+                "node": "n2",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "source": {
+                "node": "n2",
+                "port": "out"
+              },
+              "target": {
+                "node": "n3",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n4",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "source": {
+                "node": "n4",
+                "port": "out"
+              },
+              "target": {
+                "node": "n5",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "source": {
+                "node": "n5",
+                "port": "out"
+              },
+              "target": {
+                "node": "n6",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n7",
+                "port": "in"
+              }
+            }
+          ],
+          "layout": {},
+          "interface": {
+            "inputs": [
+              "n1"
+            ],
+            "outputs": [
+              "n7"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "mlp",
+    "title": "MLP",
+    "titleZh": "多层感知机（MNIST）",
+    "description": "Two hidden layers with ReLU and dropout, for 28×28 digits flattened to 784.",
+    "descriptionZh": "两个隐藏层，带 ReLU 与 Dropout，输入为展平的 28×28 手写数字。",
+    "project": {
+      "schemaVersion": "0.2",
+      "name": "MLP",
+      "entry": "main",
+      "modules": {
+        "main": {
+          "id": "main",
+          "className": "MLP",
+          "nodes": {
+            "n1": {
+              "id": "n1",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 784"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc1",
+              "params": {
+                "in_features": {
+                  "literal": 784
+                },
+                "out_features": {
+                  "literal": 256
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act1",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "layer",
+              "type": "torch.nn.Dropout",
+              "name": "drop1",
+              "params": {
+                "p": {
+                  "literal": 0.2
+                },
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc2",
+              "params": {
+                "in_features": {
+                  "literal": 256
+                },
+                "out_features": {
+                  "literal": 128
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act2",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc3",
+              "params": {
+                "in_features": {
+                  "literal": 128
+                },
+                "out_features": {
+                  "literal": 10
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "output",
+              "type": "neuroloom.Output",
+              "name": "output",
+              "params": {}
+            }
+          },
+          "edges": [
+            {
+              "id": "e1",
+              "source": {
+                "node": "n1",
+                "port": "out"
+              },
+              "target": {
+                "node": "n2",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "source": {
+                "node": "n2",
+                "port": "out"
+              },
+              "target": {
+                "node": "n3",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n4",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "source": {
+                "node": "n4",
+                "port": "out"
+              },
+              "target": {
+                "node": "n5",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "source": {
+                "node": "n5",
+                "port": "out"
+              },
+              "target": {
+                "node": "n6",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n7",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "source": {
+                "node": "n7",
+                "port": "out"
+              },
+              "target": {
+                "node": "n8",
+                "port": "in"
+              }
+            }
+          ],
+          "layout": {},
+          "interface": {
+            "inputs": [
+              "n1"
+            ],
+            "outputs": [
+              "n8"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "transformer_classifier",
+    "title": "Transformer encoder classifier",
+    "titleZh": "Transformer 编码器分类",
+    "description": "Token embeddings, two pre-norm Transformer encoder layers, mean pooling and a linear head.",
+    "descriptionZh": "词嵌入、两层 Pre-LN Transformer 编码层、平均池化，再接线性分类头。",
+    "project": {
+      "schemaVersion": "0.2",
+      "name": "TransformerClassifier",
+      "entry": "main",
+      "modules": {
+        "main": {
+          "id": "main",
+          "className": "TransformerClassifier",
+          "nodes": {
+            "n1": {
+              "id": "n1",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "tokens",
+              "params": {
+                "shape": {
+                  "literal": "B, T"
+                },
+                "dtype": {
+                  "literal": "int64"
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Embedding",
+              "name": "embed",
+              "params": {
+                "num_embeddings": {
+                  "literal": 10000
+                },
+                "embedding_dim": {
+                  "literal": 256
+                },
+                "padding_idx": {
+                  "literal": null
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.TransformerEncoderLayer",
+              "name": "encoder1",
+              "params": {
+                "d_model": {
+                  "literal": 256
+                },
+                "nhead": {
+                  "literal": 8
+                },
+                "dim_feedforward": {
+                  "literal": 1024
+                },
+                "dropout": {
+                  "literal": 0.1
+                },
+                "activation": {
+                  "literal": "gelu"
+                },
+                "layer_norm_eps": {
+                  "literal": 0.00001
+                },
+                "batch_first": {
+                  "literal": true
+                },
+                "norm_first": {
+                  "literal": true
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "layer",
+              "type": "torch.nn.TransformerEncoderLayer",
+              "name": "encoder2",
+              "params": {
+                "d_model": {
+                  "literal": 256
+                },
+                "nhead": {
+                  "literal": 8
+                },
+                "dim_feedforward": {
+                  "literal": 1024
+                },
+                "dropout": {
+                  "literal": 0.1
+                },
+                "activation": {
+                  "literal": "gelu"
+                },
+                "layer_norm_eps": {
+                  "literal": 0.00001
+                },
+                "batch_first": {
+                  "literal": true
+                },
+                "norm_first": {
+                  "literal": true
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "op",
+              "type": "torch.Tensor.mean",
+              "name": "mean",
+              "params": {
+                "dim": {
+                  "literal": 1
+                },
+                "keepdim": {
+                  "literal": false
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.LayerNorm",
+              "name": "norm",
+              "params": {
+                "normalized_shape": {
+                  "literal": 256
+                },
+                "eps": {
+                  "literal": 0.00001
+                },
+                "elementwise_affine": {
+                  "literal": true
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "head",
+              "params": {
+                "in_features": {
+                  "literal": 256
+                },
+                "out_features": {
+                  "literal": 2
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "output",
+              "type": "neuroloom.Output",
+              "name": "output",
+              "params": {}
+            }
+          },
+          "edges": [
+            {
+              "id": "e1",
+              "source": {
+                "node": "n1",
+                "port": "out"
+              },
+              "target": {
+                "node": "n2",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "source": {
+                "node": "n2",
+                "port": "out"
+              },
+              "target": {
+                "node": "n3",
+                "port": "src"
+              }
+            },
+            {
+              "id": "e3",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n4",
+                "port": "src"
+              }
+            },
+            {
+              "id": "e4",
+              "source": {
+                "node": "n4",
+                "port": "out"
+              },
+              "target": {
+                "node": "n5",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "source": {
+                "node": "n5",
+                "port": "out"
+              },
+              "target": {
+                "node": "n6",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n7",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "source": {
+                "node": "n7",
+                "port": "out"
+              },
+              "target": {
+                "node": "n8",
+                "port": "in"
+              }
+            }
+          ],
+          "layout": {},
+          "interface": {
+            "inputs": [
+              "n1"
+            ],
+            "outputs": [
+              "n8"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "unet_tiny",
+    "title": "Tiny U-Net",
+    "titleZh": "迷你 U-Net 分割网络",
+    "description": "An encoder-decoder with skip connections joined by concatenation.",
+    "descriptionZh": "编码器-解码器结构，跳跃连接通过拼接汇合。",
+    "project": {
+      "schemaVersion": "0.2",
+      "name": "TinyUNet",
+      "entry": "main",
+      "modules": {
+        "main": {
+          "id": "main",
+          "className": "TinyUNet",
+          "nodes": {
+            "n1": {
+              "id": "n1",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 3, 64, 64"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "enc1",
+              "params": {
+                "in_channels": {
+                  "literal": 3
+                },
+                "out_channels": {
+                  "literal": 16
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act1",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "layer",
+              "type": "torch.nn.MaxPool2d",
+              "name": "pool1",
+              "params": {
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": null
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "ceil_mode": {
+                  "literal": false
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "enc2",
+              "params": {
+                "in_channels": {
+                  "literal": 16
+                },
+                "out_channels": {
+                  "literal": 32
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act2",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.MaxPool2d",
+              "name": "pool2",
+              "params": {
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": null
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "ceil_mode": {
+                  "literal": false
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "mid",
+              "params": {
+                "in_channels": {
+                  "literal": 32
+                },
+                "out_channels": {
+                  "literal": 64
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act3",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n10": {
+              "id": "n10",
+              "kind": "layer",
+              "type": "torch.nn.ConvTranspose2d",
+              "name": "up2",
+              "params": {
+                "in_channels": {
+                  "literal": 64
+                },
+                "out_channels": {
+                  "literal": 32
+                },
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": 2
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "output_padding": {
+                  "literal": 0
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "dilation": {
+                  "literal": 1
+                }
+              }
+            },
+            "n11": {
+              "id": "n11",
+              "kind": "op",
+              "type": "torch.cat",
+              "name": "cat",
+              "params": {
+                "dim": {
+                  "literal": 1
+                }
+              }
+            },
+            "n12": {
+              "id": "n12",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "dec2",
+              "params": {
+                "in_channels": {
+                  "literal": 64
+                },
+                "out_channels": {
+                  "literal": 32
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n13": {
+              "id": "n13",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act4",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n14": {
+              "id": "n14",
+              "kind": "layer",
+              "type": "torch.nn.ConvTranspose2d",
+              "name": "up1",
+              "params": {
+                "in_channels": {
+                  "literal": 32
+                },
+                "out_channels": {
+                  "literal": 16
+                },
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": 2
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "output_padding": {
+                  "literal": 0
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "dilation": {
+                  "literal": 1
+                }
+              }
+            },
+            "n15": {
+              "id": "n15",
+              "kind": "op",
+              "type": "torch.cat",
+              "name": "cat_1",
+              "params": {
+                "dim": {
+                  "literal": 1
+                }
+              }
+            },
+            "n16": {
+              "id": "n16",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "dec1",
+              "params": {
+                "in_channels": {
+                  "literal": 32
+                },
+                "out_channels": {
+                  "literal": 16
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n17": {
+              "id": "n17",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act5",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n18": {
+              "id": "n18",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "out",
+              "params": {
+                "in_channels": {
+                  "literal": 16
+                },
+                "out_channels": {
+                  "literal": 1
+                },
+                "kernel_size": {
+                  "literal": 1
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n19": {
+              "id": "n19",
+              "kind": "output",
+              "type": "neuroloom.Output",
+              "name": "output",
+              "params": {}
+            }
+          },
+          "edges": [
+            {
+              "id": "e1",
+              "source": {
+                "node": "n1",
+                "port": "out"
+              },
+              "target": {
+                "node": "n2",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "source": {
+                "node": "n2",
+                "port": "out"
+              },
+              "target": {
+                "node": "n3",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n4",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "source": {
+                "node": "n4",
+                "port": "out"
+              },
+              "target": {
+                "node": "n5",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "source": {
+                "node": "n5",
+                "port": "out"
+              },
+              "target": {
+                "node": "n6",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n7",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "source": {
+                "node": "n7",
+                "port": "out"
+              },
+              "target": {
+                "node": "n8",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e8",
+              "source": {
+                "node": "n8",
+                "port": "out"
+              },
+              "target": {
+                "node": "n9",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e9",
+              "source": {
+                "node": "n9",
+                "port": "out"
+              },
+              "target": {
+                "node": "n10",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e10",
+              "source": {
+                "node": "n10",
+                "port": "out"
+              },
+              "target": {
+                "node": "n11",
+                "port": "in0"
+              }
+            },
+            {
+              "id": "e11",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n11",
+                "port": "in1"
+              }
+            },
+            {
+              "id": "e12",
+              "source": {
+                "node": "n11",
+                "port": "out"
+              },
+              "target": {
+                "node": "n12",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e13",
+              "source": {
+                "node": "n12",
+                "port": "out"
+              },
+              "target": {
+                "node": "n13",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e14",
+              "source": {
+                "node": "n13",
+                "port": "out"
+              },
+              "target": {
+                "node": "n14",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e15",
+              "source": {
+                "node": "n14",
+                "port": "out"
+              },
+              "target": {
+                "node": "n15",
+                "port": "in0"
+              }
+            },
+            {
+              "id": "e16",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n15",
+                "port": "in1"
+              }
+            },
+            {
+              "id": "e17",
+              "source": {
+                "node": "n15",
+                "port": "out"
+              },
+              "target": {
+                "node": "n16",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e18",
+              "source": {
+                "node": "n16",
+                "port": "out"
+              },
+              "target": {
+                "node": "n17",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e19",
+              "source": {
+                "node": "n17",
+                "port": "out"
+              },
+              "target": {
+                "node": "n18",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e20",
+              "source": {
+                "node": "n18",
+                "port": "out"
+              },
+              "target": {
+                "node": "n19",
+                "port": "in"
+              }
+            }
+          ],
+          "layout": {},
+          "interface": {
+            "inputs": [
+              "n1"
+            ],
+            "outputs": [
+              "n19"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "vgg_cnn",
+    "title": "VGG-style CNN",
+    "titleZh": "VGG 风格卷积网络（CIFAR-10）",
+    "description": "Stacked 3×3 convolutions with batch norm, pooling and a dropout classifier.",
+    "descriptionZh": "堆叠的 3×3 卷积加批归一化与池化，分类头带 Dropout。",
+    "project": {
+      "schemaVersion": "0.2",
+      "name": "VGGNet",
+      "entry": "main",
+      "modules": {
+        "main": {
+          "id": "main",
+          "className": "VGGNet",
+          "nodes": {
+            "n1": {
+              "id": "n1",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 3, 32, 32"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "conv1",
+              "params": {
+                "in_channels": {
+                  "literal": 3
+                },
+                "out_channels": {
+                  "literal": 32
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.BatchNorm2d",
+              "name": "bn1",
+              "params": {
+                "num_features": {
+                  "literal": 32
+                },
+                "eps": {
+                  "literal": 0.00001
+                },
+                "momentum": {
+                  "literal": 0.1
+                },
+                "affine": {
+                  "literal": true
+                },
+                "track_running_stats": {
+                  "literal": true
+                }
+              }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act1",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "conv2",
+              "params": {
+                "in_channels": {
+                  "literal": 32
+                },
+                "out_channels": {
+                  "literal": 32
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.BatchNorm2d",
+              "name": "bn2",
+              "params": {
+                "num_features": {
+                  "literal": 32
+                },
+                "eps": {
+                  "literal": 0.00001
+                },
+                "momentum": {
+                  "literal": 0.1
+                },
+                "affine": {
+                  "literal": true
+                },
+                "track_running_stats": {
+                  "literal": true
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act2",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "layer",
+              "type": "torch.nn.MaxPool2d",
+              "name": "pool1",
+              "params": {
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": null
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "ceil_mode": {
+                  "literal": false
+                }
+              }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "conv3",
+              "params": {
+                "in_channels": {
+                  "literal": 32
+                },
+                "out_channels": {
+                  "literal": 64
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n10": {
+              "id": "n10",
+              "kind": "layer",
+              "type": "torch.nn.BatchNorm2d",
+              "name": "bn3",
+              "params": {
+                "num_features": {
+                  "literal": 64
+                },
+                "eps": {
+                  "literal": 0.00001
+                },
+                "momentum": {
+                  "literal": 0.1
+                },
+                "affine": {
+                  "literal": true
+                },
+                "track_running_stats": {
+                  "literal": true
+                }
+              }
+            },
+            "n11": {
+              "id": "n11",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act3",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n12": {
+              "id": "n12",
+              "kind": "layer",
+              "type": "torch.nn.Conv2d",
+              "name": "conv4",
+              "params": {
+                "in_channels": {
+                  "literal": 64
+                },
+                "out_channels": {
+                  "literal": 64
+                },
+                "kernel_size": {
+                  "literal": 3
+                },
+                "stride": {
+                  "literal": 1
+                },
+                "padding": {
+                  "literal": 1
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "groups": {
+                  "literal": 1
+                },
+                "bias": {
+                  "literal": true
+                },
+                "padding_mode": {
+                  "literal": "zeros"
+                }
+              }
+            },
+            "n13": {
+              "id": "n13",
+              "kind": "layer",
+              "type": "torch.nn.BatchNorm2d",
+              "name": "bn4",
+              "params": {
+                "num_features": {
+                  "literal": 64
+                },
+                "eps": {
+                  "literal": 0.00001
+                },
+                "momentum": {
+                  "literal": 0.1
+                },
+                "affine": {
+                  "literal": true
+                },
+                "track_running_stats": {
+                  "literal": true
+                }
+              }
+            },
+            "n14": {
+              "id": "n14",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "act4",
+              "params": {
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n15": {
+              "id": "n15",
+              "kind": "layer",
+              "type": "torch.nn.MaxPool2d",
+              "name": "pool2",
+              "params": {
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": null
+                },
+                "padding": {
+                  "literal": 0
+                },
+                "dilation": {
+                  "literal": 1
+                },
+                "ceil_mode": {
+                  "literal": false
+                }
+              }
+            },
+            "n16": {
+              "id": "n16",
+              "kind": "layer",
+              "type": "torch.nn.AdaptiveAvgPool2d",
+              "name": "gap",
+              "params": {
+                "output_size": {
+                  "literal": 1
+                }
+              }
+            },
+            "n17": {
+              "id": "n17",
+              "kind": "layer",
+              "type": "torch.nn.Flatten",
+              "name": "flatten",
+              "params": {
+                "start_dim": {
+                  "literal": 1
+                },
+                "end_dim": {
+                  "literal": -1
+                }
+              }
+            },
+            "n18": {
+              "id": "n18",
+              "kind": "layer",
+              "type": "torch.nn.Dropout",
+              "name": "drop",
+              "params": {
+                "p": {
+                  "literal": 0.3
+                },
+                "inplace": {
+                  "literal": false
+                }
+              }
+            },
+            "n19": {
+              "id": "n19",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc",
+              "params": {
+                "in_features": {
+                  "literal": 64
+                },
+                "out_features": {
+                  "literal": 10
+                },
+                "bias": {
+                  "literal": true
+                }
+              }
+            },
+            "n20": {
+              "id": "n20",
+              "kind": "output",
+              "type": "neuroloom.Output",
+              "name": "output",
+              "params": {}
+            }
+          },
+          "edges": [
+            {
+              "id": "e1",
+              "source": {
+                "node": "n1",
+                "port": "out"
+              },
+              "target": {
+                "node": "n2",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "source": {
+                "node": "n2",
+                "port": "out"
+              },
+              "target": {
+                "node": "n3",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "source": {
+                "node": "n3",
+                "port": "out"
+              },
+              "target": {
+                "node": "n4",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "source": {
+                "node": "n4",
+                "port": "out"
+              },
+              "target": {
+                "node": "n5",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "source": {
+                "node": "n5",
+                "port": "out"
+              },
+              "target": {
+                "node": "n6",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "source": {
+                "node": "n6",
+                "port": "out"
+              },
+              "target": {
+                "node": "n7",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "source": {
+                "node": "n7",
+                "port": "out"
+              },
+              "target": {
+                "node": "n8",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e8",
+              "source": {
+                "node": "n8",
+                "port": "out"
+              },
+              "target": {
+                "node": "n9",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e9",
+              "source": {
+                "node": "n9",
+                "port": "out"
+              },
+              "target": {
+                "node": "n10",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e10",
+              "source": {
+                "node": "n10",
+                "port": "out"
+              },
+              "target": {
+                "node": "n11",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e11",
+              "source": {
+                "node": "n11",
+                "port": "out"
+              },
+              "target": {
+                "node": "n12",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e12",
+              "source": {
+                "node": "n12",
+                "port": "out"
+              },
+              "target": {
+                "node": "n13",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e13",
+              "source": {
+                "node": "n13",
+                "port": "out"
+              },
+              "target": {
+                "node": "n14",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e14",
+              "source": {
+                "node": "n14",
+                "port": "out"
+              },
+              "target": {
+                "node": "n15",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e15",
+              "source": {
+                "node": "n15",
+                "port": "out"
+              },
+              "target": {
+                "node": "n16",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e16",
+              "source": {
+                "node": "n16",
+                "port": "out"
+              },
+              "target": {
+                "node": "n17",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e17",
+              "source": {
+                "node": "n17",
+                "port": "out"
+              },
+              "target": {
+                "node": "n18",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e18",
+              "source": {
+                "node": "n18",
+                "port": "out"
+              },
+              "target": {
+                "node": "n19",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e19",
+              "source": {
+                "node": "n19",
+                "port": "out"
+              },
+              "target": {
+                "node": "n20",
+                "port": "in"
+              }
+            }
+          ],
+          "layout": {},
+          "interface": {
+            "inputs": [
+              "n1"
+            ],
+            "outputs": [
+              "n20"
+            ]
+          }
+        }
+      }
+    }
+  }
+]

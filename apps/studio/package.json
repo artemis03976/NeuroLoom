@@ -8,10 +8,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p ."
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p .",
+    "templates": "node scripts/build-templates.mjs"
   },
   "dependencies": {
     "@neuroloom/core": "*",
+    "@neuroloom/host-api": "*",
     "@xyflow/react": "^12.12.0",
     "elkjs": "^0.12.0",
     "react": "^19.3.1",
@@ -25,6 +28,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   }
 }

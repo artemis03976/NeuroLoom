@@ -35,6 +35,7 @@ export function sampleProject(): LoomProject {
           { id: 'e3', source: { node: 'n_act1', port: 'out' }, target: { node: 'n_fc2', port: 'in' } },
           { id: 'e4', source: { node: 'n_fc2', port: 'out' }, target: { node: 'n_out', port: 'in' } },
         ],
+        interface: { inputs: ['n_x'], outputs: ['n_out'] },
         layout: {
           n_x: { x: 0, y: 40 },
           n_fc1: { x: 260, y: 40 },
@@ -66,3 +67,25 @@ class Autoencoder(nn.Module):
         h = F.relu(self.dec1(z))
         return self.dec2(h), z
 `;
+
+/** A new document: one input and one output, ready to be wired up. */
+export function blankProject(): LoomProject {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    name: '未命名',
+    entry: 'main',
+    modules: {
+      main: {
+        id: 'main',
+        className: 'Model',
+        nodes: {
+          n_x: { id: 'n_x', kind: 'input', type: 'neuroloom.Input', name: 'x', params: { shape: literal('B, 784') } },
+          n_out: { id: 'n_out', kind: 'output', type: 'neuroloom.Output', name: 'output', params: {} },
+        },
+        edges: [],
+        interface: { inputs: ['n_x'], outputs: ['n_out'] },
+        layout: { n_x: { x: 0, y: 40 }, n_out: { x: 520, y: 40 } },
+      },
+    },
+  };
+}

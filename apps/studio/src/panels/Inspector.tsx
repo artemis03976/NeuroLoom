@@ -4,14 +4,17 @@ import {
   getSpec,
   isAuto,
   literalOf,
+  outputsOf,
   withDefaults,
+  type Literal,
   type NodeInst,
   type ParamSpec,
   type ParamValue,
 } from '@neuroloom/core';
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { categoryColor, glyphOf } from '../canvas/glyph';
 import { formatCount } from '../lib/format';
+import { fallbackValue, formatParam, parseParam } from '../lib/paramText';
 import { useSelectedNodeId, useStudio } from '../store';
 
 const field =
@@ -26,33 +29,70 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** A text field that only commits values that parse; keeps the raw text while typing. */
-function IntField({ value, onCommit, disabled }: { value: number | undefined; onCommit: (n: number) => void; disabled?: boolean }) {
+/** A text field that commits only values that parse; keeps the raw text while typing. */
+function TextParam({ spec, value, onCommit, disabled }: { spec: ParamSpec; value: Literal | undefined; onCommit: (v: Literal) => void; disabled?: boolean }) {
   const [draft, setDraft] = useState<string | null>(null);
-  const text = draft ?? (value === undefined ? '' : String(value));
-  const valid = /^\d+$/.test(text.trim());
+  const text = draft ?? formatParam(value);
+  const parsed = parseParam(text, spec);
   return (
-    <input
-      className={`${field} ${!valid && !disabled ? 'border-error' : ''}`}
-      inputMode="numeric"
-      value={text}
-      disabled={disabled}
-      onChange={(e) => {
-        setDraft(e.target.value);
-        if (/^\d+$/.test(e.target.value.trim())) onCommit(Number(e.target.value));
-      }}
-      onBlur={() => setDraft(null)}
-    />
+    <>
+      <input
+        className={`${field} ${!parsed.ok && !disabled ? 'border-error' : ''}`}
+        value={text}
+        disabled={disabled}
+        spellCheck={false}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const next = parseParam(e.target.value, spec);
+          if (next.ok) onCommit(next.value);
+        }}
+        onBlur={() => setDraft(null)}
+      />
+      {!parsed.ok && !disabled && draft !== null && <p className="mt-1 text-[11px] text-error">{parsed.error}</p>}
+    </>
   );
 }
 
-function ParamRow({ node, spec, resolved }: { node: NodeInst; spec: ParamSpec; resolved?: Record<string, unknown> }) {
+function ParamRow({ node, spec, resolved }: { node: NodeInst; spec: ParamSpec; resolved?: Record<string, Literal> }) {
   const setParam = useStudio((s) => s.setParam);
   const value: ParamValue | undefined = node.params[spec.name] ?? (spec.default !== undefined ? { literal: spec.default } : undefined);
   const auto = isAuto(value);
   const lit = literalOf(value);
-  const changed = spec.default !== undefined && lit !== undefined && lit !== spec.default;
+  const isNone = !auto && lit === null;
+  const changed = spec.default !== undefined && lit !== undefined && JSON.stringify(lit) !== JSON.stringify(spec.default);
   const set = (v: ParamValue) => setParam(node.id, spec.name, v);
+
+  let control: ReactNode;
+  if (spec.type === 'bool') {
+    control = (
+      <label className="flex items-center gap-2 text-[12.5px]">
+        <input type="checkbox" checked={lit === true} onChange={(e) => set({ literal: e.target.checked })} />
+        <span className="font-mono">{lit ? 'True' : 'False'}</span>
+      </label>
+    );
+  } else if (spec.type === 'enum') {
+    control = (
+      <select className={field} value={String(lit ?? '')} disabled={isNone} onChange={(e) => set({ literal: e.target.value })}>
+        {spec.options?.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    );
+  } else if (spec.type === 'shape') {
+    control = <input className={field} value={String(lit ?? '')} onChange={(e) => set({ literal: e.target.value })} spellCheck={false} />;
+  } else {
+    control = (
+      <TextParam
+        key={`${node.id}:${spec.name}:${auto}:${isNone}`}
+        spec={spec}
+        value={auto ? resolved?.[spec.name] : lit}
+        disabled={auto || isNone}
+        onCommit={(v) => set({ literal: v })}
+      />
+    );
+  }
 
   return (
     <div className="mb-2.5">
@@ -66,29 +106,19 @@ function ParamRow({ node, spec, resolved }: { node: NodeInst; spec: ParamSpec; r
             <input
               type="checkbox"
               checked={auto}
-              onChange={(e) =>
-                set(e.target.checked ? { auto: true } : { literal: (resolved?.[spec.name] as number | undefined) ?? 1 })
-              }
+              onChange={(e) => set(e.target.checked ? { auto: true } : { literal: resolved?.[spec.name] ?? fallbackValue(spec) })}
             />
             自动推断
           </span>
         )}
+        {spec.nullable && (
+          <span className="flex items-center gap-1 text-[11px] text-muted">
+            <input type="checkbox" checked={isNone} onChange={(e) => set({ literal: e.target.checked ? null : fallbackValue(spec) })} />
+            None
+          </span>
+        )}
       </label>
-      {spec.type === 'bool' ? (
-        <label className="flex items-center gap-2 text-[12.5px]">
-          <input type="checkbox" checked={lit === true} onChange={(e) => set({ literal: e.target.checked })} />
-          <span className="font-mono">{lit ? 'True' : 'False'}</span>
-        </label>
-      ) : spec.type === 'shape' ? (
-        <input className={field} value={String(lit ?? '')} onChange={(e) => set({ literal: e.target.value })} spellCheck={false} />
-      ) : (
-        <IntField
-          key={`${node.id}:${spec.name}:${auto}`}
-          value={auto ? (resolved?.[spec.name] as number | undefined) : (lit as number | undefined)}
-          disabled={auto}
-          onCommit={(n) => set({ literal: n })}
-        />
-      )}
+      {control}
     </div>
   );
 }
@@ -103,7 +133,6 @@ function NodeInspector({ nodeId }: { nodeId: string }) {
   if (!spec) return <Section title="节点">未知类型 {node.type}</Section>;
   const params = withDefaults(spec, node.params);
   const mine = diagnostics.filter((d) => d.nodeId === nodeId);
-  const shapeOut = info?.outputs?.[0];
 
   return (
     <>
@@ -131,18 +160,19 @@ function NodeInspector({ nodeId }: { nodeId: string }) {
       )}
       <Section title="张量">
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[12px]">
-          {spec.inputs.length > 0 && (
-            <>
-              <dt className="text-muted">输入</dt>
-              <dd>{info?.inputs[0] ? formatShape(info.inputs[0].shape) : '—'}</dd>
-            </>
-          )}
-          {node.kind !== 'output' && (
-            <>
-              <dt className="text-muted">输出</dt>
-              <dd>{shapeOut ? formatShape(shapeOut.shape) : '—'}</dd>
-            </>
-          )}
+          {info?.inputs.map((t, i) => (
+            <Fragment key={`in${i}`}>
+              <dt className="text-muted">{info.inputs.length > 1 ? `输入 ${i}` : '输入'}</dt>
+              <dd>{t ? formatShape(t.shape) : '—'}</dd>
+            </Fragment>
+          ))}
+          {node.kind !== 'output' &&
+            outputsOf(spec, params).map((o, i) => (
+              <Fragment key={o.name}>
+                <dt className="text-muted">{outputsOf(spec, params).length > 1 ? `输出 ${o.name}` : '输出'}</dt>
+                <dd>{info?.outputs?.[i] ? formatShape(info.outputs[i].shape) : '—'}</dd>
+              </Fragment>
+            ))}
           {spec.kind === 'layer' && (
             <>
               <dt className="text-muted">参数量</dt>

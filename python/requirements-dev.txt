@@ -1,0 +1,7 @@
+# Backend development environment: CPU PyTorch is enough for import and tracing.
+# python -m pip install -r python/requirements-dev.txt
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+torch>=2.4
+numpy
+pytest>=8

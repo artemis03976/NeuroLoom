@@ -2,12 +2,13 @@
 // M0 implements the subset needed for flat, single-module graphs; hyperparameters,
 // module instances, repeat blocks and code blocks arrive in later milestones.
 
-export const SCHEMA_VERSION = '0.1';
+export const SCHEMA_VERSION = '0.2';
 
 export type NodeId = string;
 export type ModuleId = string;
 
-export type Literal = number | string | boolean | null;
+/** Parameter values; arrays hold tuples such as kernel_size (3, 5). */
+export type Literal = number | string | boolean | null | Literal[];
 
 /** A parameter is either a literal or `auto`, meaning "infer it from the input shape". */
 export type ParamValue = { literal: Literal } | { auto: true };
@@ -43,6 +44,11 @@ export interface ModuleDef {
   edges: Edge[];
   /** Canvas positions. Kept apart from semantics so moving a node is not a semantic change. */
   layout: Record<NodeId, { x: number; y: number }>;
+  /**
+   * forward() argument order (input nodes) and return order (output nodes).
+   * Explicit, because neither canvas position nor JSON key order may change a model's interface.
+   */
+  interface: { inputs: NodeId[]; outputs: NodeId[] };
 }
 
 export interface LoomProject {

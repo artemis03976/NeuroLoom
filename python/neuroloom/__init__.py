@@ -1,4 +1,4 @@
 """NeuroLoom Python backend."""
 
 __version__ = "0.0.1"
-SCHEMA_VERSION = "0.2"
+SCHEMA_VERSION = "0.3"

@@ -1,39 +1,47 @@
-import { entryModule } from '@neuroloom/core';
+import { findPath, type ModuleId, type NodeId } from '@neuroloom/core';
 import { useReactFlow } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { runCommand } from '../commands';
+import { tr } from '../i18n';
 import { tokenizeLine } from '../lib/highlight';
 import { useSelectedNodeId, useStudio } from '../store';
 
 export function CodePanel() {
-  const { code, lineMap, todos } = useStudio((s) => s.codegen);
-  const className = useStudio((s) => entryModule(s.project).className);
+  const { code, lineMap, classLines, todos } = useStudio((s) => s.codegen);
+  const project = useStudio((s) => s.project);
+  const moduleId = useStudio((s) => s.view.moduleId);
+  const className = project.modules[project.entry]!.className;
   const selected = useSelectedNodeId();
   const [copied, setCopied] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
 
   const lines = useMemo(() => code.replace(/\n$/, '').split('\n').map(tokenizeLine), [code]);
   const nodeOfLine = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const [nodeId, nums] of Object.entries(lineMap)) for (const n of nums) if (!map.has(n)) map.set(n, nodeId);
+    const map = new Map<number, { moduleId: ModuleId; nodeId: NodeId }>();
+    for (const [mod, nodes] of Object.entries(lineMap)) {
+      for (const [nodeId, nums] of Object.entries(nodes)) for (const n of nums) if (!map.has(n)) map.set(n, { moduleId: mod, nodeId });
+    }
     return map;
   }, [lineMap]);
-  const selectNode = useStudio((s) => s.selectNode);
   const { fitView } = useReactFlow();
-  const reveal = (line: number) => {
-    const nodeId = nodeOfLine.get(line);
-    if (!nodeId) return;
-    selectNode(nodeId);
-    void fitView({ nodes: [{ id: nodeId }], duration: 300, maxZoom: 1.2, padding: 0.6 });
-  };
-  const highlighted = useMemo(() => new Set(selected ? lineMap[selected] ?? [] : []), [selected, lineMap]);
 
-  // Bring the selected node's code into view (PRD F5.2).
+  /** Clicking a line selects its node, switching to its module first when needed (PRD F5.2). */
+  const reveal = (line: number) => {
+    const target = nodeOfLine.get(line);
+    if (!target) return;
+    const studio = useStudio.getState();
+    if (target.moduleId !== studio.view.moduleId) studio.openModule(target.moduleId, findPath(studio.project, target.moduleId));
+    useStudio.getState().selectNode(target.nodeId);
+    setTimeout(() => void fitView({ nodes: [{ id: target.nodeId }], duration: 300, maxZoom: 1.2, padding: 0.6 }), 80);
+  };
+  const highlighted = useMemo(() => new Set(selected ? (lineMap[moduleId]?.[selected] ?? []) : []), [selected, lineMap, moduleId]);
+
+  // Bring the selected node's code into view, or the class shown on the canvas.
   useEffect(() => {
-    const first = Math.min(...highlighted);
-    if (!Number.isFinite(first)) return;
-    scroller.current?.querySelector(`[data-line="${first}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [highlighted]);
+    const first = highlighted.size > 0 ? Math.min(...highlighted) : classLines[moduleId];
+    if (first === undefined || !Number.isFinite(first)) return;
+    scroller.current?.querySelector(`[data-line="${first}"]`)?.scrollIntoView({ block: highlighted.size > 0 ? 'nearest' : 'start', behavior: 'smooth' });
+  }, [highlighted, classLines, moduleId]);
 
   const copy = async () => {
     try {
@@ -49,15 +57,17 @@ export function CodePanel() {
   return (
     <section className="flex min-h-0 flex-col border-t border-line bg-surface">
       <header className="flex items-center gap-3 border-b border-line px-4 py-2">
-        <span className="text-[12px] font-semibold">代码预览</span>
-        <span className="font-mono text-[11px] text-muted">{className.toLowerCase()}.py · 实时生成</span>
-        {todos > 0 && <span className="text-[11px] text-warning">{todos} 处 TODO</span>}
+        <span className="text-[12px] font-semibold">{tr('代码预览', 'Code preview')}</span>
+        <span className="font-mono text-[11px] text-muted">
+          {className.toLowerCase()}.py · {tr('实时生成', 'live')}
+        </span>
+        {todos > 0 && <span className="text-[11px] text-warning">{tr(`${todos} 处 TODO`, `${todos} TODO${todos === 1 ? '' : 's'}`)}</span>}
         <span className="flex-1" />
         <button type="button" className={button} onClick={copy}>
-          {copied ? '已复制' : '复制'}
+          {copied ? tr('已复制', 'Copied') : tr('复制', 'Copy')}
         </button>
         <button type="button" className={button} onClick={() => runCommand('exportPy')}>
-          导出 .py
+          {tr('导出 .py', 'Export .py')}
         </button>
       </header>
       <div ref={scroller} className="min-h-0 flex-1 overflow-auto bg-code py-2">
@@ -67,7 +77,7 @@ export function CodePanel() {
               key={i}
               data-line={i + 1}
               onClick={() => reveal(i + 1)}
-              title={nodeOfLine.has(i + 1) ? '在画布中定位该节点' : undefined}
+              title={nodeOfLine.has(i + 1) ? tr('在画布中定位该节点', 'Show this node on the canvas') : undefined}
               className={`px-3 ${highlighted.has(i + 1) ? 'hl' : ''} ${nodeOfLine.has(i + 1) ? 'cursor-pointer hover:bg-surface-2' : ''}`}
             >
               <span className="ln">{i + 1}</span>

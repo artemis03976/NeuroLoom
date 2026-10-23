@@ -150,6 +150,41 @@ body {
   border-style: dashed;
 }
 
+/* Module instances read as containers; a repeat is a stack of cards (PRD 9.4). */
+.nl-node-module .nl-node-head {
+  background: color-mix(in srgb, var(--cat) 8%, transparent);
+}
+.nl-node-repeat {
+  box-shadow:
+    4px 4px 0 -1px var(--nl-surface),
+    4px 4px 0 0 var(--nl-border-strong),
+    8px 8px 0 -1px var(--nl-surface),
+    8px 8px 0 0 var(--nl-border);
+}
+.nl-node-repeat.selected {
+  box-shadow:
+    0 0 0 3px var(--nl-primary-soft),
+    4px 4px 0 -1px var(--nl-surface),
+    4px 4px 0 0 var(--nl-border-strong),
+    8px 8px 0 -1px var(--nl-surface),
+    8px 8px 0 0 var(--nl-border);
+}
+.nl-repeat-badge {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--cat);
+  color: #fff;
+  font: 700 11px/1.5 var(--font-mono);
+}
+.nl-node-code {
+  border-style: dashed;
+}
+.nl-node-code-line {
+  max-width: 260px;
+  color: var(--nl-text);
+}
+
 /* ---- Edges ---- */
 .nl-edge-label {
   position: absolute;

@@ -1,4 +1,4 @@
-import { entryModule, getSpec, wouldCreateCycle } from '@neuroloom/core';
+import { wouldCreateCycle } from '@neuroloom/core';
 import {
   Background,
   BackgroundVariant,
@@ -12,29 +12,35 @@ import {
   type IsValidConnection,
   type OnConnectEnd,
 } from '@xyflow/react';
-import { useCallback, useEffect, useMemo, useRef, type DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { attempt } from '../commands';
 import { computeLayout } from '../lib/layout';
 import { useStudio, type FlowNode, type PortLink } from '../store';
 import { useUi } from '../ui';
-import { categoryColor } from './glyph';
+import { nodeBadge } from './glyph';
 import { LayerNode } from './LayerNode';
 import { TensorEdge, type TensorEdgeType } from './TensorEdge';
 
 export const NODE_DRAG_TYPE = 'application/x-neuroloom-node';
+const GRID = 20;
 
 const nodeTypes = { layer: LayerNode };
 const edgeTypes = { tensor: TensorEdge };
 
-const minimapColor = (n: FlowNode) => categoryColor(getSpec(entryModule(useStudio.getState().project).nodes[n.id]?.type));
+const minimapColor = (n: FlowNode) => {
+  const { project, view } = useStudio.getState();
+  const node = project.modules[view.moduleId]?.nodes[n.id];
+  return node ? nodeBadge(project, node).color : 'var(--nl-cat-code)';
+};
 
 export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'system' }) {
-  const { flowNodes, project, edgeTypesById, selectedEdgeIds, layoutRequest, onNodesChange, onEdgesChange, onConnect, addNodeAt, applyLayout } =
+  const { flowNodes, mod, edgeTypesById, selectedEdgeIds, layoutRequest, onNodesChange, onEdgesChange, onConnect, addNodeAt, applyLayout, enterModule } =
     useStudio(
       useShallow((s) => ({
         flowNodes: s.flowNodes,
-        project: s.project,
-        edgeTypesById: s.analysis.edgeTypes,
+        mod: s.project.modules[s.view.moduleId]!,
+        edgeTypesById: s.viewAnalysis.edgeTypes,
         selectedEdgeIds: s.selectedEdgeIds,
         layoutRequest: s.layoutRequest,
         onNodesChange: s.onNodesChange,
@@ -42,9 +48,10 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
         onConnect: s.onConnect,
         addNodeAt: s.addNodeAt,
         applyLayout: s.applyLayout,
+        enterModule: s.enterModule,
       })),
     );
-  const mod = entryModule(project);
+  const snapToGrid = useUi((s) => s.snapToGrid);
   const { screenToFlowPosition, fitView, getInternalNode } = useReactFlow<FlowNode, TensorEdgeType>();
   const nodesInitialized = useNodesInitialized();
 
@@ -63,11 +70,14 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
     [mod.edges, edgeTypesById, selectedEdgeIds],
   );
 
-  // Auto layout once React Flow has measured the nodes, so ELK gets real sizes.
-  const handledLayout = useRef(0);
+  // Auto layout once React Flow has measured the nodes, so ELK gets real sizes;
+  // a module that is already laid out is only fitted into view.
+  const handledLayout = useRef(-1);
   useEffect(() => {
-    if (layoutRequest.id === handledLayout.current || !nodesInitialized) return;
+    if (layoutRequest.id === handledLayout.current || !nodesInitialized || layoutRequest.moduleId !== mod.id) return;
     handledLayout.current = layoutRequest.id;
+    const fit = () => setTimeout(() => void fitView({ padding: 0.15, duration: 300 }), 50);
+    if (layoutRequest.fitOnly) return void fit();
     const sizes = new Map(
       flowNodes.map((n) => {
         const m = getInternalNode(n.id)?.measured;
@@ -77,9 +87,9 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
     const box = document.querySelector('.react-flow')?.getBoundingClientRect();
     const canvas = box && box.width > 0 && box.height > 0 ? { width: box.width, height: box.height } : undefined;
     void computeLayout(mod, sizes, canvas).then((positions) => {
-      applyLayout(positions, layoutRequest.undoable);
+      applyLayout(positions, layoutRequest.undoable, layoutRequest.moduleId);
       // Wait for React Flow to take the new positions before fitting the view.
-      setTimeout(() => void fitView({ padding: 0.15, duration: 300 }), 50);
+      fit();
     });
   }, [layoutRequest, nodesInitialized, flowNodes, mod, getInternalNode, applyLayout, fitView]);
 
@@ -114,10 +124,15 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
       if (!type) return;
       e.preventDefault();
       const p = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      addNodeAt(type, { x: Math.round(p.x - 84), y: Math.round(p.y - 30) });
+      attempt(() => addNodeAt(type, { x: Math.round(p.x - 84), y: Math.round(p.y - 30) }));
     },
     [screenToFlowPosition, addNodeAt],
   );
+
+  const onContextMenu = (e: ReactMouseEvent | MouseEvent, nodeId?: string) => {
+    e.preventDefault();
+    useUi.getState().setContextMenu({ screen: { x: e.clientX, y: e.clientY }, nodeId });
+  };
 
   return (
     <div
@@ -127,30 +142,39 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
         if (e.target instanceof Element && e.target.classList.contains('react-flow__pane')) openQuickAdd(e.clientX, e.clientY);
       }}
     >
-    <ReactFlow<FlowNode, TensorEdgeType>
-      nodes={flowNodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onConnectEnd={onConnectEnd}
-      isValidConnection={isValidConnection}
-      zoomOnDoubleClick={false}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      colorMode={colorMode}
-      deleteKeyCode={['Backspace', 'Delete']}
-      fitView
-      fitViewOptions={{ padding: 0.25 }}
-      minZoom={0.1}
-      maxZoom={4}
-    >
-      <Background variant={BackgroundVariant.Dots} gap={20} size={1.4} />
-      <Controls showInteractive={false} />
-      <MiniMap pannable zoomable style={{ width: 168, height: 108 }} nodeColor={minimapColor} nodeBorderRadius={4} />
-    </ReactFlow>
+      <ReactFlow<FlowNode, TensorEdgeType>
+        nodes={flowNodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onConnectEnd={onConnectEnd}
+        isValidConnection={isValidConnection}
+        onNodeDoubleClick={(_e, node) => enterModule(node.id)}
+        onNodeContextMenu={(e, node) => {
+          if (!node.selected) useStudio.getState().selectNode(node.id);
+          onContextMenu(e, node.id);
+        }}
+        onSelectionContextMenu={(e) => onContextMenu(e)}
+        onPaneContextMenu={(e) => onContextMenu(e)}
+        zoomOnDoubleClick={false}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        colorMode={colorMode}
+        deleteKeyCode={['Backspace', 'Delete']}
+        snapToGrid={snapToGrid}
+        snapGrid={[GRID, GRID]}
+        fitView
+        fitViewOptions={{ padding: 0.25 }}
+        minZoom={0.1}
+        maxZoom={4}
+      >
+        <Background variant={snapToGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots} gap={GRID} size={snapToGrid ? 0.6 : 1.4} />
+        <Controls showInteractive={false} />
+        <MiniMap pannable zoomable style={{ width: 168, height: 108 }} nodeColor={minimapColor} nodeBorderRadius={4} />
+      </ReactFlow>
     </div>
   );
 }

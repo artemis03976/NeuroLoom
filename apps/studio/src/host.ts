@@ -1,6 +1,7 @@
 // The editor's view of its host: the Electron app (native dialogs, files on disk,
 // environment management) or a plain browser tab (downloads and file pickers).
 import type { DesktopApi, MenuCommand, OpenedFile, Recovery } from '@neuroloom/host-api';
+import { tr, type Locale } from './i18n';
 
 export interface Host {
   kind: 'desktop' | 'web';
@@ -14,6 +15,8 @@ export interface Host {
   setDocState(state: { dirty: boolean; title: string }): void;
   closeAfterSave(): void;
   onCommand(listener: (command: MenuCommand) => void): () => void;
+  /** Tells native menus and dialogs the interface language. */
+  setLocale(locale: Locale): void;
   /** Python environment management; desktop only. */
   env?: DesktopApi['env'];
 }
@@ -30,6 +33,7 @@ function desktopHost(api: DesktopApi): Host {
     setDocState: (state) => api.doc.setState(state),
     closeAfterSave: () => api.doc.closeAfterSave(),
     onCommand: (listener) => api.onCommand(listener),
+    setLocale: (locale) => api.setLocale(locale),
     env: api.env,
   };
 }
@@ -60,7 +64,7 @@ function webHost(): Host {
         });
         input.click();
       }),
-    openPath: () => Promise.reject(new Error('浏览器中无法按路径打开文件')),
+    openPath: () => Promise.reject(new Error(tr('浏览器中无法按路径打开文件', 'A browser cannot open files by path'))),
     async saveFile({ text, suggestedName }) {
       const name = `${suggestedName}.loom`;
       download(text, name, 'application/json');
@@ -101,6 +105,9 @@ function webHost(): Host {
     },
     closeAfterSave: () => {},
     onCommand: () => () => {},
+    setLocale: (locale) => {
+      document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en';
+    },
   };
 }
 

@@ -109,7 +109,7 @@ def test_data_dependent_control_flow_is_reported():
 def test_cli_prints_json_and_keeps_user_prints_off_stdout():
     noisy = MLP.replace("super().__init__()", "super().__init__()\n        print('hello from user code')")
     proc = subprocess.run(
-        [sys.executable, "-m", "neuroloom", "import", "-"],
+        [sys.executable, "-m", "neuroloom", "import", "-", "--mode", "trace"],
         input=noisy, capture_output=True, text=True, encoding="utf-8", cwd=ROOT,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
@@ -119,7 +119,9 @@ def test_cli_prints_json_and_keeps_user_prints_off_stdout():
 
 def test_rpc_import_and_errors():
     ok = handle({"jsonrpc": "2.0", "id": 1, "method": "import_code", "params": {"source": MLP}})
-    assert ok["result"]["project"]["modules"]["main"]["className"] == "MLP"
+    assert ok["result"]["project"]["entry"] == "MLP"
+    traced = handle({"jsonrpc": "2.0", "id": 4, "method": "import_code", "params": {"source": MLP, "mode": "trace"}})
+    assert traced["result"]["project"]["modules"]["main"]["className"] == "MLP"
     bad = handle({"jsonrpc": "2.0", "id": 2, "method": "import_code", "params": {"source": "def broken(:\n    pass\n"}})
     assert bad["error"]["code"] == -32001 and "语法错误" in bad["error"]["message"]
     unknown = handle({"jsonrpc": "2.0", "id": 3, "method": "nope"})

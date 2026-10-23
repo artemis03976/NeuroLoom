@@ -1,4 +1,5 @@
 // Shape-changing tensor operations (PRD appendix: 张量形变).
+import { msg } from '../i18n';
 import { axis, dimAdd, dimDiv, dimEq, dimProduct, UNKNOWN, type Dim, type TensorType } from '../shape';
 import { fail, IN, L, lit, num, ok, OUT, P, resolveParams } from './helpers';
 import type { Inputs, NodeSpec, Params, PythonCall } from './types';
@@ -8,24 +9,29 @@ const doc = (path: string) => `https://docs.pytorch.org/docs/stable/generated/${
 function flattenShape(shape: Dim[], start: number, end: number): Dim[] | string {
   const s = axis(start, shape.length);
   const e = axis(end, shape.length);
-  if (s === undefined || e === undefined) return `start_dim/end_dim 超出 ${shape.length} 维输入的范围`;
-  if (s > e) return 'start_dim 不能在 end_dim 之后';
+  if (s === undefined || e === undefined) {
+    return msg(`start_dim/end_dim 超出 ${shape.length} 维输入的范围`, `start_dim/end_dim is out of range for ${shape.length}-D input`);
+  }
+  if (s > e) return msg('start_dim 不能在 end_dim 之后', 'start_dim cannot come after end_dim');
   return [...shape.slice(0, s), dimProduct(shape.slice(s, e + 1)), ...shape.slice(e + 1)];
 }
 
 /** Resolves a reshape target, including one -1. */
 function reshapeShape(input: Dim[], target: number[]): Dim[] | string {
   const holes = target.filter((d) => d === -1).length;
-  if (holes > 1) return '形状中最多只能有一个 -1';
-  if (target.some((d) => d === 0 || d < -1)) return '目标形状中的维度必须为正数或 -1';
+  if (holes > 1) return msg('形状中最多只能有一个 -1', 'the shape can contain at most one -1');
+  if (target.some((d) => d === 0 || d < -1)) return msg('目标形状中的维度必须为正数或 -1', 'every target dimension must be positive or -1');
   const total = dimProduct(input);
   const known = target.filter((d) => d !== -1).reduce((a, b) => a * b, 1);
   if (holes === 0) {
-    return dimEq(total, known) === false ? `元素总数 ${total} 无法重排为 [${target.join(', ')}]` : target;
+    if (dimEq(total, known) !== false) return target;
+    return msg(`元素总数 ${total} 无法重排为 [${target.join(', ')}]`, `cannot reshape ${total} elements into [${target.join(', ')}]`);
   }
   const missing = dimDiv(total, known);
   if (missing === undefined) {
-    return typeof total === 'number' ? `元素总数 ${total} 不能被 ${known} 整除` : target.map((d) => (d === -1 ? UNKNOWN : d));
+    return typeof total === 'number'
+      ? msg(`元素总数 ${total} 不能被 ${known} 整除`, `the element count ${total} is not divisible by ${known}`)
+      : target.map((d) => (d === -1 ? UNKNOWN : d));
   }
   return target.map((d) => (d === -1 ? missing : d));
 }
@@ -98,7 +104,7 @@ const unflattenModule: NodeSpec = {
   defaultName: 'unflatten',
   infer([x], params) {
     const d = axis(num(params, 'dim'), x!.shape.length);
-    if (d === undefined) return fail(`dim 超出 ${x!.shape.length} 维输入的范围`);
+    if (d === undefined) return fail(msg(`dim 超出 ${x!.shape.length} 维输入的范围`, `dim is out of range for ${x!.shape.length}-D input`));
     const sizes = reshapeShape([x!.shape[d]!], lit(params, 'unflattened_size') as number[]);
     if (typeof sizes === 'string') return fail(sizes);
     return ok([{ shape: [...x!.shape.slice(0, d), ...sizes, ...x!.shape.slice(d + 1)], dtype: x!.dtype }], resolveParams(params));
@@ -150,9 +156,13 @@ const permute = method(
   [P.dims('dims', '新的维度顺序', { initial: [0, 2, 1], spread: true })],
   (x, params) => {
     const dims = lit(params, 'dims') as number[];
-    if (dims.length !== x.shape.length) return `需要 ${x.shape.length} 个维度编号，收到 ${dims.length} 个`;
+    if (dims.length !== x.shape.length) {
+      return msg(`需要 ${x.shape.length} 个维度编号，收到 ${dims.length} 个`, `expected ${x.shape.length} dimension indices, got ${dims.length}`);
+    }
     const order = dims.map((d) => axis(d, x.shape.length));
-    if (order.some((d) => d === undefined) || new Set(order).size !== order.length) return 'dims 必须是各维度编号的一个排列';
+    if (order.some((d) => d === undefined) || new Set(order).size !== order.length) {
+      return msg('dims 必须是各维度编号的一个排列', 'dims must be a permutation of the dimension indices');
+    }
     return order.map((d) => x.shape[d!]!);
   },
   { functions: ['torch.permute'], example: { inputs: [{ shape: 'B, 3, 5' }], params: { dims: [0, 2, 1] } } },
@@ -167,7 +177,7 @@ const transpose = method(
   (x, params) => {
     const a = axis(num(params, 'dim0'), x.shape.length);
     const b = axis(num(params, 'dim1'), x.shape.length);
-    if (a === undefined || b === undefined) return `dim0/dim1 超出 ${x.shape.length} 维输入的范围`;
+    if (a === undefined || b === undefined) return msg(`dim0/dim1 超出 ${x.shape.length} 维输入的范围`, `dim0/dim1 is out of range for ${x.shape.length}-D input`);
     const shape = [...x.shape];
     [shape[a], shape[b]] = [shape[b]!, shape[a]!];
     return shape;
@@ -183,7 +193,7 @@ const unsqueeze = method(
   [P.int('dim', '插入位置', { initial: 1 })],
   (x, params) => {
     const d = axis(num(params, 'dim'), x.shape.length + 1);
-    return d === undefined ? 'dim 超出范围' : [...x.shape.slice(0, d), 1, ...x.shape.slice(d)];
+    return d === undefined ? msg('dim 超出范围', 'dim is out of range') : [...x.shape.slice(0, d), 1, ...x.shape.slice(d)];
   },
   { functions: ['torch.unsqueeze'], example: { inputs: [{ shape: 'B, 5' }], params: { dim: 1 } } },
 );
@@ -198,7 +208,7 @@ const squeeze = method(
     const dim = lit(params, 'dim');
     if (dim === null || dim === undefined) return x.shape.filter((d) => d !== 1);
     const d = axis(dim as number, x.shape.length);
-    if (d === undefined) return 'dim 超出范围';
+    if (d === undefined) return msg('dim 超出范围', 'dim is out of range');
     return x.shape[d] === 1 ? [...x.shape.slice(0, d), ...x.shape.slice(d + 1)] : x.shape;
   },
   { functions: ['torch.squeeze'], example: { inputs: [{ shape: 'B, 1, 5' }], params: { dim: 1 } } },
@@ -231,12 +241,12 @@ function joinOp(name: 'cat' | 'stack'): NodeSpec {
     defaultName: name,
     infer(inputs, params) {
       const tensors = inputs.filter((t): t is TensorType => t !== undefined);
-      if (tensors.length === 0) return fail('至少需要连接一个输入');
+      if (tensors.length === 0) return fail(msg('至少需要连接一个输入', 'connect at least one input'));
       const first = tensors[0]!;
       const rank = first.shape.length;
-      if (tensors.some((t) => t.shape.length !== rank)) return fail('所有输入的维数必须相同');
+      if (tensors.some((t) => t.shape.length !== rank)) return fail(msg('所有输入的维数必须相同', 'all inputs must have the same number of dimensions'));
       const d = axis(num(params, 'dim'), name === 'cat' ? rank : rank + 1);
-      if (d === undefined) return fail('dim 超出范围');
+      if (d === undefined) return fail(msg('dim 超出范围', 'dim is out of range'));
       const shape: Dim[] = [];
       for (let i = 0; i < rank; i++) {
         if (name === 'cat' && i === d) {
@@ -245,7 +255,12 @@ function joinOp(name: 'cat' | 'stack'): NodeSpec {
         }
         const sizes = tensors.map((t) => t.shape[i]!);
         if (sizes.some((s) => dimEq(s, sizes[0]!) === false)) {
-          return fail(`除拼接维外，各输入第 ${i} 维必须相同（${sizes.join('、')}）`);
+          return fail(
+            msg(
+              `除拼接维外，各输入第 ${i} 维必须相同（${sizes.join('、')}）`,
+              `apart from the concatenation dimension, all inputs must have the same size in dimension ${i} (${sizes.join(', ')})`,
+            ),
+          );
         }
         shape.push(sizes[0]!);
       }
@@ -283,14 +298,21 @@ const chunk: NodeSpec = {
   infer([x], params) {
     const n = num(params, 'chunks');
     const d = axis(num(params, 'dim'), x!.shape.length);
-    if (d === undefined) return fail('dim 超出范围');
+    if (d === undefined) return fail(msg('dim 超出范围', 'dim is out of range'));
     const len = x!.shape[d]!;
-    if (typeof len === 'number' && len % n !== 0) return fail(`第 ${d} 维大小 ${len} 不能被 ${n} 整除（M1 只支持等分）`);
+    if (typeof len === 'number' && len % n !== 0) {
+      return fail(
+        msg(
+          `第 ${d} 维大小 ${len} 不能被 ${n} 整除（只支持等分）`,
+          `dimension ${d} has size ${len}, which is not divisible by ${n} (only equal chunks are supported)`,
+        ),
+      );
+    }
     const piece = typeof len === 'number' ? len / n : (dimDiv(len, n) ?? UNKNOWN);
     const shape = x!.shape.map((s, i) => (i === d ? piece : s));
     return ok(Array.from({ length: n }, () => ({ shape, dtype: x!.dtype })), resolveParams(params));
   },
-  describe: (r) => `${r.chunks} 块 · dim = ${r.dim}`,
+  describe: (r) => msg(`${r.chunks} 块 · dim = ${r.dim}`, `${r.chunks} chunks · dim = ${r.dim}`),
   codegen: { fn: 'torch.chunk' },
   python: {
     functions: ['torch.chunk'],

@@ -1,4 +1,5 @@
 // Arithmetic and reductions (PRD appendix: 算术与归约).
+import { msg } from '../i18n';
 import { axis, broadcast, dimEq, type Dim, type TensorType } from '../shape';
 import { fail, L, lit, ok, OUT, P, resolveParams } from './helpers';
 import type { NodeSpec } from './types';
@@ -23,7 +24,7 @@ function binary(name: 'add' | 'sub' | 'mul' | 'div', operator: string, zh: strin
     infer([a, b], params) {
       if (!b) {
         const other = lit(params, 'other');
-        if (other === null || other === undefined) return fail('请连接 b，或在参数中填写常数');
+        if (other === null || other === undefined) return fail(msg('请连接 b，或在参数中填写常数', 'connect b, or enter a constant in the parameters'));
         return ok([a!], resolveParams(params));
       }
       const shape = broadcast([a!.shape, b.shape]);
@@ -61,10 +62,17 @@ const matmul: NodeSpec = {
   infer([a, b]) {
     const x = a!.shape;
     const y = b!.shape;
-    if (x.length === 0 || y.length === 0) return fail('matmul 不支持 0 维张量');
+    if (x.length === 0 || y.length === 0) return fail(msg('matmul 不支持 0 维张量', 'matmul does not support 0-D tensors'));
     const xs = x.length === 1 ? [1, x[0]!] : x;
     const ys = y.length === 1 ? [y[0]!, 1] : y;
-    if (dimEq(xs.at(-1)!, ys.at(-2)!) === false) return fail(`a 的最后一维 ${xs.at(-1)} 与 b 的倒数第二维 ${ys.at(-2)} 不一致`);
+    if (dimEq(xs.at(-1)!, ys.at(-2)!) === false) {
+      return fail(
+        msg(
+          `a 的最后一维 ${xs.at(-1)} 与 b 的倒数第二维 ${ys.at(-2)} 不一致`,
+          `the last dimension of a (${xs.at(-1)}) does not match the second-to-last dimension of b (${ys.at(-2)})`,
+        ),
+      );
+    }
     const batch = broadcast([xs.slice(0, -2), ys.slice(0, -2)]);
     if (typeof batch === 'string') return fail(batch);
     const shape: Dim[] = [...batch, ...(x.length === 1 ? [] : [xs.at(-2)!]), ...(y.length === 1 ? [] : [ys.at(-1)!])];
@@ -105,12 +113,12 @@ function reduction(name: 'mean' | 'sum', zh: string): NodeSpec {
         shape = keep ? x!.shape.map(() => 1) : [];
       } else {
         const d = axis(dim as number, x!.shape.length);
-        if (d === undefined) return fail(`dim=${dim} 超出 ${x!.shape.length} 维输入的范围`);
+        if (d === undefined) return fail(msg(`dim=${dim} 超出 ${x!.shape.length} 维输入的范围`, `dim=${dim} is out of range for ${x!.shape.length}-D input`));
         shape = keep ? x!.shape.map((s, i) => (i === d ? 1 : s)) : x!.shape.filter((_, i) => i !== d);
       }
       return ok([{ shape, dtype: (x as TensorType).dtype }], resolveParams(params));
     },
-    describe: (r) => (r.dim === null ? '全部' : `dim = ${r.dim}`),
+    describe: (r) => (r.dim === null ? msg('全部', 'all') : `dim = ${r.dim}`),
     codegen: { method: name },
     python: {
       functions: [`torch.${name}`],

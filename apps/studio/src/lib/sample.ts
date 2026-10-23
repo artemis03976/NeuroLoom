@@ -10,6 +10,7 @@ export function sampleProject(): LoomProject {
       main: {
         id: 'main',
         className: 'MLP',
+        hyperparams: [],
         nodes: {
           n_x: { id: 'n_x', kind: 'input', type: 'neuroloom.Input', name: 'x', params: { shape: literal('B, 784') } },
           n_fc1: {
@@ -48,36 +49,49 @@ export function sampleProject(): LoomProject {
   };
 }
 
+/** Shown in the import dialog: submodules, hyperparameters and a repeat. */
 export const SAMPLE_IMPORT_CODE = `import torch
 import torch.nn.functional as F
 from torch import nn
 
 
-class Autoencoder(nn.Module):
-    def __init__(self):
+class Block(nn.Module):
+    def __init__(self, dim, hidden_ratio=4):
         super().__init__()
-        self.enc1 = nn.Linear(784, 256)
-        self.enc2 = nn.Linear(256, 32)
-        self.dec1 = nn.Linear(32, 256)
-        self.dec2 = nn.Linear(256, 784)
+        self.norm = nn.LayerNorm(dim)
+        self.fc1 = nn.Linear(dim, dim * hidden_ratio)
+        self.fc2 = nn.Linear(dim * hidden_ratio, dim)
 
     def forward(self, x):
-        z = F.relu(self.enc1(x))
-        z = self.enc2(z)
-        h = F.relu(self.dec1(z))
-        return self.dec2(h), z
+        h = self.fc2(F.gelu(self.fc1(self.norm(x))))
+        return x + h
+
+
+class Classifier(nn.Module):
+    def __init__(self, dim=64, depth=4, num_classes=10):
+        super().__init__()
+        self.embed = nn.Linear(784, dim)
+        self.blocks = nn.ModuleList([Block(dim) for _ in range(depth)])
+        self.head = nn.Linear(dim, num_classes)
+
+    def forward(self, x):
+        x = self.embed(torch.flatten(x, 1))
+        for block in self.blocks:
+            x = block(x)
+        return self.head(x)
 `;
 
 /** A new document: one input and one output, ready to be wired up. */
 export function blankProject(): LoomProject {
   return {
     schemaVersion: SCHEMA_VERSION,
-    name: '未命名',
+    name: 'Untitled',
     entry: 'main',
     modules: {
       main: {
         id: 'main',
         className: 'Model',
+        hyperparams: [],
         nodes: {
           n_x: { id: 'n_x', kind: 'input', type: 'neuroloom.Input', name: 'x', params: { shape: literal('B, 784') } },
           n_out: { id: 'n_out', kind: 'output', type: 'neuroloom.Output', name: 'output', params: {} },

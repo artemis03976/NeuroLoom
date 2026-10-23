@@ -1,4 +1,5 @@
 import type { RpcFailure } from '@neuroloom/host-api';
+import { tr } from '../i18n';
 
 export class RpcError extends Error {
   constructor(
@@ -31,9 +32,9 @@ export async function rpc<T>(method: string, params: Record<string, unknown> = {
       body: JSON.stringify({ method, params }),
     });
   } catch {
-    throw new RpcError('无法连接到开发服务器');
+    throw new RpcError(tr('无法连接到开发服务器', 'Cannot reach the dev server'));
   }
-  if (res.status === 404) throw new RpcError('Python 后端不可用：当前页面不是由开发服务器提供的');
+  if (res.status === 404) throw new RpcError(tr('Python 后端不可用：当前页面不是由开发服务器提供的', 'The Python backend is unavailable: this page is not served by the dev server'));
   const body = (await res.json()) as { result?: T; error?: { message: string; data?: unknown } };
   if (body.error) throw new RpcError(body.error.message, body.error.data);
   return body.result as T;
@@ -47,9 +48,19 @@ export interface EnvInfo {
   cuda: boolean;
 }
 
+/** How the importer handled each class (PRD 11.2): L1 structured, L1+L3 with code blocks, L3 kept as source. */
+export interface ImportReportEntry {
+  className: string;
+  level: 'L1' | 'L1+L3' | 'L3';
+  codeBlocks: number;
+  notes: string[];
+}
+
 export interface ImportResult {
   project: unknown;
   observedShapes: Record<string, number[][]>;
   batchProbe: number;
   warnings: string[];
+  /** Static imports only. */
+  report?: ImportReportEntry[];
 }

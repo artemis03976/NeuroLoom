@@ -38,7 +38,7 @@ describe('templates', () => {
 
   for (const t of TEMPLATES) {
     it(`${t.id} analyzes cleanly`, () => {
-      const analysis = analyzeModule(entryModule(t.project));
+      const analysis = analyzeModule(t.project);
       expect(analysis.diagnostics).toEqual([]);
       expect(generateCode(t.project).todos).toBe(0);
     });
@@ -57,7 +57,7 @@ describe('templates', () => {
         ),
       );
       expect(result.same).toBe(true);
-      expect(analyzeModule(entryModule(t.project)).totalParams).toBe(result.params);
+      expect(analyzeModule(t.project).totalParams).toBe(result.params);
     });
   }
 });

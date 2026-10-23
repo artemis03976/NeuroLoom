@@ -1,3 +1,5 @@
+import { msg } from './i18n';
+
 /**
  * A dimension is a concrete size, a named symbol such as "B" (batch), or a
  * product / sum of those such as "B*T" or "C+64". "?" means unknown.
@@ -15,18 +17,21 @@ const SYMBOL = /^[A-Za-z_][A-Za-z0-9_]*$/;
 /** Parses "B, 3, 224, 224" (brackets optional). */
 export function parseShape(text: string): { ok: true; shape: Dim[] } | { ok: false; error: string } {
   const body = text.trim().replace(/^[[(]/, '').replace(/[\])]$/, '').trim();
-  if (body === '') return { ok: false, error: '形状不能为空' };
+  if (body === '') return { ok: false, error: msg('形状不能为空', 'the shape cannot be empty') };
   const shape: Dim[] = [];
   for (const raw of body.split(',')) {
     const token = raw.trim();
     if (/^\d+$/.test(token)) {
       const n = Number(token);
-      if (n === 0) return { ok: false, error: '维度大小必须大于 0' };
+      if (n === 0) return { ok: false, error: msg('维度大小必须大于 0', 'dimension sizes must be greater than 0') };
       shape.push(n);
     } else if (SYMBOL.test(token)) {
       shape.push(token);
+    } else if (token.split('*').every((f) => SYMBOL.test(f.trim()) || /^[1-9]\d*$/.test(f.trim()))) {
+      // A product such as B*T or B*4, in canonical form.
+      shape.push(dimProduct(token.split('*').map((f) => (/^\d+$/.test(f.trim()) ? Number(f.trim()) : f.trim()))));
     } else {
-      return { ok: false, error: `无法识别的维度“${token}”` };
+      return { ok: false, error: msg(`无法识别的维度“${token}”`, `unrecognized dimension "${token}"`) };
     }
   }
   return { ok: true, shape };
@@ -121,7 +126,9 @@ export function broadcast(shapes: Dim[][]): Dim[] | string {
       continue;
     }
     const numbers = [...new Set(dims.filter((d) => typeof d === 'number'))];
-    if (numbers.length > 1) return `无法广播：倒数第 ${i} 维为 ${numbers.join(' 和 ')}`;
+    if (numbers.length > 1) {
+      return msg(`无法广播：倒数第 ${i} 维为 ${numbers.join(' 和 ')}`, `cannot broadcast: dimension -${i} has sizes ${numbers.join(' and ')}`);
+    }
     out.unshift(numbers[0] ?? dims[0]!);
   }
   return out;
@@ -138,6 +145,23 @@ export function evalDim(d: Dim, value: number): number {
     }, 1);
     return sum + product;
   }, 0);
+}
+
+/**
+ * A dimension from its sizes in two runs where the symbols had different values
+ * (`first`, `second`): equal sizes are constants, others a product of symbols
+ * times a constant (B, B*T, B*4). Undefined when no such product fits (sums).
+ */
+export function dimFromRuns(a: number, b: number, first: Record<string, number>, second: Record<string, number>): Dim | undefined {
+  if (a === b) return a;
+  const symbols = Object.keys(first);
+  for (let mask = 1; mask < 1 << symbols.length; mask++) {
+    const picked = symbols.filter((_, i) => mask & (1 << i));
+    const pa = picked.reduce((p, s) => p * first[s]!, 1);
+    const pb = picked.reduce((p, s) => p * (second[s] ?? 1), 1);
+    if (a % pa === 0 && b % pb === 0 && a / pa === b / pb) return dimProduct([...picked, a / pa]);
+  }
+  return undefined;
 }
 
 /** Replaces every symbolic dimension with a concrete value. */

@@ -1,33 +1,55 @@
 // Editor state. The IR project is the single source of truth (PRD 15.4); React
-// Flow nodes are a view of it that additionally carries measured sizes and
-// selection, and analysis + code are derived on every semantic change.
+// Flow nodes are a view of the module on the canvas that additionally carries
+// measured sizes and selection, and analysis + code are derived on every
+// semantic change.
 //
 // Undo/redo keeps whole-project snapshots. Edits are immutable with structural
 // sharing, so a snapshot costs little more than the parts that changed.
 import {
-  analyzeModule,
+  CODE_TYPE,
+  addCodeNode,
+  addModuleNode,
   addNode,
+  analysisAt,
+  analyzeProject,
   connect,
-  entryModule,
+  createModule as createModuleDef,
+  deleteModule as deleteModuleDef,
+  findPath,
   generateCode,
-  getSpec,
-  outputsOf,
+  makeUnique,
+  packAsModule,
   pasteClip,
+  portsOf,
+  pruneDanglingEdges,
   removeEdges,
   removeNodes,
+  renameModule,
   renameNode,
+  resolvePath,
+  setEntry,
+  setHyperparams as setModuleHyperparams,
   setLayout,
   setParam,
+  unpackModule,
+  updateNode,
+  withModule,
   type Analysis,
   type Clip,
+  type CodeBlock,
   type CodegenResult,
+  type HyperParam,
   type LoomProject,
   type ModuleDef,
+  type ModuleId,
   type NodeId,
   type ParamValue,
+  type ProjectAnalysis,
+  type Repeat,
 } from '@neuroloom/core';
 import { applyNodeChanges, type Connection, type EdgeChange, type Node, type NodeChange } from '@xyflow/react';
 import { create } from 'zustand';
+import { alignPositions, type AlignMode } from './lib/align';
 import { sampleProject } from './lib/sample';
 
 export type FlowNode = Node<Record<string, never>, 'layer'>;
@@ -37,6 +59,19 @@ export interface PortLink {
   nodeId: NodeId;
   port: string;
   side: 'source' | 'target';
+}
+
+/** Node types that are not NodeSpecs: an instance of a module, or a code block. */
+export const moduleType = (moduleId: ModuleId) => `module:${moduleId}`;
+
+/**
+ * The module on the canvas, and the drill-down path that led there (PRD F4.2),
+ * which decides the instance whose shapes are shown.
+ */
+export interface View {
+  moduleId: ModuleId;
+  /** Module node ids from the entry; empty for the entry, or a module shown on its own. */
+  path: NodeId[];
 }
 
 const HISTORY_LIMIT = 200;
@@ -60,13 +95,19 @@ interface History {
 
 interface LayoutRequest {
   id: number;
+  moduleId: ModuleId;
   /** Whether the resulting move is an undoable edit (false for the layout that follows a load). */
   undoable: boolean;
+  /** The module is already laid out: only fit it into view. */
+  fitOnly?: boolean;
 }
 
 interface StudioState {
   project: LoomProject;
-  analysis: Analysis;
+  analysis: ProjectAnalysis;
+  view: View;
+  /** The analysis of the module on the canvas, in the context of its view path. */
+  viewAnalysis: Analysis;
   codegen: CodegenResult;
   flowNodes: FlowNode[];
   selectedEdgeIds: string[];
@@ -78,36 +119,67 @@ interface StudioState {
   onEdgesChange(changes: EdgeChange[]): void;
   onConnect(connection: Connection): void;
   /**
-   * Adds a node; with `link`, also connects it to an existing port in the same
-   * undo step (quick-add after dropping an edge on empty canvas). Returns its id.
+   * Adds a node (a NodeSpec type, `module:<id>` or the code block type); with
+   * `link`, also connects it to an existing port in the same undo step. Returns
+   * its id. Throws EditError when the module cannot go here.
    */
   addNodeAt(type: string, position: { x: number; y: number }, link?: PortLink): NodeId;
-  setParam(nodeId: NodeId, name: string, value: ParamValue): void;
+  /** `undefined` removes the parameter (a module argument back to its default). */
+  setParam(nodeId: NodeId, name: string, value: ParamValue | undefined): void;
   rename(nodeId: NodeId, name: string): void;
-  setClassName(name: string): void;
+  setRepeat(nodeId: NodeId, repeat: Repeat | undefined): void;
+  setCode(nodeId: NodeId, code: CodeBlock): void;
+  setShapes(nodeId: NodeId, shapes: Record<string, string> | undefined): void;
+  /** Declares observed output shapes on nodes in any module, as one undo step. */
+  applyShapes(observed: { moduleId: ModuleId; nodeId: NodeId; port: string; text: string }[]): void;
   selectNode(nodeId: NodeId | null): void;
+  selectNodes(ids: NodeId[]): void;
   /** Pastes a clipboard fragment, offset from where it was copied, and selects it. */
   paste(clip: Clip, offset: { x: number; y: number }): void;
   deleteNodes(ids: NodeId[]): void;
+  alignSelection(mode: AlignMode): void;
+
+  // Modules (PRD section 9).
+  enterModule(nodeId: NodeId): void;
+  /** Shows a module from the outline, in the context of its first use when it has one. */
+  openModule(moduleId: ModuleId, path?: NodeId[]): void;
+  /** Breadcrumb: back to the module at this depth of the path. */
+  goToDepth(depth: number): void;
+  goUp(): void;
+  packSelection(className: string): void;
+  unpack(nodeId: NodeId): void;
+  makeUnique(nodeId: NodeId): void;
+  createModule(className: string): ModuleId;
+  deleteModule(moduleId: ModuleId): void;
+  setClassName(name: string, moduleId?: ModuleId): void;
+  setEntry(moduleId: ModuleId): void;
+  setHyperparams(hyperparams: HyperParam[], renamed?: Record<string, string>): void;
+  /** Free-text fields: the preamble, a module's __init__ tail, other members or opaque source. */
+  setText(field: 'preamble' | 'initCode' | 'members' | 'source', text: string): void;
+
   /** Replaces the document. `saved: false` marks it as never saved (e.g. imported code). */
   loadProject(project: LoomProject, doc?: { path?: string | null; name?: string; saved?: boolean; relayout?: boolean }): void;
-  applyLayout(positions: Record<NodeId, { x: number; y: number }>, undoable: boolean): void;
+  applyLayout(positions: Record<NodeId, { x: number; y: number }>, undoable: boolean, moduleId?: ModuleId): void;
   requestLayout(): void;
   /** Records that `project` (the snapshot that was written) is now on disk. */
   markSaved(project: LoomProject, path: string | null, name: string): void;
   undo(): void;
   redo(): void;
+  /** Recomputes derived state after the interface language changes. */
+  relocalize(): void;
 }
 
-function derive(project: LoomProject): Pick<StudioState, 'analysis' | 'codegen'> {
-  const mod = entryModule(project);
-  const analysis = analyzeModule(mod);
-  return { analysis, codegen: generateCode(project, { [mod.id]: analysis }) };
+function derive(project: LoomProject, view: View): Pick<StudioState, 'analysis' | 'viewAnalysis' | 'codegen'> {
+  const analysis = analyzeProject(project);
+  return { analysis, viewAnalysis: analysisAt(analysis, project, view.path, view.moduleId), codegen: generateCode(project, analysis) };
 }
 
-function withModule(project: LoomProject, update: (mod: ModuleDef) => ModuleDef): LoomProject {
-  const mod = entryModule(project);
-  return { ...project, modules: { ...project.modules, [mod.id]: update(mod) } };
+/** Keeps the view pointing at something that exists after an edit, undo or load. */
+function fixView(project: LoomProject, view: View): View {
+  if (!project.modules[view.moduleId]) return { moduleId: project.entry, path: [] };
+  const resolved = resolvePath(project, view.path);
+  if (resolved.moduleId === view.moduleId) return resolved.path.length === view.path.length ? view : resolved;
+  return { moduleId: view.moduleId, path: findPath(project, view.moduleId) ?? [] };
 }
 
 function toFlowNodes(mod: ModuleDef, previous: FlowNode[] = []): FlowNode[] {
@@ -121,39 +193,73 @@ function toFlowNodes(mod: ModuleDef, previous: FlowNode[] = []): FlowNode[] {
   }));
 }
 
+/** A module some of whose nodes were never placed (imported submodules), which needs an automatic layout. */
+const needsLayout = (mod: ModuleDef) => Object.keys(mod.nodes).some((id) => !mod.layout[id]);
+
 const initial = sampleProject();
+const initialView: View = { moduleId: initial.entry, path: [] };
 const emptyHistory = (): History => ({ past: [], future: [], mergeAt: 0 });
 
 export const useStudio = create<StudioState>()((set, get) => {
+  const current = () => get().project.modules[get().view.moduleId]!;
+  const inView = (project: LoomProject, update: (mod: ModuleDef) => ModuleDef) => withModule(project, get().view.moduleId, update);
+  const selectedIds = () => get().flowNodes.filter((n) => n.selected).map((n) => n.id);
+
   /** Applies an edit as one undo step (or merges it into the previous one). */
-  const commit = (project: LoomProject, options: { flowNodes?: FlowNode[]; merge?: string } = {}) => {
+  const commit = (next: LoomProject, options: { flowNodes?: FlowNode[]; merge?: string; view?: View; select?: NodeId[] } = {}) => {
     const { project: before, history } = get();
-    if (project === before) return;
+    const project = pruneDanglingEdges(next);
+    if (project === before && !options.view) return;
+    const view = fixView(project, options.view ?? get().view);
+    const sameModule = view.moduleId === get().view.moduleId;
+    let flowNodes = options.flowNodes ?? toFlowNodes(project.modules[view.moduleId]!, sameModule ? get().flowNodes : []);
+    if (options.select) {
+      const selected = new Set(options.select);
+      flowNodes = flowNodes.map((n) => ({ ...n, selected: selected.has(n.id) }));
+    }
     const now = Date.now();
     const merging = !!options.merge && history.mergeKey === options.merge && now - history.mergeAt < MERGE_WINDOW_MS;
     set({
       project,
-      flowNodes: options.flowNodes ?? toFlowNodes(entryModule(project), get().flowNodes),
-      ...derive(project),
-      history: {
-        past: merging ? history.past : [...history.past, before].slice(-HISTORY_LIMIT),
-        future: [],
-        mergeKey: options.merge,
-        mergeAt: now,
-      },
+      view,
+      flowNodes,
+      ...derive(project, view),
+      history:
+        project === before
+          ? history
+          : { past: merging ? history.past : [...history.past, before].slice(-HISTORY_LIMIT), future: [], mergeKey: options.merge, mergeAt: now },
     });
+    if (!sameModule) afterNavigate();
   };
 
   /** Moves to a snapshot from the history, keeping selection and measurements. */
-  const restore = (project: LoomProject, history: History) =>
-    set({ project, history, flowNodes: toFlowNodes(entryModule(project), get().flowNodes), ...derive(project) });
+  const restore = (project: LoomProject, history: History) => {
+    const view = fixView(project, get().view);
+    const sameModule = view.moduleId === get().view.moduleId;
+    set({ project, history, view, flowNodes: toFlowNodes(project.modules[view.moduleId]!, sameModule ? get().flowNodes : []), ...derive(project, view) });
+  };
+
+  /** Changes the module on the canvas without editing anything. */
+  const navigate = (view: View) => {
+    const { project } = get();
+    const next = fixView(project, view);
+    set({ view: next, flowNodes: toFlowNodes(project.modules[next.moduleId]!), selectedEdgeIds: [], viewAnalysis: analysisAt(get().analysis, project, next.path, next.moduleId) });
+    afterNavigate();
+  };
+
+  /** A module seen for the first time may need a layout; either way the canvas fits it into view. */
+  const afterNavigate = () => {
+    const { view, layoutRequest } = get();
+    set({ layoutRequest: { id: layoutRequest.id + 1, moduleId: view.moduleId, undoable: false, fitOnly: !needsLayout(current()) } });
+  };
 
   return {
     project: initial,
-    ...derive(initial),
-    flowNodes: toFlowNodes(entryModule(initial)),
+    view: initialView,
+    ...derive(initial, initialView),
+    flowNodes: toFlowNodes(initial.modules[initial.entry]!),
     selectedEdgeIds: [],
-    layoutRequest: { id: 0, undoable: false },
+    layoutRequest: { id: 0, moduleId: initial.entry, undoable: false, fitOnly: true },
     doc: { path: null, name: initial.name, saved: initial },
     history: emptyHistory(),
 
@@ -166,8 +272,8 @@ export const useStudio = create<StudioState>()((set, get) => {
 
       if (removed.length === 0 && Object.keys(moved).length === 0) return set({ flowNodes });
       let project = get().project;
-      if (Object.keys(moved).length > 0) project = withModule(project, (m) => setLayout(m, moved));
-      if (removed.length > 0) project = withModule(project, (m) => removeNodes(m, removed));
+      if (Object.keys(moved).length > 0) project = inView(project, (m) => setLayout(m, moved));
+      if (removed.length > 0) project = inView(project, (m) => removeNodes(m, removed));
       commit(project, { flowNodes });
     },
 
@@ -182,101 +288,196 @@ export const useStudio = create<StudioState>()((set, get) => {
       }
       for (const id of removed) selected.delete(id);
       set({ selectedEdgeIds: [...selected] });
-      if (removed.length > 0) commit(withModule(get().project, (m) => removeEdges(m, removed)));
+      if (removed.length > 0) commit(inView(get().project, (m) => removeEdges(m, removed)));
     },
 
     onConnect({ source, sourceHandle, target, targetHandle }) {
-      const mod = connect(
-        entryModule(get().project),
-        { node: source, port: sourceHandle ?? 'out' },
-        { node: target, port: targetHandle ?? 'in' },
-      );
-      if (mod) commit(withModule(get().project, () => mod));
+      const mod = connect(current(), { node: source, port: sourceHandle ?? 'out' }, { node: target, port: targetHandle ?? 'in' });
+      if (mod) commit(inView(get().project, () => mod));
     },
 
     addNodeAt(type, position, link) {
-      let nodeId = '';
-      const project = withModule(get().project, (m) => {
-        const result = addNode(m, type, position);
+      const moduleId = get().view.moduleId;
+      let project: LoomProject;
+      let nodeId: NodeId;
+      if (type.startsWith('module:')) {
+        ({ project, nodeId } = addModuleNode(get().project, moduleId, type.slice('module:'.length), position));
+      } else {
+        const result = type === CODE_TYPE ? addCodeNode(current(), position) : addNode(current(), type, position);
         nodeId = result.nodeId;
-        const spec = getSpec(type);
-        if (!link || !spec) return result.mod;
-        const node = result.mod.nodes[nodeId]!;
+        project = inView(get().project, () => result.mod);
+      }
+      if (link) {
+        const mod = project.modules[moduleId]!;
+        const ports = portsOf(project, mod.nodes[nodeId]!);
+        const first = link.side === 'source' ? ports?.inputs[0] : ports?.outputs[0];
         const linked =
-          link.side === 'source'
-            ? spec.inputs[0] &&
-              connect(result.mod, { node: link.nodeId, port: link.port }, { node: nodeId, port: spec.inputs[0].variadic ? `${spec.inputs[0].name}0` : spec.inputs[0].name })
-            : outputsOf(spec, node.params)[0] &&
-              connect(result.mod, { node: nodeId, port: outputsOf(spec, node.params)[0]!.name }, { node: link.nodeId, port: link.port });
-        return linked || result.mod;
-      });
-      const flowNodes = toFlowNodes(entryModule(project), get().flowNodes).map((n) => ({ ...n, selected: n.id === nodeId }));
-      commit(project, { flowNodes });
+          first &&
+          (link.side === 'source'
+            ? connect(mod, { node: link.nodeId, port: link.port }, { node: nodeId, port: first.variadic ? `${first.name}0` : first.name })
+            : connect(mod, { node: nodeId, port: first.name }, { node: link.nodeId, port: link.port }));
+        if (linked) project = withModule(project, moduleId, () => linked);
+      }
+      commit(project, { select: [nodeId] });
       return nodeId;
     },
 
     setParam(nodeId, name, value) {
-      commit(withModule(get().project, (m) => setParam(m, nodeId, name, value)), { merge: `param:${nodeId}:${name}` });
+      commit(inView(get().project, (m) => setParam(m, nodeId, name, value)), { merge: `param:${nodeId}:${name}` });
     },
 
     rename(nodeId, name) {
-      commit(withModule(get().project, (m) => renameNode(m, nodeId, name)), { merge: `rename:${nodeId}` });
+      commit(inView(get().project, (m) => renameNode(m, nodeId, name)), { merge: `rename:${nodeId}` });
     },
 
-    setClassName(className) {
-      commit(withModule(get().project, (m) => ({ ...m, className })), { merge: 'className' });
+    setRepeat(nodeId, repeat) {
+      commit(inView(get().project, (m) => updateNode(m, nodeId, { repeat })), { merge: `repeat:${nodeId}` });
+    },
+
+    setCode(nodeId, code) {
+      commit(inView(get().project, (m) => updateNode(m, nodeId, { code })), { merge: `code:${nodeId}` });
+    },
+
+    setShapes(nodeId, shapes) {
+      commit(inView(get().project, (m) => updateNode(m, nodeId, { shapes })), { merge: `shapes:${nodeId}` });
+    },
+
+    applyShapes(observed) {
+      let project = get().project;
+      for (const o of observed) {
+        project = withModule(project, o.moduleId, (m) => {
+          const node = m.nodes[o.nodeId];
+          return node ? updateNode(m, o.nodeId, { shapes: { ...node.shapes, [o.port]: o.text } }) : m;
+        });
+      }
+      commit(project);
     },
 
     selectNode(nodeId) {
       set({ flowNodes: get().flowNodes.map((n) => ({ ...n, selected: n.id === nodeId })) });
     },
 
+    selectNodes(ids) {
+      const picked = new Set(ids);
+      set({ flowNodes: get().flowNodes.map((n) => ({ ...n, selected: picked.has(n.id) })) });
+    },
+
     paste(clip, offset) {
-      let pasted: NodeId[] = [];
-      const project = withModule(get().project, (m) => {
-        const result = pasteClip(m, clip, offset);
-        pasted = result.nodeIds;
-        return result.mod;
-      });
-      const selected = new Set(pasted);
-      const flowNodes = toFlowNodes(entryModule(project), get().flowNodes).map((n) => ({ ...n, selected: selected.has(n.id) }));
-      commit(project, { flowNodes });
+      const { project, nodeIds } = pasteClip(get().project, get().view.moduleId, clip, offset);
+      commit(project, { select: nodeIds });
     },
 
     deleteNodes(ids) {
-      if (ids.length > 0) commit(withModule(get().project, (m) => removeNodes(m, ids)));
+      if (ids.length > 0) commit(inView(get().project, (m) => removeNodes(m, ids)));
+    },
+
+    alignSelection(mode) {
+      const picked = get().flowNodes.filter((n) => n.selected);
+      if (picked.length < 2) return;
+      const positions = alignPositions(
+        picked.map((n) => ({ id: n.id, x: n.position.x, y: n.position.y, width: n.measured?.width ?? 168, height: n.measured?.height ?? 64 })),
+        mode,
+      );
+      commit(inView(get().project, (m) => setLayout(m, positions)));
+    },
+
+    enterModule(nodeId) {
+      const node = current().nodes[nodeId];
+      if (node?.kind !== 'module' || !get().project.modules[node.type]) return;
+      navigate({ moduleId: node.type, path: [...get().view.path, nodeId] });
+    },
+
+    openModule(moduleId, path) {
+      navigate({ moduleId, path: path ?? findPath(get().project, moduleId) ?? [] });
+    },
+
+    goToDepth(depth) {
+      const path = get().view.path.slice(0, depth);
+      navigate({ moduleId: resolvePath(get().project, path).moduleId, path });
+    },
+
+    goUp() {
+      const { view, project } = get();
+      if (view.path.length > 0) get().goToDepth(view.path.length - 1);
+      else if (view.moduleId !== project.entry) navigate({ moduleId: project.entry, path: [] });
+    },
+
+    packSelection(className) {
+      const result = packAsModule(get().project, get().view.moduleId, selectedIds(), className, get().viewAnalysis);
+      commit(result.project, { select: [result.nodeId] });
+    },
+
+    unpack(nodeId) {
+      const result = unpackModule(get().project, get().view.moduleId, nodeId);
+      commit(result.project, { select: result.nodeIds });
+    },
+
+    makeUnique(nodeId) {
+      commit(makeUnique(get().project, get().view.moduleId, nodeId).project, { select: [nodeId] });
+    },
+
+    createModule(className) {
+      const result = createModuleDef(get().project, className);
+      commit(result.project, { view: { moduleId: result.moduleId, path: [] } });
+      return result.moduleId;
+    },
+
+    deleteModule(moduleId) {
+      commit(deleteModuleDef(get().project, moduleId));
+    },
+
+    setClassName(className, moduleId = get().view.moduleId) {
+      commit(renameModule(get().project, moduleId, className), { merge: `className:${moduleId}` });
+    },
+
+    setEntry(moduleId) {
+      commit(setEntry(get().project, moduleId), { view: { moduleId, path: [] } });
+    },
+
+    setHyperparams(hyperparams, renamed = {}) {
+      commit(setModuleHyperparams(get().project, get().view.moduleId, hyperparams, renamed), { merge: `hyperparams:${get().view.moduleId}` });
+    },
+
+    setText(field, text) {
+      const { project } = get();
+      if (field === 'preamble') return commit({ ...project, preamble: text }, { merge: 'preamble' });
+      commit(
+        inView(project, (m) => (field === 'source' ? { ...m, opaque: { ...m.opaque, source: text } } : { ...m, [field]: text })),
+        { merge: `${field}:${get().view.moduleId}` },
+      );
     },
 
     loadProject(project, doc = {}) {
-      const mod = entryModule(project);
-      const relayout = doc.relayout ?? Object.keys(mod.layout).length === 0;
+      const view: View = { moduleId: project.entry, path: [] };
+      const relayout = doc.relayout ?? needsLayout(project.modules[project.entry]!);
       set({
         project,
-        ...derive(project),
-        flowNodes: toFlowNodes(mod),
+        view,
+        ...derive(project, view),
+        flowNodes: toFlowNodes(project.modules[project.entry]!),
         selectedEdgeIds: [],
         history: emptyHistory(),
         doc: { path: doc.path ?? null, name: doc.name ?? project.name, saved: doc.saved === false ? null : project },
-        layoutRequest: relayout ? { id: get().layoutRequest.id + 1, undoable: false } : get().layoutRequest,
+        layoutRequest: { id: get().layoutRequest.id + 1, moduleId: project.entry, undoable: false, fitOnly: !relayout },
       });
     },
 
-    applyLayout(positions, undoable) {
-      const project = withModule(get().project, (m) => setLayout(m, positions));
+    applyLayout(positions, undoable, moduleId = get().view.moduleId) {
+      const project = withModule(get().project, moduleId, (m) => setLayout(m, positions));
       if (undoable) return commit(project);
-      // The layout that follows a load is part of loading: no undo step, and a
-      // clean document stays clean.
-      const { doc, project: before } = get();
+      // The layout that follows a load or a first visit is part of loading: no
+      // undo step, and a clean document stays clean.
+      const { doc, project: before, view } = get();
       set({
         project,
-        flowNodes: toFlowNodes(entryModule(project), get().flowNodes),
-        ...derive(project),
+        flowNodes: moduleId === view.moduleId ? toFlowNodes(project.modules[moduleId]!, get().flowNodes) : get().flowNodes,
+        ...derive(project, view),
         doc: doc.saved === before ? { ...doc, saved: project } : doc,
       });
     },
 
     requestLayout() {
-      set({ layoutRequest: { id: get().layoutRequest.id + 1, undoable: true } });
+      set({ layoutRequest: { id: get().layoutRequest.id + 1, moduleId: get().view.moduleId, undoable: true } });
     },
 
     markSaved(project, path, name) {
@@ -296,9 +497,14 @@ export const useStudio = create<StudioState>()((set, get) => {
       if (!next) return;
       restore(next, { past: [...history.past, project], future: history.future.slice(1), mergeAt: 0 });
     },
+
+    relocalize() {
+      set(derive(get().project, get().view));
+    },
   };
 });
 
-export const useEntryModule = () => useStudio((s) => entryModule(s.project));
+export const useCurrentModule = () => useStudio((s) => s.project.modules[s.view.moduleId]!);
 export const useSelectedNodeId = () => useStudio((s) => s.flowNodes.find((n) => n.selected)?.id ?? null);
+export const useSelectionCount = () => useStudio((s) => s.flowNodes.reduce((n, f) => n + (f.selected ? 1 : 0), 0));
 export const useDirty = () => useStudio((s) => s.doc.saved !== s.project);

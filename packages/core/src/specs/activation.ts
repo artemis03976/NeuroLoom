@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { axis } from '../shape';
 import { fail, inplaceParam, IN, L, lit, num, ok, OUT, P, resolveParams } from './helpers';
 import type { Inputs, NodeSpec, ParamSpec, Params, PythonCall } from './types';
@@ -7,7 +8,9 @@ const doc = (path: string) => `https://docs.pytorch.org/docs/stable/generated/${
 /** Element-wise: the output has the input's shape. Softmax-like ones also check `dim`. */
 function elementwise([x]: Inputs, params: Params) {
   const dim = lit(params, 'dim');
-  if (typeof dim === 'number' && axis(dim, x!.shape.length) === undefined) return fail(`dim=${dim} 超出 ${x!.shape.length} 维输入的范围`);
+  if (typeof dim === 'number' && axis(dim, x!.shape.length) === undefined) {
+    return fail(msg(`dim=${dim} 超出 ${x!.shape.length} 维输入的范围`, `dim=${dim} is out of range for ${x!.shape.length}-D input`));
+  }
   return ok([x!], resolveParams(params));
 }
 
@@ -84,7 +87,9 @@ export const ACTIVATION_SPECS: NodeSpec[] = [
     infer([x], params) {
       const n = num(params, 'num_parameters');
       const channels = x!.shape[1];
-      if (n !== 1 && typeof channels === 'number' && channels !== n) return fail(`num_parameters 应为 1 或通道数 ${channels}`);
+      if (n !== 1 && typeof channels === 'number' && channels !== n) {
+        return fail(msg(`num_parameters 应为 1 或通道数 ${channels}`, `num_parameters must be 1 or the number of channels (${channels})`));
+      }
       return ok([x!], resolveParams(params));
     },
     paramCount: (r) => r.num_parameters as number,

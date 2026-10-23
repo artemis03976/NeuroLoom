@@ -76,10 +76,14 @@ export function connect(mod: ModuleDef, source: PortRef, target: PortRef): Modul
   return { ...mod, edges: [...edges, { id: newId('e'), source, target }] };
 }
 
-export function setParam(mod: ModuleDef, nodeId: NodeId, name: string, value: ParamValue): ModuleDef {
+/** Sets a parameter; `undefined` removes it (a module argument back to its default). */
+export function setParam(mod: ModuleDef, nodeId: NodeId, name: string, value: ParamValue | undefined): ModuleDef {
   const node = mod.nodes[nodeId];
   if (!node) return mod;
-  return { ...mod, nodes: { ...mod.nodes, [nodeId]: { ...node, params: { ...node.params, [name]: value } } } };
+  const params = { ...node.params };
+  if (value === undefined) delete params[name];
+  else params[name] = value;
+  return { ...mod, nodes: { ...mod.nodes, [nodeId]: { ...node, params } } };
 }
 
 export function renameNode(mod: ModuleDef, nodeId: NodeId, name: string): ModuleDef {

@@ -2,6 +2,7 @@ import type { MenuCommand } from '@neuroloom/host-api';
 import { useEffect, useRef, useState } from 'react';
 import { runCommand } from '../commands';
 import { host } from '../host';
+import { tr, useLocale } from '../i18n';
 import { rpc, type EnvInfo } from '../lib/rpc';
 import type { ThemeChoice } from '../lib/theme';
 import { useDirty, useStudio } from '../store';
@@ -9,7 +10,6 @@ import { useUi } from '../ui';
 
 type Backend = { state: 'checking' } | { state: 'ok'; env: EnvInfo } | { state: 'down'; reason: string };
 
-const THEME_LABEL: Record<ThemeChoice, string> = { system: '跟随系统', light: '浅色', dark: '深色' };
 const NEXT_THEME: Record<ThemeChoice, ThemeChoice> = { system: 'light', light: 'dark', dark: 'system' };
 const MOD = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl+';
 
@@ -53,15 +53,15 @@ function FileMenu() {
   return (
     <div ref={root} className="relative">
       <button type="button" className={button} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        文件
+        {tr('文件', 'File')}
       </button>
       {open && (
         <div role="menu" className="absolute top-full left-0 z-40 mt-1 w-64 rounded-lg border border-line bg-surface py-1 shadow-xl">
-          {item('新建', 'new', `${MOD}N`)}
-          {item('打开…', 'open', `${MOD}O`)}
+          {item(tr('新建', 'New'), 'new', `${MOD}N`)}
+          {item(tr('打开…', 'Open…'), 'open', `${MOD}O`)}
           {recent.length > 0 && (
             <>
-              <div className="px-3 pt-2 pb-1 text-[11px] text-muted">最近打开</div>
+              <div className="px-3 pt-2 pb-1 text-[11px] text-muted">{tr('最近打开', 'Recent')}</div>
               {recent.slice(0, 6).map((path) => (
                 <button
                   key={path}
@@ -80,13 +80,13 @@ function FileMenu() {
             </>
           )}
           <div className="my-1 border-t border-line" />
-          {item('保存', 'save', `${MOD}S`)}
-          {item('另存为…', 'saveAs', `${MOD}Shift+S`)}
+          {item(tr('保存', 'Save'), 'save', `${MOD}S`)}
+          {item(tr('另存为…', 'Save As…'), 'saveAs', `${MOD}Shift+S`)}
           <div className="my-1 border-t border-line" />
-          {item('从代码导入…', 'import', `${MOD}I`)}
-          {item('导出 .py…', 'exportPy', `${MOD}E`)}
+          {item(tr('从代码导入…', 'Import from Code…'), 'import', `${MOD}I`)}
+          {item(tr('导出 .py…', 'Export .py…'), 'exportPy', `${MOD}E`)}
           <div className="my-1 border-t border-line" />
-          {item('Python 环境…', 'environment')}
+          {item(tr('Python 环境…', 'Python Environment…'), 'environment')}
         </div>
       )}
     </div>
@@ -99,12 +99,15 @@ export function TopBar({ theme, onTheme }: { theme: ThemeChoice; onTheme: (t: Th
   const canUndo = useStudio((s) => s.history.past.length > 0);
   const canRedo = useStudio((s) => s.history.future.length > 0);
   const backendVersion = useUi((s) => s.backendVersion);
+  const snap = useUi((s) => s.snapToGrid);
+  const locale = useLocale((s) => s.locale);
   const [backend, setBackend] = useState<Backend>({ state: 'checking' });
+  const themeLabel: Record<ThemeChoice, string> = { system: tr('跟随系统', 'System'), light: tr('浅色', 'Light'), dark: tr('深色', 'Dark') };
 
   useEffect(() => {
     setBackend({ state: 'checking' });
     rpc<EnvInfo>('env_info')
-      .then((env) => setBackend(env.torch ? { state: 'ok', env } : { state: 'down', reason: '当前 Python 环境没有安装 torch' }))
+      .then((env) => setBackend(env.torch ? { state: 'ok', env } : { state: 'down', reason: tr('当前 Python 环境没有安装 torch', 'The Python environment has no torch') }))
       .catch((e: Error) => setBackend({ state: 'down', reason: e.message }));
   }, [backendVersion]);
 
@@ -116,22 +119,31 @@ export function TopBar({ theme, onTheme }: { theme: ThemeChoice; onTheme: (t: Th
       </span>
       <FileMenu />
       <span className="mx-2 h-5 w-px bg-line" />
-      <span className="mr-2 flex max-w-64 items-center gap-1.5 truncate text-[13px]" title={dirty ? '有未保存的更改' : '已保存'}>
+      <span className="mr-2 flex max-w-64 items-center gap-1.5 truncate text-[13px]" title={dirty ? tr('有未保存的更改', 'Unsaved changes') : tr('已保存', 'Saved')}>
         <span className="truncate font-medium">{docName}</span>
-        {dirty && <span aria-label="未保存" className="size-1.5 flex-none rounded-full bg-warning" />}
+        {dirty && <span aria-label={tr('未保存', 'unsaved')} className="size-1.5 flex-none rounded-full bg-warning" />}
       </span>
-      <button type="button" className={button} disabled={!canUndo} onClick={() => runCommand('undo')} title={`撤销（${MOD}Z）`}>
+      <button type="button" className={button} disabled={!canUndo} onClick={() => runCommand('undo')} title={tr(`撤销（${MOD}Z）`, `Undo (${MOD}Z)`)}>
         ↶
       </button>
-      <button type="button" className={button} disabled={!canRedo} onClick={() => runCommand('redo')} title={`重做（${MOD}Shift+Z）`}>
+      <button type="button" className={button} disabled={!canRedo} onClick={() => runCommand('redo')} title={tr(`重做（${MOD}Shift+Z）`, `Redo (${MOD}Shift+Z)`)}>
         ↷
       </button>
       <span className="mx-2 h-5 w-px bg-line" />
       <button type="button" className={button} onClick={() => runCommand('import')}>
-        导入代码
+        {tr('导入代码', 'Import code')}
       </button>
       <button type="button" className={button} onClick={() => runCommand('autoLayout')} title={`${MOD}L`}>
-        自动布局
+        {tr('自动布局', 'Auto layout')}
+      </button>
+      <button
+        type="button"
+        className={`${button} ${snap ? 'bg-primary-soft text-primary' : ''}`}
+        aria-pressed={snap}
+        onClick={() => runCommand('toggleSnap')}
+        title={tr('拖动节点时吸附到 20 px 网格', 'Snap nodes to a 20 px grid while dragging')}
+      >
+        {tr('网格吸附', 'Snap')}
       </button>
       <span className="flex-1" />
       <button
@@ -146,11 +158,19 @@ export function TopBar({ theme, onTheme }: { theme: ThemeChoice; onTheme: (t: Th
         {backend.state === 'ok'
           ? `Python ${backend.env.python} · torch ${backend.env.torch}`
           : backend.state === 'down'
-            ? 'Python 后端未连接'
-            : '正在连接后端…'}
+            ? tr('Python 后端未连接', 'Python backend not connected')
+            : tr('正在连接后端…', 'Connecting…')}
       </button>
-      <button type="button" className={button} onClick={() => onTheme(NEXT_THEME[theme])} title="切换主题">
-        {THEME_LABEL[theme]}
+      <button
+        type="button"
+        className={button}
+        onClick={() => runCommand(locale === 'zh' ? 'locale:en' : 'locale:zh')}
+        title={tr('切换界面语言', 'Switch the interface language')}
+      >
+        {locale === 'zh' ? 'EN' : '中文'}
+      </button>
+      <button type="button" className={button} onClick={() => onTheme(NEXT_THEME[theme])} title={tr('切换主题', 'Switch theme')}>
+        {themeLabel[theme]}
       </button>
     </header>
   );

@@ -40,6 +40,7 @@ const api: DesktopApi = {
     setState: (state) => ipcRenderer.send(CHANNELS.docState, state),
     closeAfterSave: () => ipcRenderer.send(CHANNELS.docCloseAfterSave),
   },
+  setLocale: (locale) => ipcRenderer.send(CHANNELS.locale, locale),
   onCommand: (listener) => subscribe<MenuCommand>(CHANNELS.command, listener),
 };
 

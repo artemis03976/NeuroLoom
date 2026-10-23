@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { fail, feature, flag, IN, L, num, ok, P, rankError, resolveParams } from './helpers';
 import type { Example, NodeSpec, OutputSpec } from './types';
 
@@ -48,7 +49,7 @@ function recurrent(cls: keyof typeof GATES): NodeSpec {
     infer([x], params) {
       const bad = rankError(x!, [3], cls);
       if (bad) return fail(bad);
-      const inSize = feature(params, 'input_size', x!.shape[2], '输入最后一维');
+      const inSize = feature(params, 'input_size', x!.shape[2], msg('输入最后一维', 'the last input dimension'));
       if (typeof inSize === 'string') return fail(inSize);
       const hidden = num(params, 'hidden_size');
       const dirs = flag(params, 'bidirectional') ? 2 : 1;
@@ -69,7 +70,8 @@ function recurrent(cls: keyof typeof GATES): NodeSpec {
       }
       return total;
     },
-    describe: (r) => `${r.input_size ?? '?'} → ${r.hidden_size}${(r.num_layers as number) > 1 ? ` × ${r.num_layers} 层` : ''}${r.bidirectional ? ' · 双向' : ''}`,
+    describe: (r) =>
+      `${r.input_size ?? '?'} → ${r.hidden_size}${(r.num_layers as number) > 1 ? msg(` × ${r.num_layers} 层`, ` × ${r.num_layers} layers`) : ''}${r.bidirectional ? msg(' · 双向', ' · bidirectional') : ''}`,
     codegen: { ctor: `nn.${cls}`, unpack: isLstm ? '{out}, ({h_n}, {c_n})' : '{out}, {h_n}' },
     example: EXAMPLES[cls],
   };

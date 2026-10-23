@@ -1,5 +1,6 @@
 // Text <-> value for the inspector's parameter fields, by ParamSpec type.
 import { checkParamValue, type Literal, type ParamSpec } from '@neuroloom/core';
+import { tr } from '../i18n';
 
 /** How a value is shown in its text field ("3, 5" for a tuple). */
 export function formatParam(value: Literal | undefined): string {
@@ -16,12 +17,12 @@ export function parseParam(text: string, p: ParamSpec): { ok: true; value: Liter
   let value: Literal;
   switch (p.type) {
     case 'int':
-      if (!INT.test(t)) return { ok: false, error: '请输入整数' };
+      if (!INT.test(t)) return { ok: false, error: tr('请输入整数', 'Enter an integer') };
       value = Number(t);
       break;
     case 'float': {
       const n = Number(t);
-      if (t === '' || !Number.isFinite(n)) return { ok: false, error: '请输入数字' };
+      if (t === '' || !Number.isFinite(n)) return { ok: false, error: tr('请输入数字', 'Enter a number') };
       value = n;
       break;
     }
@@ -32,14 +33,19 @@ export function parseParam(text: string, p: ParamSpec): { ok: true; value: Liter
       }
       const parts = t.replace(/[()[\]]/g, '').split(',').map((s) => s.trim()).filter(Boolean);
       if (parts.length === 0 || !parts.every((s) => INT.test(s))) {
-        return { ok: false, error: p.options ? `请输入整数、整数元组或 ${p.options.join(' / ')}` : '请输入整数或整数元组，如 3, 5' };
+        return {
+          ok: false,
+          error: p.options
+            ? tr(`请输入整数、整数元组或 ${p.options.join(' / ')}`, `Enter an integer, a tuple of integers or ${p.options.join(' / ')}`)
+            : tr('请输入整数或整数元组，如 3, 5', 'Enter an integer or a tuple such as 3, 5'),
+        };
       }
       value = parts.length === 1 ? Number(parts[0]) : parts.map(Number);
       break;
     }
     case 'dims': {
       const parts = t.replace(/[()[\]]/g, '').split(',').map((s) => s.trim()).filter(Boolean);
-      if (parts.length === 0 || !parts.every((s) => INT.test(s))) return { ok: false, error: '请输入整数列表，如 0, 2, 1' };
+      if (parts.length === 0 || !parts.every((s) => INT.test(s))) return { ok: false, error: tr('请输入整数列表，如 0, 2, 1', 'Enter a list of integers such as 0, 2, 1') };
       value = parts.map(Number);
       break;
     }

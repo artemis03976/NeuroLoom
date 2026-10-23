@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { dimMul, UNKNOWN, type Dim } from '../shape';
 import { fail, feature, IN, L, lit, num, ok, OUT, P, rankError, resolveParams, showTuple, tuple } from './helpers';
 import type { Example, NodeSpec } from './types';
@@ -10,7 +11,13 @@ export function convLength(len: Dim, k: number, s: number, p: number, d: number,
   if (typeof len === 'number') {
     const round = ceil ? Math.ceil : Math.floor;
     const out = round((len + 2 * p - span - 1) / s) + 1;
-    return out >= 1 ? { dim: out } : { error: `输出尺寸小于 1（输入 ${len}，核 ${k}，步长 ${s}，填充 ${p}）` };
+    if (out >= 1) return { dim: out };
+    return {
+      error: msg(
+        `输出尺寸小于 1（输入 ${len}，核 ${k}，步长 ${s}，填充 ${p}）`,
+        `the output size is less than 1 (input ${len}, kernel ${k}, stride ${s}, padding ${p})`,
+      ),
+    };
   }
   return { dim: s === 1 && 2 * p === span ? len : UNKNOWN };
 }
@@ -65,21 +72,23 @@ function conv(n: 1 | 2 | 3, transposed: boolean): NodeSpec {
     infer([x], params) {
       const bad = rankError(x!, [n + 2], cls);
       if (bad) return fail(bad);
-      const inC = feature(params, 'in_channels', x!.shape[1], '输入通道数');
+      const inC = feature(params, 'in_channels', x!.shape[1], msg('输入通道数', 'the number of input channels'));
       if (typeof inC === 'string') return fail(inC);
       const outC = num(params, 'out_channels');
       const groups = num(params, 'groups');
-      if (inC % groups !== 0 || outC % groups !== 0) return fail(`in_channels 与 out_channels 都必须能被 groups=${groups} 整除`);
+      if (inC % groups !== 0 || outC % groups !== 0) {
+        return fail(msg(`in_channels 与 out_channels 都必须能被 groups=${groups} 整除`, `in_channels and out_channels must both be divisible by groups=${groups}`));
+      }
 
       const k = tuple(lit(params, 'kernel_size'), n);
       const s = tuple(lit(params, 'stride'), n);
       const d = tuple(lit(params, 'dilation'), n);
       const padding = lit(params, 'padding');
-      if (padding === 'same' && s.some((v) => v !== 1)) return fail('padding="same" 只支持 stride=1');
+      if (padding === 'same' && s.some((v) => v !== 1)) return fail(msg('padding="same" 只支持 stride=1', 'padding="same" only supports stride=1'));
       const p = typeof padding === 'string' ? Array<number>(n).fill(0) : tuple(padding, n);
       const op = transposed ? tuple(lit(params, 'output_padding'), n) : [];
       for (const [name, values] of [['kernel_size', k], ['stride', s], ['dilation', d], ['padding', p]] as const) {
-        if (values.length !== n) return fail(`${name} 需要 ${n} 个值`);
+        if (values.length !== n) return fail(msg(`${name} 需要 ${n} 个值`, `${name} needs ${n} values`));
       }
 
       const spatial: Dim[] = [];

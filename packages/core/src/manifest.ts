@@ -17,6 +17,8 @@ export interface ManifestParam {
 export interface ManifestEntry {
   type: string;
   kind: NodeSpec['kind'];
+  /** Base for generated node names ("fc", "relu"). */
+  defaultName: string;
   /** Layers: the torch.nn class, e.g. "torch.nn.Conv2d". */
   layerClass?: string;
   params: ManifestParam[];
@@ -36,6 +38,7 @@ export function exportManifest(): Manifest {
     const entry: ManifestEntry = {
       type: s.type,
       kind: s.kind,
+      defaultName: s.defaultName,
       params: s.params.map((p) => {
         const out: ManifestParam = { name: p.name, type: p.type };
         if (p.default !== undefined) out.default = p.default;

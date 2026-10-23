@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
+from .i18n import t, using_locale
 
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 IMPORT_TIMEOUT_S = 30
@@ -46,41 +47,59 @@ def env_info() -> dict[str, Any]:
     return info
 
 
-def import_code(source: str, className: str | None = None, inputShapes: dict[str, str] | None = None) -> dict[str, Any]:
-    cmd = [sys.executable, "-m", "neuroloom", "import", "-"]
-    if className:
-        cmd += ["--class", className]
-    for name, dims in (inputShapes or {}).items():
-        cmd += ["--input", f"{name}={dims}"]
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
-    try:
-        proc = subprocess.run(
-            cmd,
-            input=source,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=IMPORT_TIMEOUT_S,
-            cwd=PACKAGE_ROOT,
-            env=env,
-        )
-    except subprocess.TimeoutExpired as e:
-        raise RpcError(-32002, f"导入超时（{IMPORT_TIMEOUT_S} 秒），已终止执行") from e
+def _child(args: list[str], stdin: str, locale: str | None = None) -> dict[str, Any]:
+    """Runs `python -m neuroloom <args>` in a fresh process and returns its JSON result.
 
-    lines = [l for l in proc.stdout.splitlines() if l.strip()]
-    try:
-        result = json.loads(lines[-1])
-    except (IndexError, json.JSONDecodeError) as e:
-        raise RpcError(-32603, "导入进程没有返回结果", {"stderr": proc.stderr[-4000:]}) from e
-    if "error" in result:
-        raise RpcError(-32001, result["error"]["message"], {**result["error"].get("details", {}), "stderr": proc.stderr[-4000:]})
-    return result
+    Messages, the child's as well as the ones raised here, are in `locale` (the server's when None).
+    """
+    with using_locale(locale) as lang:
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-m", "neuroloom", "--lang", lang, *args],
+                input=stdin,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=IMPORT_TIMEOUT_S,
+                cwd=PACKAGE_ROOT,
+                env=env,
+            )
+        except subprocess.TimeoutExpired as e:
+            raise RpcError(-32002, t(f"超时（{IMPORT_TIMEOUT_S} 秒），已终止执行", f"timed out after {IMPORT_TIMEOUT_S} s; execution was stopped")) from e
+
+        lines = [l for l in proc.stdout.splitlines() if l.strip()]
+        try:
+            result = json.loads(lines[-1])
+        except (IndexError, json.JSONDecodeError) as e:
+            raise RpcError(-32603, t("子进程没有返回结果", "the child process returned no result"), {"stderr": proc.stderr[-4000:]}) from e
+        if "error" in result:
+            raise RpcError(-32001, result["error"]["message"], {**result["error"].get("details", {}), "stderr": proc.stderr[-4000:]})
+        return result
+
+
+def import_code(
+    source: str, className: str | None = None, inputShapes: dict[str, str] | None = None, mode: str = "static", locale: str | None = None
+) -> dict[str, Any]:
+    """`locale` ("zh" or "en") is the language of the messages; the server's (zh unless started with --lang) when omitted."""
+    args = ["import", "-", "--mode", mode]
+    if className:
+        args += ["--class", className]
+    for name, dims in (inputShapes or {}).items():
+        args += ["--input", f"{name}={dims}"]
+    return _child(args, source, locale)
+
+
+def probe_shapes(code: str, className: str, inputs: list[str], locale: str | None = None) -> dict[str, Any]:
+    """Runs instrumented generated code (see probe.py); this executes the model."""
+    return _child(["probe"], json.dumps({"code": code, "className": className, "inputs": inputs}), locale)
 
 
 METHODS = {
     "ping": lambda: {"pong": True, "backend": __version__},
     "env_info": env_info,
     "import_code": import_code,
+    "probe_shapes": probe_shapes,
 }
 
 

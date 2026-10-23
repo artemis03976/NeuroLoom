@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { fail, feature, IN, L, lit, num, ok, OUT, P, resolveParams } from './helpers';
 import type { NodeSpec } from './types';
 
@@ -19,7 +20,7 @@ export const linear: NodeSpec = {
   outputs: OUT,
   defaultName: 'fc',
   infer([x], params) {
-    const inFeatures = feature(params, 'in_features', x!.shape.at(-1), '输入最后一维');
+    const inFeatures = feature(params, 'in_features', x!.shape.at(-1), msg('输入最后一维', 'the last input dimension'));
     if (typeof inFeatures === 'string') return fail(inFeatures);
     const outFeatures = num(params, 'out_features');
     return ok([{ shape: [...x!.shape.slice(0, -1), outFeatures], dtype: x!.dtype }], resolveParams(params, { in_features: inFeatures }));
@@ -62,10 +63,14 @@ export const embedding: NodeSpec = {
   outputs: OUT,
   defaultName: 'embed',
   infer([x], params) {
-    if (x!.dtype !== 'int64') return fail('嵌入层的输入必须是整数张量（把输入节点的数据类型设为 int64）');
+    if (x!.dtype !== 'int64') {
+      return fail(
+        msg('嵌入层的输入必须是整数张量（把输入节点的数据类型设为 int64）', "the embedding input must be an integer tensor (set the input node's dtype to int64)"),
+      );
+    }
     const pad = lit(params, 'padding_idx');
     if (typeof pad === 'number' && (pad >= num(params, 'num_embeddings') || pad < -num(params, 'num_embeddings'))) {
-      return fail('padding_idx 超出词表范围');
+      return fail(msg('padding_idx 超出词表范围', 'padding_idx is out of range for num_embeddings'));
     }
     return ok([{ shape: [...x!.shape, num(params, 'embedding_dim')], dtype: 'float32' }], resolveParams(params));
   },

@@ -1,3 +1,4 @@
+import { msg } from '../i18n';
 import { dimEq } from '../shape';
 import { fail, feature, flag, L, num, ok, OUT, P, rankError, resolveParams } from './helpers';
 import type { NodeSpec, Params } from './types';
@@ -19,10 +20,12 @@ const layerParams = () => [
   P.bool('bias', '偏置', { default: true }),
 ];
 
-function checkModel(params: Params, x: { shape: (number | string)[] }, name: string): number | string {
-  const d = feature(params, 'd_model', x.shape[2], `${name}最后一维`);
+/** `what` is the localized name of the last input dimension. */
+function checkModel(params: Params, x: { shape: (number | string)[] }, what: string): number | string {
+  const d = feature(params, 'd_model', x.shape[2], what);
   if (typeof d === 'string') return d;
-  if (d % num(params, 'nhead') !== 0) return `d_model=${d} 不能被 nhead=${num(params, 'nhead')} 整除`;
+  const nhead = num(params, 'nhead');
+  if (d % nhead !== 0) return msg(`d_model=${d} 不能被 nhead=${nhead} 整除`, `d_model=${d} is not divisible by nhead=${nhead}`);
   return d;
 }
 
@@ -51,18 +54,23 @@ export const multiheadAttention: NodeSpec = {
       const bad = rankError(t!, [3], name);
       if (bad) return fail(bad);
     }
-    const e = feature(params, 'embed_dim', q!.shape[2], 'query 最后一维');
+    const e = feature(params, 'embed_dim', q!.shape[2], msg('query 最后一维', 'the last dimension of query'));
     if (typeof e === 'string') return fail(e);
-    if (e % num(params, 'num_heads') !== 0) return fail(`embed_dim=${e} 不能被 num_heads=${num(params, 'num_heads')} 整除`);
-    if (dimEq(k!.shape[2]!, e) === false || dimEq(v!.shape[2]!, e) === false) return fail('key 和 value 的最后一维必须等于 embed_dim');
+    const heads = num(params, 'num_heads');
+    if (e % heads !== 0) return fail(msg(`embed_dim=${e} 不能被 num_heads=${heads} 整除`, `embed_dim=${e} is not divisible by num_heads=${heads}`));
+    if (dimEq(k!.shape[2]!, e) === false || dimEq(v!.shape[2]!, e) === false) {
+      return fail(msg('key 和 value 的最后一维必须等于 embed_dim', 'the last dimension of key and value must equal embed_dim'));
+    }
     const batchFirst = flag(params, 'batch_first');
     const [batch, target] = batchFirst ? [q!.shape[0]!, q!.shape[1]!] : [q!.shape[1]!, q!.shape[0]!];
     const source = batchFirst ? k!.shape[1]! : k!.shape[0]!;
-    if (dimEq(k!.shape[batchFirst ? 1 : 0]!, v!.shape[batchFirst ? 1 : 0]!) === false) return fail('key 与 value 的序列长度不一致');
+    if (dimEq(k!.shape[batchFirst ? 1 : 0]!, v!.shape[batchFirst ? 1 : 0]!) === false) {
+      return fail(msg('key 与 value 的序列长度不一致', 'key and value have different sequence lengths'));
+    }
     return ok([q!, { shape: [batch, target, source], dtype: q!.dtype }], resolveParams(params, { embed_dim: e }));
   },
   paramCount: (r) => mhaParams(r.embed_dim as number, r.bias as boolean),
-  describe: (r) => `${r.embed_dim ?? '?'} 维 · ${r.num_heads} 头`,
+  describe: (r) => msg(`${r.embed_dim ?? '?'} 维 · ${r.num_heads} 头`, `${r.embed_dim ?? '?'} dims · ${r.num_heads} heads`),
   codegen: { ctor: 'nn.MultiheadAttention', unpack: '{out}, {weights}' },
   example: { inputs: [{ shape: 'B, 5, 16' }, { shape: 'B, 7, 16' }, { shape: 'B, 7, 16' }], params: { num_heads: 4, batch_first: true } },
 };
@@ -85,12 +93,12 @@ function transformerLayer(decoder: boolean): NodeSpec {
     infer([x, memory], params) {
       const bad = rankError(x!, [3], cls);
       if (bad) return fail(bad);
-      const d = checkModel(params, x!, decoder ? 'tgt ' : '输入');
+      const d = checkModel(params, x!, decoder ? msg('tgt 最后一维', 'the last dimension of tgt') : msg('输入最后一维', 'the last input dimension'));
       if (typeof d === 'string') return fail(d);
       if (decoder) {
         const badMemory = rankError(memory!, [3], 'memory');
         if (badMemory) return fail(badMemory);
-        if (dimEq(memory!.shape[2]!, d) === false) return fail('memory 的最后一维必须等于 d_model');
+        if (dimEq(memory!.shape[2]!, d) === false) return fail(msg('memory 的最后一维必须等于 d_model', 'the last dimension of memory must equal d_model'));
       }
       return ok([x!], resolveParams(params, { d_model: d }));
     },
@@ -103,7 +111,7 @@ function transformerLayer(decoder: boolean): NodeSpec {
       const norms = (decoder ? 3 : 2) * d * (bias ? 2 : 1);
       return attention + feedForward + norms;
     },
-    describe: (r) => `${r.d_model ?? '?'} 维 · ${r.nhead} 头 · FF ${r.dim_feedforward}`,
+    describe: (r) => msg(`${r.d_model ?? '?'} 维 · ${r.nhead} 头 · FF ${r.dim_feedforward}`, `${r.d_model ?? '?'} dims · ${r.nhead} heads · FF ${r.dim_feedforward}`),
     codegen: { ctor: `nn.${cls}` },
     example: decoder
       ? { inputs: [{ shape: 'B, 5, 16' }, { shape: 'B, 7, 16' }], params: { nhead: 4, dim_feedforward: 32, batch_first: true } }

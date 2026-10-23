@@ -18,6 +18,7 @@ export const CHANNELS = {
   recoveryClear: 'nl:recovery:clear',
   docState: 'nl:doc:state',
   docCloseAfterSave: 'nl:doc:close-after-save',
+  locale: 'nl:locale',
   command: 'nl:command',
 } as const;
 
@@ -64,6 +65,13 @@ export type MenuCommand =
   | 'redo'
   | 'autoLayout'
   | 'environment'
+  | 'packModule'
+  | 'unpackModule'
+  | 'goUp'
+  | 'newModule'
+  | 'toggleSnap'
+  | 'locale:zh'
+  | 'locale:en'
   | `openRecent:${string}`;
 
 export interface DesktopApi {
@@ -95,6 +103,8 @@ export interface DesktopApi {
     setState(state: { dirty: boolean; title: string }): void;
     closeAfterSave(): void;
   };
+  /** The interface language, for native menus and dialogs. */
+  setLocale(locale: 'zh' | 'en'): void;
   onCommand(listener: (command: MenuCommand) => void): () => void;
 }
 

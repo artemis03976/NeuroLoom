@@ -41,6 +41,15 @@ export function allSpecs(): NodeSpec[] {
   return [...registry.values()];
 }
 
+/** Fills optional parameters with their defaults. */
+export function withDefaults(spec: NodeSpec, params: Params): Params {
+  const full: Params = { ...params };
+  for (const p of spec.params) {
+    if (full[p.name] === undefined && p.default !== undefined) full[p.name] = { literal: p.default };
+  }
+  return full;
+}
+
 /** Parameter values for a freshly created node. */
 export function initialParams(spec: NodeSpec): Params {
   const params: Params = {};

@@ -1,8 +1,8 @@
 // Shape inference and validation for one module (PRD section 8.4–8.5).
 import { incomingByPort, isValidIdentifier, portKey, topoOrder } from './graph';
-import { isAuto, literalOf, type ModuleDef, type NodeId, type ParamValue } from './ir';
+import { isAuto, literalOf, type Edge, type Literal, type ModuleDef, type NodeId, type ParamValue } from './ir';
 import type { TensorType } from './shape';
-import { getSpec, type NodeSpec, type Resolved } from './specs';
+import { getSpec, outputsOf, variadicIndex, type Inputs, type NodeSpec, type ParamSpec, type Resolved } from './specs';
 
 export interface Diagnostic {
   severity: 'error' | 'warning';
@@ -11,7 +11,7 @@ export interface Diagnostic {
 }
 
 export interface NodeAnalysis {
-  inputs: (TensorType | undefined)[];
+  inputs: Inputs;
   /** Undefined when inference failed here or upstream. */
   outputs?: TensorType[];
   resolved?: Resolved;
@@ -35,6 +35,37 @@ export function withDefaults(spec: NodeSpec, params: Record<string, ParamValue>)
   return full;
 }
 
+const isInt = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v);
+
+/** Validates one literal against its ParamSpec; returns an error message or undefined. */
+export function checkParamValue(p: ParamSpec, v: Literal | undefined): string | undefined {
+  if (v === null) return p.nullable ? undefined : `${p.name} 不能为空`;
+  if (v === undefined) return `缺少参数 ${p.name}`;
+  const atLeast = (n: number) => p.min === undefined || n >= p.min;
+  switch (p.type) {
+    case 'int':
+      if (!isInt(v)) return `${p.name} 必须是整数`;
+      return atLeast(v) ? undefined : `${p.name} 必须 ≥ ${p.min}`;
+    case 'float':
+      return typeof v === 'number' && Number.isFinite(v) ? undefined : `${p.name} 必须是数字`;
+    case 'bool':
+      return typeof v === 'boolean' ? undefined : `${p.name} 必须是布尔值`;
+    case 'enum':
+      return typeof v === 'string' && p.options?.includes(v) ? undefined : `${p.name} 必须是 ${p.options?.join(' / ')} 之一`;
+    case 'shape':
+      return typeof v === 'string' ? undefined : `${p.name} 必须是形状文本`;
+    case 'ints': {
+      if (typeof v === 'string') return p.options?.includes(v) ? undefined : `${p.name} 必须是整数或 ${p.options?.join(' / ') ?? '整数元组'}`;
+      const values = Array.isArray(v) ? v : [v];
+      if (values.length === 0 || !values.every(isInt)) return `${p.name} 必须是整数或整数元组`;
+      if (Array.isArray(v) && p.arity !== undefined && v.length !== p.arity) return `${p.name} 需要 ${p.arity} 个值`;
+      return values.every((n) => atLeast(n as number)) ? undefined : `${p.name} 的每个值都必须 ≥ ${p.min}`;
+    }
+    case 'dims':
+      return Array.isArray(v) && v.length > 0 && v.every(isInt) ? undefined : `${p.name} 必须是整数列表`;
+  }
+}
+
 function checkParams(spec: NodeSpec, params: Record<string, ParamValue>): string | undefined {
   for (const p of spec.params) {
     const value = params[p.name];
@@ -43,24 +74,17 @@ function checkParams(spec: NodeSpec, params: Record<string, ParamValue>): string
       if (!p.allowAuto) return `参数 ${p.name} 不支持自动推断`;
       continue;
     }
-    const v = literalOf(value);
-    switch (p.type) {
-      case 'int':
-        if (typeof v !== 'number' || !Number.isInteger(v)) return `${p.name} 必须是整数`;
-        if (p.min !== undefined && v < p.min) return `${p.name} 必须 ≥ ${p.min}`;
-        break;
-      case 'float':
-        if (typeof v !== 'number' || !Number.isFinite(v)) return `${p.name} 必须是数字`;
-        break;
-      case 'bool':
-        if (typeof v !== 'boolean') return `${p.name} 必须是布尔值`;
-        break;
-      case 'shape':
-        if (typeof v !== 'string') return `${p.name} 必须是形状文本`;
-        break;
-    }
+    const error = checkParamValue(p, literalOf(value));
+    if (error) return error;
   }
   return undefined;
+}
+
+/** Edges into a variadic input, in port order. */
+export function variadicEdges(mod: ModuleDef, nodeId: NodeId, base: string): Edge[] {
+  return mod.edges
+    .filter((e) => e.target.node === nodeId && variadicIndex(e.target.port, base) !== undefined)
+    .sort((a, b) => variadicIndex(a.target.port, base)! - variadicIndex(b.target.port, base)!);
 }
 
 export function analyzeModule(mod: ModuleDef): Analysis {
@@ -82,10 +106,14 @@ export function analyzeModule(mod: ModuleDef): Analysis {
 
   const incoming = incomingByPort(mod);
   const nodes: Record<NodeId, NodeAnalysis> = {};
+  /** Output port index of a source node, or -1 if the port does not exist (any more). */
   const outputIndex = (nodeId: NodeId, port: string): number => {
-    const spec = getSpec(mod.nodes[nodeId]?.type);
-    return Math.max(0, spec?.outputs.findIndex((o) => o.name === port) ?? 0);
+    const node = mod.nodes[nodeId];
+    const spec = getSpec(node?.type);
+    if (!node || !spec) return -1;
+    return outputsOf(spec, withDefaults(spec, node.params)).findIndex((o) => o.name === port);
   };
+  const typeOf = (e: Edge): TensorType | undefined => nodes[e.source.node]?.outputs?.[outputIndex(e.source.node, e.source.port)];
 
   for (const nodeId of order) {
     const node = mod.nodes[nodeId]!;
@@ -96,15 +124,26 @@ export function analyzeModule(mod: ModuleDef): Analysis {
       continue;
     }
 
-    const inputs = spec.inputs.map((p) => {
-      const e = incoming.get(portKey(nodeId, p.name));
-      return e ? nodes[e.source.node]?.outputs?.[outputIndex(e.source.node, e.source.port)] : undefined;
-    });
+    const inputs: Inputs = [];
+    const unconnected: string[] = [];
+    let upstreamFailed = false;
+    for (const port of spec.inputs) {
+      const edges = port.variadic ? variadicEdges(mod, nodeId, port.name) : [incoming.get(portKey(nodeId, port.name))].filter((e): e is Edge => !!e);
+      if (edges.length === 0) {
+        if (!port.optional) unconnected.push(port.name);
+        if (!port.variadic) inputs.push(undefined);
+        continue;
+      }
+      for (const e of edges) {
+        const t = typeOf(e);
+        if (!t) upstreamFailed = true;
+        inputs.push(t);
+      }
+    }
     nodes[nodeId] = { inputs, paramCount: 0 };
 
-    const unconnected = spec.inputs.filter((p) => !incoming.has(portKey(nodeId, p.name)));
     if (unconnected.length > 0) {
-      diagnostics.push({ severity: 'error', nodeId, message: `输入端口 ${unconnected.map((p) => p.name).join('、')} 未连接` });
+      diagnostics.push({ severity: 'error', nodeId, message: `输入端口 ${unconnected.join('、')} 未连接` });
       continue;
     }
     const params = withDefaults(spec, node.params);
@@ -114,9 +153,9 @@ export function analyzeModule(mod: ModuleDef): Analysis {
       continue;
     }
     // An upstream failure is already reported there; don't cascade it downstream.
-    if (inputs.some((t) => t === undefined)) continue;
+    if (upstreamFailed) continue;
 
-    const result = spec.infer(inputs as TensorType[], params);
+    const result = spec.infer(inputs, params);
     if (!result.ok) {
       diagnostics.push({ severity: 'error', nodeId, message: result.error });
       continue;
@@ -132,7 +171,11 @@ export function analyzeModule(mod: ModuleDef): Analysis {
 
   const edgeTypes: Record<string, TensorType> = {};
   for (const e of mod.edges) {
-    const t = nodes[e.source.node]?.outputs?.[outputIndex(e.source.node, e.source.port)];
+    if (outputIndex(e.source.node, e.source.port) < 0) {
+      diagnostics.push({ severity: 'error', nodeId: e.source.node, message: `输出端口 ${e.source.port} 已不存在，请重新连线` });
+      continue;
+    }
+    const t = typeOf(e);
     if (t) edgeTypes[e.id] = t;
   }
 

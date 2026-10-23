@@ -1,5 +1,6 @@
 // Structural equivalence used by the round-trip gate (PRD section 11.5).
 import { analyzeModule, withDefaults, type Analysis } from './analyze';
+import { canonicalValue } from './codegen';
 import { interfaceOrder } from './graph';
 import { literalOf, type Literal, type ModuleDef, type NodeId } from './ir';
 import { parseShape, shapeText } from './shape';
@@ -35,7 +36,7 @@ export function structuralSignature(mod: ModuleDef, analysis: Analysis = analyze
     if (spec) {
       const full = withDefaults(spec, node.params);
       for (const p of spec.params) {
-        let value = resolved?.[p.name] ?? literalOf(full[p.name]);
+        let value = canonicalValue(resolved?.[p.name] ?? literalOf(full[p.name]), p);
         if (p.type === 'shape' && typeof value === 'string') {
           const parsed = parseShape(value);
           if (parsed.ok) value = shapeText(parsed.shape);

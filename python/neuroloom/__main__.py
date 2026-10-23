@@ -17,15 +17,15 @@ def _utf8_stdio() -> None:
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
-    from .importer import ImportFailure, import_source, parse_dims
+    from .importer import ImportFailure, import_source, parse_input
 
     source = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
     try:
-        shapes = {}
+        inputs = {}
         for item in args.input:
-            name, _, dims = item.partition("=")
-            shapes[name.strip()] = parse_dims(dims)
-        result = import_source(source, args.class_name, shapes, filename=args.file if args.file != "-" else "<model.py>")
+            name, _, spec = item.partition("=")
+            inputs[name.strip()] = parse_input(spec)
+        result = import_source(source, args.class_name, inputs, filename=args.file if args.file != "-" else "<model.py>")
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except ImportFailure as e:
@@ -45,7 +45,10 @@ def main(argv: list[str] | None = None) -> int:
     p_import = sub.add_parser("import", help="import a PyTorch model file into NeuroLoom IR (prints JSON)")
     p_import.add_argument("file", help="path to a .py file, or - to read stdin")
     p_import.add_argument("--class", dest="class_name", help="model class to import (default: last nn.Module defined)")
-    p_import.add_argument("--input", action="append", default=[], metavar="NAME=DIMS", help="input shape, e.g. x=B,784")
+    p_import.add_argument(
+        "--input", action="append", default=[], metavar="NAME=DIMS[:DTYPE]", help="input shape, e.g. x=B,784 or ids=B,16:int64"
+    )
+    sub.add_parser("import-batch", help="import a JSON list of {source, className, inputShapes} from stdin (prints a JSON list)")
 
     sub.add_parser("serve", help="JSON-RPC 2.0 over stdio, one message per line")
     sub.add_parser("env", help="print Python / torch environment info")
@@ -53,6 +56,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "import":
         return _cmd_import(args)
+    if args.command == "import-batch":
+        from .importer import import_many
+
+        print(json.dumps(import_many(json.loads(sys.stdin.read())), ensure_ascii=False))
+        return 0
     if args.command == "serve":
         from .server import serve
 

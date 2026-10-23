@@ -1,8 +1,10 @@
 import { parseProject } from '@neuroloom/core';
 import { useState } from 'react';
+import { errorMessage } from '../host';
 import { rpc, RpcError, type ImportResult } from '../lib/rpc';
 import { SAMPLE_IMPORT_CODE } from '../lib/sample';
 import { useStudio } from '../store';
+import { notify } from '../ui';
 
 /** "x=B,784; mask=B,16" -> { x: "B,784", mask: "B,16" } */
 function parseShapes(text: string): Record<string, string> {
@@ -14,7 +16,7 @@ function parseShapes(text: string): Record<string, string> {
   return shapes;
 }
 
-export function ImportDialog({ onClose, onImported }: { onClose: () => void; onImported: (warnings: string[]) => void }) {
+export function ImportDialog({ onClose }: { onClose: () => void }) {
   const loadProject = useStudio((s) => s.loadProject);
   const [source, setSource] = useState(SAMPLE_IMPORT_CODE);
   const [className, setClassName] = useState('');
@@ -31,11 +33,12 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
         className: className.trim() || null,
         inputShapes: parseShapes(shapes),
       });
-      loadProject(parseProject(result.project), { relayout: true });
-      onImported(result.warnings);
+      const project = parseProject(result.project);
+      loadProject(project, { name: project.name, saved: false, relayout: true });
+      notify(`已导入 ${project.name}`, 'success', result.warnings);
       onClose();
     } catch (e) {
-      setError(e instanceof RpcError || e instanceof Error ? e.message : String(e));
+      setError(e instanceof RpcError ? e.message : errorMessage(e));
     } finally {
       setBusy(false);
     }

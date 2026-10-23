@@ -15,11 +15,14 @@ const SHORT: Record<string, string> = {
  * "a -> b" (a.out to b.in). Nodes default to a left-to-right row.
  */
 export function build(className: string, rows: NodeRow[], edges: string[]): LoomProject {
-  const mod: ModuleDef = { id: 'main', className, nodes: {}, edges: [], layout: {} };
+  const mod: ModuleDef = { id: 'main', className, nodes: {}, edges: [], layout: {}, interface: { inputs: [], outputs: [] } };
   rows.forEach(([name, short, params = {}, pos], i) => {
     const type = SHORT[short] ?? short;
-    mod.nodes[name] = { id: name, kind: getSpec(type)!.kind, type, name, params };
+    const kind = getSpec(type)!.kind;
+    mod.nodes[name] = { id: name, kind, type, name, params };
     mod.layout[name] = { x: pos?.[0] ?? i * 220, y: pos?.[1] ?? 0 };
+    if (kind === 'input') mod.interface.inputs.push(name);
+    if (kind === 'output') mod.interface.outputs.push(name);
   });
   edges.forEach((text, i) => {
     const [a, b] = text.split('->').map((s) => s.trim()) as [string, string];

@@ -2,11 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   analyzeModule,
   connect,
+  copyNodes,
+  parseClip,
+  pasteClip,
   entryModule,
   generateCode,
   literal,
   parseProject,
+  parseProjectText,
   parseShape,
+  serializeProject,
   renameNode,
   setLayout,
   setParam,
@@ -102,7 +107,7 @@ class MLP(nn.Module):
     expect(code).toContain('        return head1, head2\n');
   });
 
-  it('keeps forward arguments and return values in creation order, whatever the layout', () => {
+  it('keeps forward arguments and return values in interface order, whatever the layout', () => {
     const inputs = twoInputs();
     inputs.modules.main = setLayout(entryModule(inputs), { a: { x: 0, y: 300 }, b: { x: 0, y: 0 } });
     expect(generateCode(inputs).code).toContain('def forward(self, a: torch.Tensor, b: torch.Tensor)');
@@ -149,11 +154,88 @@ describe('editing', () => {
   });
 });
 
+describe('.loom serialization', () => {
+  it('is byte-stable regardless of key insertion order', () => {
+    const p = mlp();
+    const reordered = JSON.parse(JSON.stringify(p), (_k, v) =>
+      v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).reverse()) : v,
+    );
+    expect(serializeProject(reordered)).toBe(serializeProject(p));
+    expect(serializeProject(p).endsWith('}\n')).toBe(true);
+  });
+
+  it('round-trips without changing the generated code', () => {
+    const p = twoHeads();
+    const loaded = parseProjectText(serializeProject(p));
+    expect(generateCode(loaded).code).toBe(generateCode(p).code);
+  });
+
+  it('keeps the return order even though node ids sort the other way', () => {
+    const p = twoHeads();
+    const mod = entryModule(p);
+    // Rename ids so the second output sorts first alphabetically.
+    const text = serializeProject(p).replaceAll('"output_1"', '"a_out"').replaceAll('"output"', '"z_out"');
+    const loaded = parseProjectText(text);
+    expect(entryModule(loaded).interface.outputs).toEqual(['z_out', 'a_out']);
+    expect(generateCode(loaded).code).toContain('return head1, head2');
+    expect(mod.interface.outputs).toEqual(['output', 'output_1']);
+  });
+
+  it('migrates 0.1 files, deriving the interface from node order', () => {
+    const v01 = JSON.parse(JSON.stringify(twoInputs()));
+    v01.schemaVersion = '0.1';
+    delete v01.modules.main.interface;
+    const loaded = parseProject(v01);
+    expect(loaded.schemaVersion).toBe('0.2');
+    expect(entryModule(loaded).interface).toEqual({ inputs: ['a', 'b'], outputs: ['output', 'output_1'] });
+  });
+
+  it('repairs an interface that lists missing nodes or omits some', () => {
+    const p = JSON.parse(JSON.stringify(twoInputs()));
+    p.modules.main.interface = { inputs: ['b', 'ghost'], outputs: [] };
+    expect(entryModule(parseProject(p)).interface).toEqual({ inputs: ['b', 'a'], outputs: ['output', 'output_1'] });
+  });
+
+  it('rejects files from a newer schema', () => {
+    const p = JSON.parse(JSON.stringify(mlp()));
+    p.schemaVersion = '9.0';
+    expect(() => parseProject(p)).toThrow('9.0');
+  });
+});
+
 describe('parseProject', () => {
   it('accepts a valid project and rejects unknown node types', () => {
     expect(() => parseProject(JSON.parse(JSON.stringify(mlp())))).not.toThrow();
     const bad = JSON.parse(JSON.stringify(mlp()));
     bad.modules.main.nodes.fc1.type = 'torch.nn.Mystery';
     expect(() => parseProject(bad)).toThrow('torch.nn.Mystery');
+  });
+});
+
+describe('clipboard', () => {
+  it('copies nodes with the edges between them and pastes them with fresh names', () => {
+    const mod = entryModule(mlp());
+    const clip = parseClip(JSON.stringify(copyNodes(mod, ['fc1', 'act1'])))!;
+    expect(clip.nodes.map((n) => n.name)).toEqual(['fc1', 'act1']);
+    expect(clip.edges).toHaveLength(1);
+
+    const { mod: pasted, nodeIds } = pasteClip(mod, clip, { x: 40, y: 40 });
+    const names = nodeIds.map((id) => pasted.nodes[id]!.name);
+    expect(names).toEqual(['fc3', 'act2']);
+    expect(pasted.edges.filter((e) => nodeIds.includes(e.source.node) && nodeIds.includes(e.target.node))).toHaveLength(1);
+    expect(pasted.layout[nodeIds[0]!]).toEqual({ x: mod.layout.fc1!.x + 40, y: mod.layout.fc1!.y + 40 });
+  });
+
+  it('keeps names that are free and adds pasted inputs to the interface', () => {
+    const source = entryModule(mlp());
+    const target = entryModule(twoInputs());
+    const { mod, nodeIds } = pasteClip(target, copyNodes(source, ['x', 'fc2']), { x: 0, y: 0 });
+    expect(nodeIds.map((id) => mod.nodes[id]!.name)).toEqual(['x', 'fc2']);
+    expect(mod.interface.inputs).toEqual(['a', 'b', nodeIds[0]]);
+  });
+
+  it('ignores clipboard text that is not a NeuroLoom clip', () => {
+    expect(parseClip('hello')).toBeNull();
+    expect(parseClip('{"kind":"other"}')).toBeNull();
   });
 });

@@ -18,6 +18,7 @@
     "test:py": "node scripts/py.mjs -m pytest -q",
     "smoke": "npm run smoke -w @neuroloom/desktop",
     "perf": "npm run perf -w @neuroloom/desktop",
+    "startup": "npm run startup -w @neuroloom/desktop",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "brand": "npm run build -w @neuroloom/brand",
     "specs": "npm run specs -w @neuroloom/core"

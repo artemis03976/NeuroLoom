@@ -88,6 +88,7 @@ npm run dev
 | `npm run smoke` | 启动构建好的桌面版做端到端冒烟测试（先运行 `build:desktop`） |
 | `npm run perf` | 在构建好的桌面版中按 PRD 第 13 节测量帧率、修改延迟和内存（先运行 `build:desktop`） |
 | `npm run dist` | 打当前平台的安装包，输出到 `apps/desktop/release/`；`npm run dist -- --dir` 只生成免安装目录 |
+| `npm run startup` | 测打包后应用的冷启动时间：启动 5 次，每次用新的用户数据目录，到编辑器可用为止（先运行 `npm run dist -- --dir`） |
 | `npm run specs` | 节点规格变动后，重新生成 Python 导入器用的 `python/neuroloom/specs.json` |
 | `npm run templates -w @neuroloom/studio` | 从 `apps/studio/templates/*.py` 重新生成模板 |
 | `npm run brand` | 从 `brand/palette.json` 重新生成 logo、图标与配色 token |

@@ -10,23 +10,11 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { _electron } from 'playwright-core';
+import { desktopRoot, packagedExecutable } from './packaged.mjs';
 
-const desktopRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const release = join(desktopRoot, 'release');
-
-function findExecutable() {
-  const candidates = {
-    win32: [join(release, 'win-unpacked', 'NeuroLoom.exe')],
-    darwin: [process.arch === 'arm64' ? 'mac-arm64' : 'mac', 'mac-arm64', 'mac'].map((d) => join(release, d, 'NeuroLoom.app', 'Contents', 'MacOS', 'NeuroLoom')),
-    linux: [join(release, 'linux-unpacked', 'neuroloom')],
-  }[process.platform] ?? [];
-  return candidates.find((p) => existsSync(p));
-}
-
-const executablePath = process.argv[2] ?? findExecutable();
+const executablePath = process.argv[2] ?? packagedExecutable();
 if (!executablePath || !existsSync(executablePath)) {
   console.error('No packaged app found; run `npm run dist -- --dir` first or pass the executable path.');
   process.exit(1);

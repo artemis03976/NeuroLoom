@@ -70,6 +70,7 @@ export type MenuCommand =
   | 'goUp'
   | 'newModule'
   | 'toggleSnap'
+  | 'replay'
   | 'locale:zh'
   | 'locale:en'
   | `openRecent:${string}`;

@@ -2,6 +2,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useState } from 'react';
 import { FlowCanvas } from './canvas/FlowCanvas';
 import { Breadcrumb, ContextMenuView, SelectionBar, SourceView } from './canvas/Overlays';
+import { ReplayBar } from './canvas/ReplayBar';
 import { discardRecovery, restoreRecovery } from './commands';
 import { host } from './host';
 import { useClipboard, useCommands, useDocumentLifecycle } from './hooks';
@@ -91,6 +92,7 @@ export function App() {
               <SelectionBar />
             </div>
             <SourceView />
+            <ReplayBar />
             <RecoveryBanner />
             <Toasts />
           </main>

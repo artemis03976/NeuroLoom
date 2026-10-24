@@ -2,6 +2,7 @@
 // (desktop), the top bar and the canvas context menu.
 import { EditError, isValidClassName, parseProjectText, serializeProject, uniqueClassName, type ModuleId, type NodeId } from '@neuroloom/core';
 import type { MenuCommand } from '@neuroloom/host-api';
+import { useReplay } from './canvas/replay';
 import { errorMessage, host } from './host';
 import { tr, useLocale } from './i18n';
 import { probeShapes } from './lib/probe';
@@ -218,6 +219,8 @@ export function runCommand(command: MenuCommand): void {
       return studio.goUp();
     case 'newModule':
       return newModule();
+    case 'replay':
+      return useReplay.getState().open ? useReplay.getState().close() : useReplay.getState().start();
     case 'toggleSnap':
       return useUi.getState().toggleSnap();
     case 'locale:zh':

@@ -16,7 +16,8 @@
     "smoke": "node scripts/smoke.mjs",
     "dist": "node scripts/build.mjs && electron-builder --config electron-builder.config.mjs --publish never",
     "smoke:packaged": "node scripts/smoke-packaged.mjs",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "perf": "node scripts/perf.mjs"
   },
   "devDependencies": {
     "@neuroloom/backend-bridge": "*",

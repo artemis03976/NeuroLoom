@@ -2,6 +2,7 @@
 # zh: Transformer 编码器分类
 # description: Token embeddings, two pre-norm Transformer encoder layers, mean pooling and a linear head.
 # description_zh: 词嵌入、两层 Pre-LN Transformer 编码层、平均池化，再接线性分类头。
+# paper: https://arxiv.org/abs/1706.03762
 # inputs: tokens=B,T:int64
 from torch import nn
 

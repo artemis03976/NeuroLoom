@@ -70,6 +70,27 @@ function recurrent(cls: keyof typeof GATES): NodeSpec {
       }
       return total;
     },
+    // One input projection over the whole sequence plus a hidden projection per step,
+    // all (add)mm: 2·T·B·gates·H·(in + H) per layer and direction, biases not counted.
+    // That is what FlopCounterMode counts when the layer runs as those products (on
+    // ARM, or with oneDNN off). On x86 PyTorch runs LSTM as the fused oneDNN op
+    // mkldnn_rnn_layer, which FlopCounterMode cannot see and counts as 0; the work is
+    // the same, so the formula holds there too (the tests count with oneDNN off).
+    flops: (r, [x]) => {
+      const [steps, batch] = r.batch_first ? [x![1]!, x![0]!] : [x![0]!, x![1]!];
+      const h = r.hidden_size as number;
+      const dirs = r.bidirectional ? 2 : 1;
+      let total = 0;
+      for (let layer = 0; layer < (r.num_layers as number); layer++) {
+        const inSize = layer === 0 ? (r.input_size as number) : h * dirs;
+        total += dirs * 2 * steps * batch * GATES[cls] * h * (inSize + h);
+      }
+      return total;
+    },
+    shapeDoc: L(
+      `out: [B, T, D·hidden_size] with batch_first, else [T, B, D·hidden_size]; ${isLstm ? 'h_n, c_n' : 'h_n'}: [D·num_layers, B, hidden_size]; D = 2 if bidirectional else 1`,
+      `out：batch_first 时为 [B, T, D·hidden_size]，否则 [T, B, D·hidden_size]；${isLstm ? 'h_n、c_n' : 'h_n'}：[D·num_layers, B, hidden_size]；双向时 D = 2，否则 1`,
+    ),
     describe: (r) =>
       `${r.input_size ?? '?'} → ${r.hidden_size}${(r.num_layers as number) > 1 ? msg(` × ${r.num_layers} 层`, ` × ${r.num_layers} layers`) : ''}${r.bidirectional ? msg(' · 双向', ' · bidirectional') : ''}`,
     codegen: { ctor: `nn.${cls}`, unpack: isLstm ? '{out}, ({h_n}, {c_n})' : '{out}, {h_n}' },

@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { PythonBackend, discoverPythons, planEnvironment, probePython, venvPython } from '../src';
+import { PythonBackend, discoverPythons, planEnvironment, probePython, venvPython } from '../src/index.ts';
 
 const pythonDir = join(dirname(fileURLToPath(import.meta.url)), '../../../python');
 const projectVenv = join(pythonDir, '.venv');

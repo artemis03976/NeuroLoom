@@ -2,6 +2,7 @@
 # zh: 多层感知机（MNIST）
 # description: Two hidden layers with ReLU and dropout, for 28×28 digits flattened to 784.
 # description_zh: 两个隐藏层，带 ReLU 与 Dropout，输入为展平的 28×28 手写数字。
+# paper: https://www.nature.com/articles/323533a0
 # inputs: x=B,784
 from torch import nn
 

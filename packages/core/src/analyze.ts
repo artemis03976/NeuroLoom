@@ -120,8 +120,11 @@ function checkParams(spec: NodeSpec, params: Params): string | undefined {
   return undefined;
 }
 
-/** Replaces expressions with their values in `env`. */
-export function bindParams(params: Record<string, ParamValue>, env: Env): { params: Params } | { error: string } {
+/**
+ * Replaces expressions with their values in `env`. `unknown` names a parameter
+ * whose value is only known when the model runs (it uses a preamble function).
+ */
+export function bindParams(params: Record<string, ParamValue>, env: Env): { params: Params } | { error: string } | { unknown: string } {
   const bound: Params = {};
   for (const [name, value] of Object.entries(params)) {
     const text = exprOf(value);
@@ -130,6 +133,7 @@ export function bindParams(params: Record<string, ParamValue>, env: Env): { para
       continue;
     }
     const result = evalExpr(text, env);
+    if (!result.ok && result.unknown) return { unknown: `${name} = ${text}` };
     if (!result.ok) return { error: msg(`参数 ${name} = ${text}：${result.error}`, `${name} = ${text}: ${result.error}`) };
     bound[name] = { literal: result.value };
   }
@@ -176,12 +180,14 @@ export function defaultEnv(mod: ModuleDef, globals: Env = {}): Env {
   return env;
 }
 
-/** Layers that code blocks use directly (`self.attn(...)`), so they need no edges of their own. */
-function usedByCode(mod: ModuleDef): Set<string> {
+/**
+ * Layers that Python kept verbatim uses directly (`self.attn(...)` in a code
+ * block, or in a helper method that forward() calls), so they need no edges.
+ */
+export function usedByCode(mod: ModuleDef): Set<string> {
   const names = new Set<string>();
-  for (const n of Object.values(mod.nodes)) {
-    for (const m of n.code?.source.matchAll(/\bself\.([A-Za-z_][A-Za-z0-9_]*)/g) ?? []) names.add(m[1]!);
-  }
+  const texts = [mod.members ?? '', mod.initCode ?? '', ...Object.values(mod.nodes).map((n) => n.code?.source ?? '')];
+  for (const text of texts) for (const m of text.matchAll(/\bself\.([A-Za-z_][A-Za-z0-9_]*)/g)) names.add(m[1]!);
   return names;
 }
 
@@ -290,6 +296,14 @@ class Analyzer {
         const result = bindParams(node.params, env);
         if ('error' in result) {
           fail(nodeId, result.error);
+          continue;
+        }
+        if ('unknown' in result) {
+          diagnostics.push({
+            severity: 'warning',
+            nodeId,
+            message: msg(`参数 ${result.unknown} 要运行时才知道，无法推断形状`, `${result.unknown} is only known when the model runs, so its shape cannot be inferred`),
+          });
           continue;
         }
         bound = result.params;
@@ -513,6 +527,7 @@ class Analyzer {
     if (node.repeat!.first) {
       const result = bindParams(node.repeat!.first, env);
       if ('error' in result) return result;
+      if ('unknown' in result) return { error: msg(`参数 ${result.unknown} 要运行时才知道`, `${result.unknown} is only known when the model runs`) };
       firstParams = { ...params, ...result.params };
       const error = checkParams(spec, firstParams);
       if (error) return { error };

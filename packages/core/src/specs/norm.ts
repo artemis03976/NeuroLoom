@@ -1,7 +1,7 @@
 import { msg } from '../i18n';
 import { isAuto } from '../ir';
 import { dimEq } from '../shape';
-import { fail, feature, IN, L, lit, num, ok, OUT, P, rankError, resolveParams, tuple } from './helpers';
+import { fail, feature, IN, L, lit, num, ok, OUT, P, rankError, resolveParams, SAME_SHAPE, tuple } from './helpers';
 import type { Example, NodeSpec } from './types';
 
 const doc = (cls: string) => `https://docs.pytorch.org/docs/stable/generated/torch.nn.${cls}.html`;
@@ -38,6 +38,7 @@ function channelNorm(cls: string, zh: string, ranks: number[], kind: 'batch' | '
       return ok([x!], resolveParams(params, { num_features: c }));
     },
     paramCount: (r) => (r.affine ? 2 * (r.num_features as number) : 0),
+    shapeDoc: SAME_SHAPE,
     describe: (r) => msg(`${r.num_features ?? '?'} 通道`, `${r.num_features ?? '?'} channels`),
     codegen: { ctor: `nn.${cls}` },
     example,
@@ -94,6 +95,7 @@ const layerNorm: NodeSpec = {
     const n = tuple(r.normalized_shape, 1).reduce((a, b) => a * b, 1);
     return r.elementwise_affine ? n * (r.bias ? 2 : 1) : 0;
   },
+  shapeDoc: SAME_SHAPE,
   describe: (r) => `[${tuple(r.normalized_shape, 1).join(', ')}]`,
   codegen: { ctor: 'nn.LayerNorm' },
   example: { inputs: [{ shape: 'B, 6, 16' }] },
@@ -140,6 +142,7 @@ const groupNorm: NodeSpec = {
     return ok([x!], resolveParams(params, { num_channels: c }));
   },
   paramCount: (r) => (r.affine ? 2 * (r.num_channels as number) : 0),
+  shapeDoc: SAME_SHAPE,
   describe: (r) => msg(`${r.num_groups} 组 · ${r.num_channels ?? '?'} 通道`, `${r.num_groups} groups · ${r.num_channels ?? '?'} channels`),
   codegen: { ctor: 'nn.GroupNorm' },
   example: { inputs: [{ shape: 'B, 8, 4, 4' }], params: { num_groups: 2 } },

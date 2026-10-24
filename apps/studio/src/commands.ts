@@ -1,7 +1,8 @@
 // Document and editor commands, shared by keyboard shortcuts, the native menu
 // (desktop), the top bar and the canvas context menu.
-import { EditError, isValidClassName, parseProjectText, serializeProject, uniqueClassName, type ModuleId, type NodeId } from '@neuroloom/core';
+import { EditError, generateFiles, isValidClassName, parseProjectText, serializeProject, snakeCase, uniqueClassName, type ModuleId, type NodeId } from '@neuroloom/core';
 import type { MenuCommand } from '@neuroloom/host-api';
+import { useReplay } from './canvas/replay';
 import { errorMessage, host } from './host';
 import { tr, useLocale } from './i18n';
 import { probeShapes } from './lib/probe';
@@ -72,11 +73,13 @@ export async function saveDocument(saveAs = false): Promise<boolean> {
 }
 
 export async function exportPython(): Promise<void> {
-  const { codegen, project } = useStudio.getState();
+  const { codegen, project, analysis } = useStudio.getState();
   const entry = project.modules[project.entry]!;
   const name = entry.className.replace(/[^A-Za-z0-9_]/g, '').toLowerCase() || 'model';
   try {
-    const where = await host.exportPython({ text: codegen.code, suggestedName: name });
+    const where = project.exportOptions?.splitFiles
+      ? await host.exportPackage({ files: generateFiles(project, analysis), suggestedName: snakeCase(entry.className) || 'model' })
+      : await host.exportPython({ text: codegen.code, suggestedName: name });
     if (where) notify(host.kind === 'desktop' ? tr(`已导出 ${where}`, `Exported ${where}`) : tr(`已下载 ${baseName(where)}`, `Downloaded ${baseName(where)}`), 'success');
   } catch (e) {
     notify(tr(`导出失败：${errorMessage(e)}`, `Export failed: ${errorMessage(e)}`), 'error');
@@ -204,6 +207,10 @@ export function runCommand(command: MenuCommand): void {
       return useUi.getState().openDialog('environment');
     case 'exportPy':
       return void exportPython();
+    case 'exportOptions':
+      return useUi.getState().openDialog('exportOptions');
+    case 'exportImage':
+      return useUi.getState().openDialog('exportImage');
     case 'undo':
       return studio.undo();
     case 'redo':
@@ -218,6 +225,8 @@ export function runCommand(command: MenuCommand): void {
       return studio.goUp();
     case 'newModule':
       return newModule();
+    case 'replay':
+      return useReplay.getState().open ? useReplay.getState().close() : useReplay.getState().start();
     case 'toggleSnap':
       return useUi.getState().toggleSnap();
     case 'locale:zh':

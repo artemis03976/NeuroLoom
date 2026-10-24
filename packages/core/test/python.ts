@@ -41,7 +41,7 @@ export const inputShapesOf = (p: LoomProject): Record<string, string> =>
       .map((n) => [n.name, inputArg(String(literalOf(n.params.shape)), literalOf(n.params.dtype) as string | undefined)]),
   );
 
-export type ImportMode = 'static' | 'trace';
+export type ImportMode = 'static' | 'dynamic' | 'trace';
 
 export function importCode(code: string, inputShapes: Record<string, string> = {}, mode: ImportMode = 'static'): ImportResult {
   const args = ['-m', 'neuroloom', 'import', '-', '--mode', mode];

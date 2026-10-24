@@ -12,6 +12,8 @@ export const CHANNELS = {
   fileOpenPath: 'nl:file:open-path',
   fileSave: 'nl:file:save',
   fileExportPython: 'nl:file:export-python',
+  fileExportPackage: 'nl:file:export-package',
+  fileExportImage: 'nl:file:export-image',
   fileRecent: 'nl:file:recent',
   recoveryWrite: 'nl:recovery:write',
   recoveryRead: 'nl:recovery:read',
@@ -45,6 +47,20 @@ export interface OpenedFile {
   text: string;
 }
 
+/** File formats of an exported diagram (PRD F7.3). */
+export type ImageFormat = 'svg' | 'png' | 'pdf';
+
+/**
+ * A diagram to save. `data` is SVG markup for 'svg' and PNG bytes for 'png'. For
+ * 'pdf' it is either SVG markup, which the desktop app prints to a vector PDF the
+ * size of the drawing, or finished PDF bytes.
+ */
+export interface ImageExport {
+  format: ImageFormat;
+  data: string | Uint8Array;
+  suggestedName: string;
+}
+
 /** Unsaved work kept by autosave, restored after a crash. */
 export interface Recovery {
   text: string;
@@ -61,6 +77,8 @@ export type MenuCommand =
   | 'saveAndClose'
   | 'import'
   | 'exportPy'
+  | 'exportOptions'
+  | 'exportImage'
   | 'undo'
   | 'redo'
   | 'autoLayout'
@@ -70,6 +88,7 @@ export type MenuCommand =
   | 'goUp'
   | 'newModule'
   | 'toggleSnap'
+  | 'replay'
   | 'locale:zh'
   | 'locale:en'
   | `openRecent:${string}`;
@@ -92,6 +111,10 @@ export interface DesktopApi {
     /** Saves to `path`, or asks where when it is absent. Returns the path, or null if cancelled. */
     save(args: { path?: string; text: string; suggestedName: string }): Promise<string | null>;
     exportPython(args: { text: string; suggestedName: string }): Promise<string | null>;
+    /** Writes a Python package: asks for a folder and creates `suggestedName` in it. Returns the package folder, or null. */
+    exportPackage(args: { files: { name: string; text: string }[]; suggestedName: string }): Promise<string | null>;
+    /** Asks where to save an exported diagram and writes it. Returns the path, or null if cancelled. */
+    exportImage(args: ImageExport): Promise<string | null>;
     recent(): Promise<string[]>;
   };
   recovery: {

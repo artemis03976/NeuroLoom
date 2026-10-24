@@ -1,5 +1,6 @@
 import type { MenuCommand } from '@neuroloom/host-api';
 import { useEffect, useRef, useState } from 'react';
+import { useReplay } from '../canvas/replay';
 import { runCommand } from '../commands';
 import { host } from '../host';
 import { tr, useLocale } from '../i18n';
@@ -85,6 +86,8 @@ function FileMenu() {
           <div className="my-1 border-t border-line" />
           {item(tr('从代码导入…', 'Import from Code…'), 'import', `${MOD}I`)}
           {item(tr('导出 .py…', 'Export .py…'), 'exportPy', `${MOD}E`)}
+          {item(tr('导出选项…', 'Export Options…'), 'exportOptions')}
+          {item(tr('导出图片…', 'Export Image…'), 'exportImage')}
           <div className="my-1 border-t border-line" />
           {item(tr('Python 环境…', 'Python Environment…'), 'environment')}
         </div>
@@ -100,6 +103,7 @@ export function TopBar({ theme, onTheme }: { theme: ThemeChoice; onTheme: (t: Th
   const canRedo = useStudio((s) => s.history.future.length > 0);
   const backendVersion = useUi((s) => s.backendVersion);
   const snap = useUi((s) => s.snapToGrid);
+  const replaying = useReplay((s) => s.open);
   const locale = useLocale((s) => s.locale);
   const [backend, setBackend] = useState<Backend>({ state: 'checking' });
   const themeLabel: Record<ThemeChoice, string> = { system: tr('跟随系统', 'System'), light: tr('浅色', 'Light'), dark: tr('深色', 'Dark') };
@@ -144,6 +148,15 @@ export function TopBar({ theme, onTheme }: { theme: ThemeChoice; onTheme: (t: Th
         title={tr('拖动节点时吸附到 20 px 网格', 'Snap nodes to a 20 px grid while dragging')}
       >
         {tr('网格吸附', 'Snap')}
+      </button>
+      <button
+        type="button"
+        className={`${button} ${replaying ? 'bg-primary-soft text-primary' : ''}`}
+        aria-pressed={replaying}
+        onClick={() => runCommand('replay')}
+        title={tr('按拓扑顺序逐层演示前向传播', 'Step through the forward pass in topological order')}
+      >
+        {tr('▶ 回放', '▶ Replay')}
       </button>
       <span className="flex-1" />
       <button

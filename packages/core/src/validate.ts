@@ -45,6 +45,11 @@ export function parseProject(json: unknown): LoomProject {
   }
   if (!isObject(json.modules[json.entry])) throw invalid(`入口模块 ${json.entry} 不存在`, `entry module ${json.entry} does not exist`);
   if (json.preamble !== undefined && typeof json.preamble !== 'string') throw invalid('preamble 必须是文本', 'preamble must be text');
+  if (json.exportOptions !== undefined) {
+    const o = json.exportOptions;
+    const ok = isObject(o) && Object.entries(o).every(([k, v]) => (k === 'nesting' ? Number.isInteger(v) && (v as number) >= 0 : typeof v === 'boolean'));
+    if (!ok) throw invalid('exportOptions 结构不完整', 'incomplete exportOptions');
+  }
   const modules = json.modules;
 
   for (const [moduleId, mod] of Object.entries(modules)) {

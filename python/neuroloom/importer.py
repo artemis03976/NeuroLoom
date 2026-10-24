@@ -542,9 +542,18 @@ def _probe_shapes(gm, cls, graph, placeholders, inputs: dict[str, InputSpec], g:
 
 
 def import_code(source: str, class_name: str | None = None, inputs: dict[str, InputSpec] | None = None, mode: str = "static", filename: str = "<model.py>") -> dict[str, Any]:
-    """`static` reads the source without running it (L1 + L3); `trace` runs it under torch.fx (L2, flattened)."""
+    """How a source becomes a project:
+
+    - `static` reads the source without running it (L1 + L3);
+    - `dynamic` runs it, keeps the hierarchy, and merges torch.fx traces with the static result (L1 + L2 + L3);
+    - `trace` runs it under torch.fx as one flat graph (used by the tests to compare shapes).
+    """
     if mode == "trace":
         return import_source(source, class_name, inputs, filename)
+    if mode == "dynamic":
+        from .dynamic import import_dynamic
+
+        return import_dynamic(source, class_name, inputs, filename)
     if mode != "static":
         raise ImportFailure(t(f"未知的导入方式 {mode}", f"unknown import mode {mode}"))
     from .static import import_static
@@ -565,4 +574,8 @@ def import_many(requests: list[dict]) -> list[dict]:
                 results.append(import_code(request["source"], request.get("className"), inputs, request.get("mode", "static")))
             except ImportFailure as e:
                 results.append({"error": {"message": str(e), "details": e.details}})
+            except Exception as e:  # one broken request must not lose the others' results
+                import traceback
+
+                results.append({"error": {"message": f"{type(e).__name__}: {e}", "details": {"traceback": traceback.format_exc(limit=6)}}})
     return results

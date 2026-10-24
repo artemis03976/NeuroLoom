@@ -2,6 +2,7 @@
 # zh: LSTM 文本分类
 # description: Token embeddings, a bidirectional LSTM, mean pooling over time and a linear head.
 # description_zh: 词嵌入、双向 LSTM、按时间步平均池化，再接线性分类头。
+# paper: https://doi.org/10.1162/neco.1997.9.8.1735
 # inputs: tokens=B,T:int64
 from torch import nn
 

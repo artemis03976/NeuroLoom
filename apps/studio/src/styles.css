@@ -235,3 +235,76 @@ body {
 .tok-self {
   color: var(--nl-cat-attention);
 }
+
+/* ---------------------------------------------------------------- large graphs and replay */
+
+/* Zoomed out below 40 %: colour and name only (PRD 7.3). Sizes stay, so nothing is re-measured. */
+.nl-lod .nl-node-type,
+.nl-lod .nl-node-body,
+.nl-lod .nl-node-port span,
+.nl-lod .nl-node-error,
+.nl-lod .nl-edge-label {
+  visibility: hidden;
+}
+.nl-lod .nl-node {
+  background: color-mix(in srgb, var(--cat) 18%, var(--nl-surface));
+  box-shadow: none;
+}
+.nl-lod .nl-node-name {
+  font-size: 15px;
+}
+
+/* Dashes instead of particles for large or zoomed-out views (PRD 8.2). */
+.nl-edge-dashes {
+  animation: nl-dash 0.9s linear infinite;
+}
+@keyframes nl-dash {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+/* Forward replay (PRD F3.5): the running step glows, what has not run yet fades. */
+.nl-node.replay-active {
+  border-color: var(--nl-flow);
+  box-shadow:
+    0 0 0 3px var(--nl-flow-soft),
+    0 0 22px color-mix(in srgb, var(--nl-flow) 55%, transparent);
+}
+.nl-node.replay-pending {
+  opacity: 0.4;
+}
+.nl-node {
+  transition:
+    opacity 0.25s,
+    box-shadow 0.25s;
+}
+.nl-pop {
+  animation: nl-pop 0.35s ease-out;
+}
+/* `scale` composes with the label's positioning transform instead of replacing it. */
+@keyframes nl-pop {
+  from {
+    scale: 0.6;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nl-edge-dashes,
+  .nl-pop {
+    animation: none;
+  }
+}
+
+/* During a pan or zoom gesture the graph is one composited layer that moves without
+   repainting, and edge animation pauses (PRD 13: 1000 nodes at 50 fps). */
+.nl-moving .react-flow__viewport {
+  will-change: transform;
+}
+.nl-moving .nl-edge-dashes {
+  animation-play-state: paused;
+}
+.nl-moving .react-flow__edges circle {
+  visibility: hidden;
+}

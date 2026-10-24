@@ -48,10 +48,13 @@ export interface EnvInfo {
   cuda: boolean;
 }
 
-/** How the importer handled each class (PRD 11.2): L1 structured, L1+L3 with code blocks, L3 kept as source. */
+/**
+ * How the importer handled each class (PRD 11.2): L1 structured, L1+L3 with code
+ * blocks, L2 structured from a run (expressions became numbers), L3 kept as source.
+ */
 export interface ImportReportEntry {
   className: string;
-  level: 'L1' | 'L1+L3' | 'L3';
+  level: 'L1' | 'L1+L3' | 'L2' | 'L3';
   codeBlocks: number;
   notes: string[];
 }
@@ -61,6 +64,6 @@ export interface ImportResult {
   observedShapes: Record<string, number[][]>;
   batchProbe: number;
   warnings: string[];
-  /** Static imports only. */
+  /** Static and dynamic imports. */
   report?: ImportReportEntry[];
 }

@@ -1,12 +1,31 @@
 import { msg } from '../i18n';
 import { dimEq } from '../shape';
-import { fail, feature, flag, L, num, ok, OUT, P, rankError, resolveParams } from './helpers';
+import { fail, feature, flag, L, num, ok, OUT, P, rankError, resolveParams, SAME_SHAPE } from './helpers';
 import type { NodeSpec, Params } from './types';
 
 const doc = (cls: string) => `https://docs.pytorch.org/docs/stable/generated/torch.nn.${cls}.html`;
 
 /** Parameters of nn.MultiheadAttention for embedding size e (with or without biases). */
 const mhaParams = (e: number, bias: boolean) => 4 * e * e + (bias ? 4 * e : 0);
+
+/**
+ * FLOPs of one nn.MultiheadAttention call with `target` queries attending to
+ * `source` keys, embedding size e: the q, k, v and output projections
+ * (2·e² per row each) plus Q·Kᵀ and attention·V (2·target·source·e each).
+ * The head split does not change the total, and biases are not counted.
+ *
+ * Inside the transformer layers the attention core goes through
+ * scaled_dot_product_attention. On CPU it uses the math path (bmm, counted)
+ * when dropout is active, but with dropout = 0 or in eval mode it uses a fused
+ * flash kernel that FlopCounterMode has no formula for, so PyTorch then
+ * reports 4·batch·target·source·e less. We always count it, as FlopCounterMode
+ * does for the GPU attention kernels.
+ */
+const attentionFlops = (batch: number, target: number, source: number, e: number) =>
+  4 * batch * e * e * (target + source) + 4 * batch * target * source * e;
+
+/** [batch, length] of a sequence tensor. */
+const seq = (x: number[], batchFirst: unknown): [number, number] => (batchFirst ? [x[0]!, x[1]!] : [x[1]!, x[0]!]);
 
 const layerParams = () => [
   P.int('d_model', '模型维度', { allowAuto: true, min: 1, initial: 'auto' }),
@@ -70,6 +89,15 @@ export const multiheadAttention: NodeSpec = {
     return ok([q!, { shape: [batch, target, source], dtype: q!.dtype }], resolveParams(params, { embed_dim: e }));
   },
   paramCount: (r) => mhaParams(r.embed_dim as number, r.bias as boolean),
+  // Called with need_weights=True, so the attention core is two explicit bmm calls.
+  flops: (r, [q, k]) => {
+    const [batch, target] = seq(q!, r.batch_first);
+    return attentionFlops(batch, target, seq(k!, r.batch_first)[1], r.embed_dim as number);
+  },
+  shapeDoc: L(
+    'out: same shape as query; weights: [B, L, S] (L = query length, S = key length, averaged over heads)',
+    'out：与 query 形状相同；weights：[B, L, S]（L = query 长度，S = key 长度，各头取平均）',
+  ),
   describe: (r) => msg(`${r.embed_dim ?? '?'} 维 · ${r.num_heads} 头`, `${r.embed_dim ?? '?'} dims · ${r.num_heads} heads`),
   codegen: { ctor: 'nn.MultiheadAttention', unpack: '{out}, {weights}' },
   example: { inputs: [{ shape: 'B, 5, 16' }, { shape: 'B, 7, 16' }, { shape: 'B, 7, 16' }], params: { num_heads: 4, batch_first: true } },
@@ -111,6 +139,14 @@ function transformerLayer(decoder: boolean): NodeSpec {
       const norms = (decoder ? 3 : 2) * d * (bias ? 2 : 1);
       return attention + feedForward + norms;
     },
+    // Self-attention, cross-attention over memory (decoder), and the two feed-forward linears.
+    flops: (r, [x, memory]) => {
+      const d = r.d_model as number;
+      const [batch, target] = seq(x!, r.batch_first);
+      const cross = decoder ? attentionFlops(batch, target, seq(memory!, r.batch_first)[1], d) : 0;
+      return attentionFlops(batch, target, target, d) + cross + 4 * batch * target * d * (r.dim_feedforward as number);
+    },
+    shapeDoc: decoder ? L('Same shape as tgt', '与 tgt 形状相同') : SAME_SHAPE,
     describe: (r) => msg(`${r.d_model ?? '?'} 维 · ${r.nhead} 头 · FF ${r.dim_feedforward}`, `${r.d_model ?? '?'} dims · ${r.nhead} heads · FF ${r.dim_feedforward}`),
     codegen: { ctor: `nn.${cls}` },
     example: decoder

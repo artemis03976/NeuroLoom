@@ -3,7 +3,7 @@
 // and windows; names are made unique on paste.
 import { newId, uniqueName } from './graph';
 import { CODE_TYPE, SCHEMA_VERSION, type Edge, type LoomProject, type ModuleDef, type ModuleId, type NodeId, type NodeInst } from './ir';
-import { uniqueClassName, uniqueModuleId } from './project';
+import { snakeCase, uniqueClassName, uniqueModuleId } from './project';
 import { getSpec } from './specs';
 
 export const CLIP_KIND = 'neuroloom/clip';
@@ -62,7 +62,27 @@ export function parseClip(text: string): Clip | null {
 }
 
 /** Definitions equal in everything but layout are the same module. */
-const sameDef = (a: ModuleDef, b: ModuleDef) => JSON.stringify({ ...a, layout: {} }) === JSON.stringify({ ...b, layout: {} });
+/** Same definition apart from where it is stored: its id, layout, and a numbered class name (Block2 for Block). */
+function sameDef(existing: ModuleDef, def: ModuleDef): boolean {
+  const content = (m: ModuleDef) => JSON.stringify({ ...m, id: '', className: '', layout: {} });
+  const named = existing.className === def.className || (existing.className.startsWith(def.className) && /^\d+$/.test(existing.className.slice(def.className.length)));
+  return named && content(existing) === content(def);
+}
+
+/** Clip definitions with the ones they use first. */
+function usedFirst(defs: Record<ModuleId, ModuleDef>): ModuleDef[] {
+  const out: ModuleDef[] = [];
+  const seen = new Set<ModuleId>();
+  const visit = (id: ModuleId) => {
+    const def = defs[id];
+    if (!def || seen.has(id)) return;
+    seen.add(id);
+    for (const n of Object.values(def.nodes)) if (n.kind === 'module') visit(n.type);
+    out.push(def);
+  };
+  Object.keys(defs).forEach(visit);
+  return out;
+}
 
 /**
  * Pastes into `moduleId` with fresh ids, moved by `offset`; clashing names get
@@ -72,24 +92,20 @@ const sameDef = (a: ModuleDef, b: ModuleDef) => JSON.stringify({ ...a, layout: {
 export function pasteClip(project: LoomProject, moduleId: ModuleId, clip: Clip, offset: { x: number; y: number }): { project: LoomProject; nodeIds: NodeId[] } {
   const modules = { ...project.modules };
   const defMap = new Map<ModuleId, ModuleId>();
-  const added: ModuleDef[] = [];
-  for (const def of Object.values(clip.modules)) {
-    const existing = modules[def.id];
-    if (existing && sameDef(existing, def)) {
-      defMap.set(def.id, def.id);
-      continue;
-    }
-    const id = existing ? uniqueModuleId({ ...project, modules }, def.className) : def.id;
-    const className = uniqueClassName({ ...project, modules }, def.className);
-    defMap.set(def.id, id);
-    modules[id] = { ...def, id, className };
-    added.push(modules[id]!);
-  }
-  for (const def of added) {
+  for (const def of usedFirst(clip.modules)) {
     const nodes = Object.fromEntries(
       Object.entries(def.nodes).map(([k, n]) => [k, n.kind === 'module' ? { ...n, type: defMap.get(n.type) ?? n.type } : n]),
     );
-    modules[def.id] = { ...def, nodes };
+    const mapped = { ...def, nodes };
+    const existing = modules[def.id] && sameDef(modules[def.id]!, mapped) ? modules[def.id] : Object.values(modules).find((m) => sameDef(m, mapped));
+    if (existing) {
+      defMap.set(def.id, existing.id);
+      continue;
+    }
+    const id = modules[def.id] ? uniqueModuleId({ ...project, modules }, def.className) : def.id;
+    const className = uniqueClassName({ ...project, modules }, def.className);
+    defMap.set(def.id, id);
+    modules[id] = { ...mapped, id, className };
   }
 
   const mod = modules[moduleId]!;
@@ -125,4 +141,29 @@ export function pasteClip(project: LoomProject, moduleId: ModuleId, clip: Clip, 
   }
   modules[moduleId] = next;
   return { project: { ...project, modules }, nodeIds: [...idMap.values()] };
+}
+
+/**
+ * Adds an instance of another project's entry module to `moduleId` (a built-in
+ * block, PRD 9.6), with the definitions it uses. Definitions the project already
+ * has are reused, others are added under free names.
+ */
+export function insertModuleFrom(
+  project: LoomProject,
+  moduleId: ModuleId,
+  source: LoomProject,
+  position: { x: number; y: number },
+): { project: LoomProject; nodeId: NodeId } {
+  const entry = source.modules[source.entry]!;
+  const node: NodeInst = { id: 'block', kind: 'module', type: entry.id, name: snakeCase(entry.className), params: {} };
+  const clip: Clip = {
+    kind: CLIP_KIND,
+    schemaVersion: SCHEMA_VERSION,
+    nodes: [node],
+    edges: [],
+    layout: { [node.id]: position },
+    modules: usedModules(source, [node]),
+  };
+  const result = pasteClip(project, moduleId, clip, { x: 0, y: 0 });
+  return { project: result.project, nodeId: result.nodeIds[0]! };
 }

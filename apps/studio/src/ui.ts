@@ -33,7 +33,7 @@ export interface ContextMenu {
 }
 
 interface UiState {
-  dialog: 'new' | 'import' | 'environment' | null;
+  dialog: 'new' | 'import' | 'environment' | 'exportOptions' | 'exportImage' | null;
   prompt: Prompt | null;
   contextMenu: ContextMenu | null;
   toasts: Toast[];

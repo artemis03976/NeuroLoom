@@ -167,6 +167,61 @@ try {
   await win.waitForFunction(hasNode, 'blk');
   check('Alt+← goes back up', true);
 
+  // Image export (PRD F7.3) through the real dialog and IPC handler; the native
+  // save dialog is stubbed in the main process to answer with a path.
+  const saveTo = (path) =>
+    app.evaluate(({ dialog }, target) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: target });
+    }, path);
+  const exportFromDialog = async (format, extra = '') => {
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send('nl:command', 'exportImage'));
+    await win.waitForSelector('#image-export-title');
+    await win.evaluate(([f, x]) => {
+      document.querySelector(`input[name=image-format][value=${f}]`).click();
+      if (x) document.querySelector(x).click();
+    }, [format, extra]);
+    await win.locator('[role=dialog] button[type=submit]').click();
+    await win.waitForSelector('#image-export-title', { state: 'detached', timeout: 15_000 });
+  };
+  const svgFile = join(userData, 'smoke-image.svg');
+  await saveTo(svgFile);
+  await exportFromDialog('svg');
+  const svgText = readFileSync(svgFile, 'utf8');
+  const svgDoc = await win.evaluate((text) => {
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const root = doc.documentElement;
+    return { root: root.nodeName, broken: !!doc.querySelector('parsererror'), width: Number(root.getAttribute('width')), height: Number(root.getAttribute('height')), texts: [...doc.querySelectorAll('text')].map((t) => t.textContent) };
+  }, svgText);
+  check(
+    'exports the canvas as an SVG file',
+    svgDoc.root === 'svg' && !svgDoc.broken && ['x', 'blk', 'output', '[B, 8]'].every((t) => svgDoc.texts.includes(t)) && !svgText.includes('var('),
+    `${svgDoc.width}×${svgDoc.height}, ${svgText.length} bytes`,
+  );
+
+  const pngFile = join(userData, 'smoke-image.png');
+  await saveTo(pngFile);
+  await exportFromDialog('png', 'input[name=image-scale][value="2"]');
+  const png = readFileSync(pngFile);
+  const pngSize = [png.readUInt32BE(16), png.readUInt32BE(20)];
+  check(
+    'exports a 2× PNG',
+    png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) && pngSize[0] === svgDoc.width * 2 && pngSize[1] === svgDoc.height * 2,
+    `${pngSize.join('×')}, ${png.length} bytes`,
+  );
+
+  const pdfFile = join(userData, 'smoke-image.pdf');
+  await saveTo(pdfFile);
+  const pdfPath = await win.evaluate((svg) => window.neuroloom.file.exportImage({ format: 'pdf', data: svg, suggestedName: 'smoke' }), svgText);
+  const pdf = readFileSync(pdfFile).toString('latin1');
+  const box = /\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/.exec(pdf);
+  const near = (a, b) => Math.abs(Number(a) - b) <= 1;
+  check(
+    'prints a one-page vector PDF the size of the drawing',
+    pdfPath === pdfFile && pdf.startsWith('%PDF-') && pdf.trimEnd().endsWith('%%EOF') && !!box && near(box[1], svgDoc.width * 0.75) && near(box[2], svgDoc.height * 0.75) &&
+      (pdf.match(/\/Type\s*\/Page\b/g) ?? []).length === 1 && !pdf.includes('/Subtype /Image'),
+    box ? `${box[1]}×${box[2]} pt, ${pdf.length} bytes` : 'no MediaBox',
+  );
+
   // Native menus follow the interface language. The editor re-renders in the new
   // language before telling the main process, which can take a while on a slow
   // runner, so wait for the menu instead of a fixed time.

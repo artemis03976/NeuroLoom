@@ -2,13 +2,16 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useState } from 'react';
 import { FlowCanvas } from './canvas/FlowCanvas';
 import { Breadcrumb, ContextMenuView, SelectionBar, SourceView } from './canvas/Overlays';
+import { ReplayBar } from './canvas/ReplayBar';
 import { discardRecovery, restoreRecovery } from './commands';
 import { host } from './host';
 import { useClipboard, useCommands, useDocumentLifecycle } from './hooks';
 import { tr, useLocale } from './i18n';
 import { applyTheme, loadTheme, type ThemeChoice } from './lib/theme';
-import { CodePanel } from './panels/CodePanel';
+import { BottomPanel } from './panels/BottomPanel';
 import { EnvironmentDialog } from './panels/EnvironmentDialog';
+import { ExportOptionsDialog } from './panels/ExportOptionsDialog';
+import { ImageExportDialog } from './panels/ImageExportDialog';
 import { ImportDialog } from './panels/ImportDialog';
 import { Inspector } from './panels/Inspector';
 import { Palette } from './panels/Palette';
@@ -91,12 +94,13 @@ export function App() {
               <SelectionBar />
             </div>
             <SourceView />
+            <ReplayBar />
             <RecoveryBanner />
             <Toasts />
           </main>
           <Inspector />
         </div>
-        <CodePanel />
+        <BottomPanel />
       </div>
       {quickAdd && <QuickAdd key={`${quickAdd.screen.x},${quickAdd.screen.y}`} state={quickAdd} />}
       <ContextMenuView />
@@ -104,6 +108,8 @@ export function App() {
       {dialog === 'new' && <TemplateDialog onClose={() => openDialog(null)} />}
       {dialog === 'import' && <ImportDialog onClose={() => openDialog(null)} />}
       {dialog === 'environment' && <EnvironmentDialog onClose={() => openDialog(null)} onChanged={backendChanged} />}
+      {dialog === 'exportOptions' && <ExportOptionsDialog onClose={() => openDialog(null)} />}
+      {dialog === 'exportImage' && <ImageExportDialog onClose={() => openDialog(null)} />}
     </ReactFlowProvider>
   );
 }

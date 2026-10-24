@@ -1,6 +1,6 @@
 // Electron main process: window, menus, files, and the Python backend (PRD 15.2–15.4).
 import { createEnvironment, discoverPythons, PythonBackend, type RpcFailure } from '@neuroloom/backend-bridge';
-import { CHANNELS, type Recovery, type RpcEnvelope } from '@neuroloom/host-api';
+import { CHANNELS, type ImageExport, type Recovery, type RpcEnvelope } from '@neuroloom/host-api';
 import {
   app,
   BrowserWindow,
@@ -12,20 +12,30 @@ import {
   shell,
   type IpcMainInvokeEvent,
 } from 'electron';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { saveImage } from './imageExport';
 import { buildMenu } from './menu';
 import { SettingsStore, writeAtomic } from './settings';
 
 const here = dirname(fileURLToPath(import.meta.url));
+// An installed app carries the studio UI, the `neuroloom` Python package and the window
+// icon as extra resources (see electron-builder.config.mjs); in development they come
+// straight from the repository.
 const repoRoot = resolve(here, '../../..');
-const studioDist = join(repoRoot, 'apps/studio/dist');
-const pythonDir = join(repoRoot, 'python');
+const studioDist = app.isPackaged ? join(process.resourcesPath, 'studio') : join(repoRoot, 'apps/studio/dist');
+const pythonDir = app.isPackaged ? join(process.resourcesPath, 'python') : join(repoRoot, 'python');
+const windowIcon = app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(repoRoot, 'brand/assets/icons/icon-256.png');
 const devUrl = process.env.NEUROLOOM_DEV_URL?.replace(/\/$/, '');
 const APP_ORIGIN = 'app://studio';
 
+// The installed Python package sits inside the app (read-only, and signed on macOS):
+// the user's interpreter must not write __pycache__ next to it.
+if (app.isPackaged) process.env.PYTHONDONTWRITEBYTECODE = '1';
+
 // Tests point userData at a throwaway directory so they never touch real settings.
+// (Before the single-instance lock, which is held per userData directory.)
 if (process.env.NEUROLOOM_USER_DATA) app.setPath('userData', process.env.NEUROLOOM_USER_DATA);
 
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
@@ -161,6 +171,19 @@ function registerIpc(): void {
     writeAtomic(result.filePath, args.text);
     return result.filePath;
   });
+  handle(CHANNELS.fileExportPackage, async (e, args: { files: { name: string; text: string }[]; suggestedName: string }) => {
+    const result = await dialog.showOpenDialog(windowOf(e)!, {
+      title: t(`选择放置 ${args.suggestedName} 包的文件夹`, `Choose the folder for the ${args.suggestedName} package`),
+      defaultPath: app.getPath('documents'),
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (result.canceled || !result.filePaths[0]) return null;
+    const folder = join(result.filePaths[0], args.suggestedName);
+    mkdirSync(folder, { recursive: true });
+    for (const file of args.files) writeAtomic(join(folder, basename(file.name)), file.text);
+    return folder;
+  });
+  handle(CHANNELS.fileExportImage, (e, args: ImageExport) => saveImage(windowOf(e), args, t('导出图片', 'Export Image')));
   handle(CHANNELS.fileRecent, () => settings.recent());
 
   handle(CHANNELS.recoveryWrite, (_e, recovery: Recovery) => writeAtomic(recoveryFile(), JSON.stringify(recovery)));
@@ -215,7 +238,7 @@ function createWindow(): BrowserWindow {
     minHeight: 640,
     show: false,
     title: 'NeuroLoom',
-    icon: join(repoRoot, 'brand/assets/icons/icon-256.png'),
+    icon: windowIcon,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0E1222' : '#F6F7FB',
     webPreferences: {
       preload: join(here, 'preload.cjs'),
@@ -254,20 +277,84 @@ function createWindow(): BrowserWindow {
     }
   });
 
+  win.webContents.on('did-finish-load', () => deliverProject(win));
   void win.loadURL(devUrl ? `${devUrl}/` : `${APP_ORIGIN}/index.html`);
   return win;
 }
 
-app.whenReady().then(() => {
-  settings = new SettingsStore(app.getPath('userData'));
-  serveStudio();
-  registerIpc();
-  rebuildMenu();
-  createWindow();
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+// ---------------------------------------------------------------- projects opened by the OS
+
+// Double-clicking a .loom file (file association) starts the app with the path as an
+// argument on Windows and Linux, sends `open-file` on macOS, and reaches an already
+// running app as `second-instance`. The editor opens it like a recent file.
+let pendingProject: string | undefined;
+let started = false;
+
+/** The first .loom file among command-line arguments (a path, or a file:// URL from a Linux desktop entry). */
+function projectFromArgs(argv: string[], cwd = process.cwd()): string | undefined {
+  for (const arg of argv.slice(1)) {
+    if (arg.startsWith('-')) continue;
+    let path: string;
+    try {
+      path = arg.startsWith('file://') ? fileURLToPath(arg) : resolve(cwd, arg);
+    } catch {
+      continue;
+    }
+    if (extname(path).toLowerCase() === '.loom' && existsSync(path)) return path;
+  }
+  return undefined;
+}
+
+function deliverProject(win: BrowserWindow): void {
+  if (!pendingProject) return;
+  // The preload holds commands until the editor subscribes, so this may arrive early.
+  win.webContents.send(CHANNELS.command, `openRecent:${pendingProject}`);
+  pendingProject = undefined;
+}
+
+function openProject(path: string): void {
+  pendingProject = path;
+  if (!started) return; // the first window picks it up
+  const win = BrowserWindow.getAllWindows()[0];
+  if (!win) {
+    createWindow();
+    return;
+  }
+  if (win.isMinimized()) win.restore();
+  win.focus();
+  if (!win.webContents.isLoading()) deliverProject(win);
+}
+
+app.on('open-file', (e, path) => {
+  e.preventDefault();
+  openProject(path);
 });
+
+// One app instance: a second launch hands its file to the first and exits.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', (_e, argv, workingDirectory) => {
+    const path = projectFromArgs(argv, workingDirectory);
+    if (path) return openProject(path);
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win?.isMinimized()) win.restore();
+    win?.focus();
+  });
+  pendingProject ??= projectFromArgs(process.argv);
+
+  app.whenReady().then(() => {
+    settings = new SettingsStore(app.getPath('userData'));
+    serveStudio();
+    registerIpc();
+    rebuildMenu();
+    createWindow();
+    started = true;
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  });
+}
 
 app.on('window-all-closed', () => {
   void backendPromise?.then((b) => b.dispose());

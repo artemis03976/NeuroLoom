@@ -17,6 +17,7 @@ import {
   deleteModule as deleteModuleDef,
   findPath,
   generateCode,
+  insertModuleFrom,
   makeUnique,
   packAsModule,
   pasteClip,
@@ -38,6 +39,7 @@ import {
   type Clip,
   type CodeBlock,
   type CodegenResult,
+  type ExportOptions,
   type HyperParam,
   type LoomProject,
   type ModuleDef,
@@ -49,8 +51,10 @@ import {
 } from '@neuroloom/core';
 import { applyNodeChanges, type Connection, type EdgeChange, type Node, type NodeChange } from '@xyflow/react';
 import { create } from 'zustand';
+import { nodeFaces, type NodeFace } from './canvas/face';
 import { alignPositions, type AlignMode } from './lib/align';
 import { sampleProject } from './lib/sample';
+import { BLOCKS } from './templates';
 
 export type FlowNode = Node<Record<string, never>, 'layer'>;
 
@@ -63,6 +67,8 @@ export interface PortLink {
 
 /** Node types that are not NodeSpecs: an instance of a module, or a code block. */
 export const moduleType = (moduleId: ModuleId) => `module:${moduleId}`;
+/** A built-in composite module (PRD 9.6), added with the definitions it uses. */
+export const blockType = (blockId: string) => `block:${blockId}`;
 
 /**
  * The module on the canvas, and the drill-down path that led there (PRD F4.2),
@@ -108,6 +114,8 @@ interface StudioState {
   view: View;
   /** The analysis of the module on the canvas, in the context of its view path. */
   viewAnalysis: Analysis;
+  /** What each node of the module on the canvas shows; unchanged faces keep their object across edits. */
+  faces: Record<NodeId, NodeFace>;
   codegen: CodegenResult;
   flowNodes: FlowNode[];
   selectedEdgeIds: string[];
@@ -119,7 +127,7 @@ interface StudioState {
   onEdgesChange(changes: EdgeChange[]): void;
   onConnect(connection: Connection): void;
   /**
-   * Adds a node (a NodeSpec type, `module:<id>` or the code block type); with
+   * Adds a node (a NodeSpec type, `module:<id>`, `block:<id>` or the code block type); with
    * `link`, also connects it to an existing port in the same undo step. Returns
    * its id. Throws EditError when the module cannot go here.
    */
@@ -154,6 +162,8 @@ interface StudioState {
   setClassName(name: string, moduleId?: ModuleId): void;
   setEntry(moduleId: ModuleId): void;
   setHyperparams(hyperparams: HyperParam[], renamed?: Record<string, string>): void;
+  /** How the code is written (PRD F5.3); kept in the project, so it is an undoable edit. */
+  setExportOptions(options: ExportOptions): void;
   /** Free-text fields: the preamble, a module's __init__ tail, other members or opaque source. */
   setText(field: 'preamble' | 'initCode' | 'members' | 'source', text: string): void;
 
@@ -169,9 +179,10 @@ interface StudioState {
   relocalize(): void;
 }
 
-function derive(project: LoomProject, view: View): Pick<StudioState, 'analysis' | 'viewAnalysis' | 'codegen'> {
+function derive(project: LoomProject, view: View, faces?: Record<NodeId, NodeFace>): Pick<StudioState, 'analysis' | 'viewAnalysis' | 'faces' | 'codegen'> {
   const analysis = analyzeProject(project);
-  return { analysis, viewAnalysis: analysisAt(analysis, project, view.path, view.moduleId), codegen: generateCode(project, analysis) };
+  const viewAnalysis = analysisAt(analysis, project, view.path, view.moduleId);
+  return { analysis, viewAnalysis, faces: nodeFaces(project, project.modules[view.moduleId]!, viewAnalysis, faces), codegen: generateCode(project, analysis) };
 }
 
 /** Keeps the view pointing at something that exists after an edit, undo or load. */
@@ -182,16 +193,26 @@ function fixView(project: LoomProject, view: View): View {
   return { moduleId: view.moduleId, path: findPath(project, view.moduleId) ?? [] };
 }
 
+/** Shared by every flow node: what a node shows comes from `faces`, not from here. */
+const NO_DATA: Record<string, never> = {};
+
+/**
+ * React Flow nodes for a module. A node whose position did not change keeps its
+ * object, so React Flow (and the memoized node component) leaves it alone.
+ */
 function toFlowNodes(mod: ModuleDef, previous: FlowNode[] = []): FlowNode[] {
   const prev = new Map(previous.map((n) => [n.id, n]));
-  return Object.values(mod.nodes).map((n) => ({
-    ...prev.get(n.id),
-    id: n.id,
-    type: 'layer',
-    position: mod.layout[n.id] ?? prev.get(n.id)?.position ?? { x: 0, y: 0 },
-    data: {},
-  }));
+  return Object.values(mod.nodes).map((n) => {
+    const before = prev.get(n.id);
+    const position = mod.layout[n.id] ?? before?.position ?? { x: 0, y: 0 };
+    if (before && before.position.x === position.x && before.position.y === position.y) return before;
+    return { ...before, id: n.id, type: 'layer', position, data: NO_DATA };
+  });
 }
+
+/** Selects exactly `ids`, touching only the nodes whose selection changes. */
+const withSelection = (nodes: FlowNode[], ids: Set<NodeId>) =>
+  nodes.map((n) => (!!n.selected === ids.has(n.id) ? n : { ...n, selected: ids.has(n.id) }));
 
 /** A module some of whose nodes were never placed (imported submodules), which needs an automatic layout. */
 const needsLayout = (mod: ModuleDef) => Object.keys(mod.nodes).some((id) => !mod.layout[id]);
@@ -215,7 +236,7 @@ export const useStudio = create<StudioState>()((set, get) => {
     let flowNodes = options.flowNodes ?? toFlowNodes(project.modules[view.moduleId]!, sameModule ? get().flowNodes : []);
     if (options.select) {
       const selected = new Set(options.select);
-      flowNodes = flowNodes.map((n) => ({ ...n, selected: selected.has(n.id) }));
+      flowNodes = withSelection(flowNodes, selected);
     }
     const now = Date.now();
     const merging = !!options.merge && history.mergeKey === options.merge && now - history.mergeAt < MERGE_WINDOW_MS;
@@ -223,7 +244,7 @@ export const useStudio = create<StudioState>()((set, get) => {
       project,
       view,
       flowNodes,
-      ...derive(project, view),
+      ...derive(project, view, sameModule ? get().faces : undefined),
       history:
         project === before
           ? history
@@ -236,14 +257,15 @@ export const useStudio = create<StudioState>()((set, get) => {
   const restore = (project: LoomProject, history: History) => {
     const view = fixView(project, get().view);
     const sameModule = view.moduleId === get().view.moduleId;
-    set({ project, history, view, flowNodes: toFlowNodes(project.modules[view.moduleId]!, sameModule ? get().flowNodes : []), ...derive(project, view) });
+    set({ project, history, view, flowNodes: toFlowNodes(project.modules[view.moduleId]!, sameModule ? get().flowNodes : []), ...derive(project, view, sameModule ? get().faces : undefined) });
   };
 
   /** Changes the module on the canvas without editing anything. */
   const navigate = (view: View) => {
     const { project } = get();
     const next = fixView(project, view);
-    set({ view: next, flowNodes: toFlowNodes(project.modules[next.moduleId]!), selectedEdgeIds: [], viewAnalysis: analysisAt(get().analysis, project, next.path, next.moduleId) });
+    const viewAnalysis = analysisAt(get().analysis, project, next.path, next.moduleId);
+    set({ view: next, flowNodes: toFlowNodes(project.modules[next.moduleId]!), selectedEdgeIds: [], viewAnalysis, faces: nodeFaces(project, project.modules[next.moduleId]!, viewAnalysis) });
     afterNavigate();
   };
 
@@ -300,7 +322,10 @@ export const useStudio = create<StudioState>()((set, get) => {
       const moduleId = get().view.moduleId;
       let project: LoomProject;
       let nodeId: NodeId;
-      if (type.startsWith('module:')) {
+      const block = type.startsWith('block:') ? BLOCKS.find((b) => b.id === type.slice('block:'.length)) : undefined;
+      if (block) {
+        ({ project, nodeId } = insertModuleFrom(get().project, moduleId, block.project, position));
+      } else if (type.startsWith('module:')) {
         ({ project, nodeId } = addModuleNode(get().project, moduleId, type.slice('module:'.length), position));
       } else {
         const result = type === CODE_TYPE ? addCodeNode(current(), position) : addNode(current(), type, position);
@@ -354,12 +379,12 @@ export const useStudio = create<StudioState>()((set, get) => {
     },
 
     selectNode(nodeId) {
-      set({ flowNodes: get().flowNodes.map((n) => ({ ...n, selected: n.id === nodeId })) });
+      set({ flowNodes: withSelection(get().flowNodes, new Set(nodeId ? [nodeId] : [])) });
     },
 
     selectNodes(ids) {
       const picked = new Set(ids);
-      set({ flowNodes: get().flowNodes.map((n) => ({ ...n, selected: picked.has(n.id) })) });
+      set({ flowNodes: withSelection(get().flowNodes, picked) });
     },
 
     paste(clip, offset) {
@@ -438,6 +463,11 @@ export const useStudio = create<StudioState>()((set, get) => {
       commit(setModuleHyperparams(get().project, get().view.moduleId, hyperparams, renamed), { merge: `hyperparams:${get().view.moduleId}` });
     },
 
+    setExportOptions(options) {
+      const { exportOptions: _, ...rest } = get().project;
+      commit(Object.keys(options).length > 0 ? { ...rest, exportOptions: options } : rest, { merge: 'exportOptions' });
+    },
+
     setText(field, text) {
       const { project } = get();
       if (field === 'preamble') return commit({ ...project, preamble: text }, { merge: 'preamble' });
@@ -471,7 +501,7 @@ export const useStudio = create<StudioState>()((set, get) => {
       set({
         project,
         flowNodes: moduleId === view.moduleId ? toFlowNodes(project.modules[moduleId]!, get().flowNodes) : get().flowNodes,
-        ...derive(project, view),
+        ...derive(project, view, get().faces),
         doc: doc.saved === before ? { ...doc, saved: project } : doc,
       });
     },
@@ -499,7 +529,7 @@ export const useStudio = create<StudioState>()((set, get) => {
     },
 
     relocalize() {
-      set(derive(get().project, get().view));
+      set(derive(get().project, get().view, get().faces));
     },
   };
 });

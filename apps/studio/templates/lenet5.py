@@ -2,6 +2,7 @@
 # zh: LeNet-5 卷积网络
 # description: The classic convolutional network for handwritten digits.
 # description_zh: 经典的手写数字卷积网络。
+# paper: https://ieeexplore.ieee.org/document/726791
 # inputs: x=B,1,28,28
 from torch import nn
 

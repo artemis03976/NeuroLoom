@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
-import { PythonBackend, venvPython, type RpcFailure } from '../../../packages/backend-bridge/src/index';
+import { PythonBackend, venvPython, type RpcFailure } from '../../../packages/backend-bridge/src/index.ts';
 
 export function pythonBridge(): Plugin {
   return {

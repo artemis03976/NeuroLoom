@@ -211,6 +211,16 @@ def _stored_names(node: ast.AST) -> set[str]:
     return names
 
 
+def _assigned_names(stmts: list[ast.stmt]) -> set[str]:
+    """Names every run of the statements binds: plain assignments at the top level, not ones under if/for/try."""
+    names: set[str] = set()
+    for stmt in stmts:
+        targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target] if isinstance(stmt, ast.AnnAssign) and stmt.value else []
+        for target in targets:
+            names |= {n.id for n in ast.walk(target) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store)}
+    return names
+
+
 def _is_docstring(stmt: ast.stmt) -> bool:
     return isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str)
 
@@ -248,6 +258,7 @@ class _Child:
     input_names: list[str]
     outputs: list[str]
     call_style: bool = False  # opaque modules whose instances pass arguments verbatim
+    optional: list[str] = field(default_factory=list)  # forward() arguments with defaults, made ports when a call passes them
 
 
 @dataclass
@@ -313,7 +324,7 @@ class _ClassConverter:
         self.m = _Module(cls.name, cls.name)
         self.hp: list[str] = []
         self.locals: dict[str, ast.expr] = {}
-        self.local_stmts: dict[str, ast.stmt] = {}
+        self.local_stmts: dict[str, list[ast.stmt]] = {}  # every assignment, in order (n = 32; n = f(n))
         self.attrs: dict[str, str] = {}  # self.<attr> -> node id
         self.repeat_style: dict[str, str] = {}  # repeat attr -> "list" (for loop) or "sequential" (called)
         self.constants: dict[str, str] = {}
@@ -397,6 +408,17 @@ class _ClassConverter:
                     substitute = True
                 elif n.id not in self.hp and not hasattr(builtins, n.id):
                     raise Unsupported(t(f"无法解析名称 {n.id}", f"cannot resolve name {n.id}"))
+            elif isinstance(n, ast.Attribute):
+                # The editor evaluates names and math.*, not attributes of objects (config.n_embd, block.expansion).
+                root = n
+                while isinstance(root, ast.Attribute):
+                    root = root.value
+                if not (isinstance(root, ast.Name) and root.id == "math"):
+                    if forward:  # x.size(0), x.shape[1]
+                        segment = self.file.segment(node)
+                        raise Unsupported(t(f"参数依赖运行时的值（{segment}）", f"argument depends on run-time values ({segment})"))
+                    segment = self.file.segment(n)
+                    raise Unsupported(t(f"属性 {segment} 无法在编辑器中求值", f"the attribute {segment} cannot be evaluated in the editor"))
             elif isinstance(n, (ast.Lambda, ast.NamedExpr, ast.Await, ast.Yield, ast.YieldFrom, ast.comprehension)):
                 raise Unsupported(t("表达式过于复杂", "expression too complex"))
         if substitute:
@@ -433,7 +455,7 @@ class _ClassConverter:
                     if isinstance(target, ast.Name) and target.id not in self.hp:
                         self._expr(stmt.value)  # must be expressible
                         self.locals[target.id] = _Rewrite(self.locals).visit(copy.deepcopy(stmt.value))
-                        self.local_stmts[target.id] = stmt
+                        self.local_stmts.setdefault(target.id, []).append(stmt)
                         continue
                 raise Unsupported(type(stmt).__name__)
             except Unsupported:
@@ -443,10 +465,15 @@ class _ClassConverter:
             # Locals were inlined into the structured statements; the moved ones may still need them.
             needed: list[ast.stmt] = []
             want = set().union(*(_loaded_names(s) for s in init_code))
-            for name, stmt in self.local_stmts.items():
-                if name in want and stmt not in needed:
-                    needed.append(stmt)
-                    want |= _loaded_names(stmt)
+            grew = True
+            while grew:
+                grew = False
+                for name, stmts in self.local_stmts.items():
+                    for stmt in stmts if name in want else []:
+                        if stmt not in needed:
+                            needed.append(stmt)
+                            want |= _loaded_names(stmt)
+                            grew = True
             ordered = [s for s in body if s in needed or s in init_code]
             self.m.mod["initCode"] = "\n".join(self.file.statements([s]) for s in ordered)
             self.notes.append(
@@ -598,13 +625,13 @@ class _ClassConverter:
             if not child.inputs:
                 self.imp.ensure_ports(child, 1, 1)
             return child.inputs[0]
-        spec = next(s for s in self.imp.catalog.layers.values() if s["type"] == type_)
+        spec = self.imp.layer_spec(type_)
         return spec["inputs"][0]["name"]
 
     def _first_output(self, kind: str, type_: str) -> str:
         if kind == "module":
             return self.imp.module_info(type_).outputs[0]
-        spec = next(s for s in self.imp.catalog.layers.values() if s["type"] == type_)
+        spec = self.imp.layer_spec(type_)
         return spec["outputs"][0]["name"]
 
     def _repeat(self, attr: str, elt: ast.Call, count: ast.expr, first: ast.Call | None, style: str) -> None:
@@ -686,7 +713,8 @@ class _ClassConverter:
         stmts = [body[i] for i in pending]
         read = set().union(*(_loaded_names(s) for s in stmts))
         written = set().union(*(_stored_names(s) for s in stmts))
-        inputs = [n for n in sorted(read) if n in self.values]
+        # A name the block may leave as it was (`if ...: identity = f(x)`, `out += y`) comes in too.
+        inputs = [n for n in sorted(read | (written - _assigned_names(stmts))) if n in self.values]
         outputs = sorted(written & later[pending[-1]])
         node = self.m.add("code", CODE, self.m.unique("code"), {}, code={"source": self.file.statements(stmts), "inputs": inputs, "outputs": outputs})
         for name in inputs:
@@ -734,7 +762,10 @@ class _ClassConverter:
             elif isinstance(elt, ast.Name):
                 match = [o for o in value.outputs if o.get("path") == [*value.path, *sub]]
                 if not match:
-                    if any(o.get("path", [])[: len(value.path) + len(sub)] == [*value.path, *sub] for o in value.outputs):
+                    nested = any(o.get("path", [])[: len(value.path) + len(sub)] == [*value.path, *sub] for o in value.outputs)
+                    if nested and elt.id == "_":
+                        continue  # `out, _ = self.lstm(x)` discards the whole (h, c) tuple
+                    if nested:
                         raise Unsupported(t("把元组结果赋给一个变量", "a tuple result assigned to one variable"))
                     raise Unsupported(t("解包的元素个数不符", "the number of unpacked elements does not match"))
                 if elt.id != "_":
@@ -772,7 +803,9 @@ class _ClassConverter:
             return
         elements = stmt.value.elts if isinstance(stmt.value, ast.Tuple) else [stmt.value]
         for i, elt in enumerate(elements):
-            name = "output" if i == 0 else f"output_{i}"
+            # Output names must not clash with the model's own variables (`output = F.log_softmax(...)`).
+            taken = self.m.taken() | set(self.values)
+            name = next(n for n in ["output", *(f"output_{k}" for k in range(1, 100))] if n not in taken)
             snapshot = self._snapshot()
             try:
                 value = self._lower(elt)
@@ -849,7 +882,12 @@ class _ClassConverter:
     def _call_node(self, node_id: str, args: list[ast.expr], keywords: list[ast.keyword]) -> _Value:
         """A call of a layer, module instance or repeat: one node, one call."""
         if node_id in self.used:
-            raise Unsupported(t("同一个层被调用了多次（共享权重）", "the same layer is called more than once (shared weights)"))
+            node = self.m.mod["nodes"][node_id]
+            spec = self.imp.layer_spec(node["type"]) if node["kind"] == "layer" else None
+            if not spec or not spec.get("stateless") or node.get("repeat"):
+                raise Unsupported(t("同一个层被调用了多次（共享权重）", "the same layer is called more than once (shared weights)"))
+            # A layer without parameters (self.relu used twice) is the same as a second copy.
+            node_id = self.m.add("layer", node["type"], self.m.unique(node["name"]), copy.deepcopy(node["params"]))
         node = self.m.mod["nodes"][node_id]
         if any(isinstance(a, ast.Starred) for a in args) or any(k.arg is None for k in keywords):
             raise Unsupported(t("调用使用了 * 或 ** 展开", "the call uses * or ** unpacking"))
@@ -857,10 +895,12 @@ class _ClassConverter:
             child = self.imp.module_info(node["type"])
             if child.call_style and not child.inputs:
                 self.imp.ensure_ports(child, len(args) + len(keywords), 1)
+            if child.optional:
+                self.imp.optional_ports(child, len(args), [k.arg for k in keywords])
             ports = list(zip(child.inputs, child.input_names))
             outputs = [{"name": o, "path": [i]} if len(child.outputs) > 1 else {"name": o} for i, o in enumerate(child.outputs)]
         else:
-            spec = next(s for s in self.imp.catalog.layers.values() if s["type"] == node["type"])
+            spec = self.imp.layer_spec(node["type"])
             ports = [(p["name"], p["name"]) for p in spec["inputs"]]
             outputs = _outputs(spec, node["params"])
         if len(args) > len(ports):
@@ -1049,6 +1089,10 @@ class _Importer:
         self.modules.update(externals)
         self.children.update(children)
 
+    def layer_spec(self, type_: str) -> dict | None:
+        """The manifest entry of a layer type ("torch.nn.ReLU")."""
+        return next((s for s in self.catalog.layers.values() if s["type"] == type_), None)
+
     def module_info(self, module_id: str) -> _Child:
         if module_id in self.children:
             return self.children[module_id]
@@ -1082,7 +1126,7 @@ class _Importer:
         m = _Module(cls.name, cls.name)
         m.mod["opaque"] = {"source": self.file.statements([cls])}
         methods = {s.name: s for s in cls.body if isinstance(s, ast.FunctionDef)}
-        forward = methods.get("forward")
+        forward = methods.get("forward") or self.inherited_forward(cls)
         init = methods.get("__init__")
         call_style = True
         if init and not (init.args.vararg or init.args.kwarg or init.args.kwonlyargs or init.args.posonlyargs):
@@ -1103,10 +1147,13 @@ class _Importer:
             m.mod["opaque"]["verbatimArgs"] = True
         info = _Child(cls.name, [h["name"] for h in m.mod["hyperparams"]], [], [], [], call_style)
         if forward:
-            for a in forward.args.args[1:]:
+            args = forward.args.args[1:]
+            required = len(args) - len(forward.args.defaults)
+            for a in args[:required]:
                 node = m.add("input", INPUT, a.arg, {"shape": {"literal": ""}, "dtype": {"literal": "float32"}})
                 info.inputs.append(node)
                 info.input_names.append(a.arg)
+            info.optional = [a.arg for a in args[required:]]
             last = forward.body[-1] if forward.body else None
             count = len(last.value.elts) if isinstance(last, ast.Return) and isinstance(last.value, ast.Tuple) else 1
             for i in range(count):
@@ -1116,6 +1163,18 @@ class _Importer:
         self.children[cls.name] = info
         note = t(f"整个类保留为源代码：{reason}", f"whole class kept as source code: {reason}")
         self.report.append({"className": cls.name, "level": "L3", "codeBlocks": 0, "notes": [note]})
+
+    def inherited_forward(self, cls: ast.ClassDef, seen: frozenset[str] = frozenset()) -> ast.FunctionDef | None:
+        """forward() of the nearest base class in the file that defines one (class ResNet152(ResNet) with only __init__)."""
+        for base in cls.bases:
+            parent = self.file.classes.get(self.file.qualname(base) or "")
+            if parent is None or parent.name in seen:
+                continue
+            own = next((s for s in parent.body if isinstance(s, ast.FunctionDef) and s.name == "forward"), None)
+            found = own or self.inherited_forward(parent, seen | {parent.name})
+            if found:
+                return found
+        return None
 
     def external(self, written: str) -> _Child:
         """A module class from another package (timm.layers.DropPath): a call-style opaque module without source."""
@@ -1143,6 +1202,25 @@ class _Importer:
         names.sort(key=lambda n: (not n.startswith("#"), int(n[1:]) if n.startswith("#") else 0))
         mod["hyperparams"] = [{"name": n} for n in names]
         child.hyperparams = names
+
+    def optional_ports(self, child: _Child, positional: int, keywords: list[str | None]) -> None:
+        """Arguments with defaults become ports once a call passes them, in forward() order."""
+        wanted = [name for i, name in enumerate(child.optional) if len(child.inputs) + i < positional or name in keywords]
+        if not wanted:
+            return
+        upto = child.optional.index(wanted[-1]) + 1
+        if len(wanted) < upto:
+            raise Unsupported(t(f"{child.module_id} 的可选参数跳过了前面的参数", f"optional arguments of {child.module_id} skip earlier ones"))
+        mod = self.modules[child.module_id]
+        m = _Module(child.module_id, mod["className"])
+        m.mod = mod
+        m.count = len(mod["nodes"])
+        for name in child.optional[:upto]:
+            node = m.add("input", INPUT, name, {"shape": {"literal": ""}, "dtype": {"literal": "float32"}})
+            child.inputs.append(node)
+            child.input_names.append(name)
+        del child.optional[:upto]
+        mod["interface"]["inputs"] = child.inputs
 
     def ensure_ports(self, child: _Child, inputs: int, outputs: int) -> None:
         mod = self.modules[child.module_id]

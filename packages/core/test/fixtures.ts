@@ -6,10 +6,14 @@ import {
   entryModule,
   expr,
   getSpec,
+  initialParams,
   literal,
+  outputsOf,
+  withDefaults,
   type LoomProject,
   type ModuleDef,
   type NodeInst,
+  type NodeSpec,
   type ParamValue,
 } from '../src';
 
@@ -47,6 +51,55 @@ export function build(className: string, rows: NodeRow[], edges: string[]): Loom
 /** The project with its entry module replaced by `update(entry)`. */
 export function editEntry(p: LoomProject, update: (mod: ModuleDef) => ModuleDef): LoomProject {
   return { ...p, modules: { ...p.modules, [p.entry]: update(entryModule(p)) } };
+}
+
+const INPUT_NAMES = ['x', 'y', 'z', 'w'];
+
+/** A spec's own example (the round-trip and FLOPs tests): inputs -> the spec's node -> one output per output port. */
+export function exampleProject(spec: NodeSpec): LoomProject {
+  const example = spec.example!;
+  const mod: ModuleDef = emptyModule('main', 'Example');
+
+  example.inputs.forEach((input, i) => {
+    const id = `in${i}`;
+    mod.nodes[id] = {
+      id,
+      kind: 'input',
+      type: 'neuroloom.Input',
+      name: INPUT_NAMES[i]!,
+      params: { shape: literal(input.shape), dtype: literal(input.dtype ?? 'float32') },
+    };
+    mod.layout[id] = { x: 0, y: i * 120 };
+    mod.interface.inputs.push(id);
+  });
+
+  const params: Record<string, ParamValue> = { ...initialParams(spec) };
+  for (const [k, v] of Object.entries(example.params ?? {})) params[k] = v === 'auto' ? { auto: true } : literal(v);
+  const name = spec.kind === 'layer' ? `${spec.defaultName}1` : spec.defaultName;
+  mod.nodes.node = { id: 'node', kind: spec.kind, type: spec.type, name, params };
+  mod.layout.node = { x: 260, y: 0 };
+
+  let next = 0;
+  for (const port of spec.inputs) {
+    const count = port.variadic ? example.inputs.length - next : next < example.inputs.length ? 1 : 0;
+    for (let i = 0; i < count; i++, next++) {
+      mod.edges.push({
+        id: `e${mod.edges.length}`,
+        source: { node: `in${next}`, port: 'out' },
+        target: { node: 'node', port: port.variadic ? `${port.name}${i}` : port.name },
+      });
+    }
+  }
+
+  outputsOf(spec, withDefaults(spec, params)).forEach((out, i) => {
+    const id = `out${i}`;
+    mod.nodes[id] = { id, kind: 'output', type: 'neuroloom.Output', name: i === 0 ? 'output' : `output_${i}`, params: {} };
+    mod.layout[id] = { x: 520, y: i * 120 };
+    mod.interface.outputs.push(id);
+    mod.edges.push({ id: `e${mod.edges.length}`, source: { node: 'node', port: out.name }, target: { node: id, port: 'in' } });
+  });
+
+  return { schemaVersion: SCHEMA_VERSION, name: spec.type, entry: 'main', modules: { main: mod } };
 }
 
 const lin = (inF: number | 'auto', outF: number, bias?: boolean): Record<string, ParamValue> => ({

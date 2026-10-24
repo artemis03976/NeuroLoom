@@ -1,7 +1,8 @@
 // The editor's view of its host: the Electron app (native dialogs, files on disk,
 // environment management) or a plain browser tab (downloads and file pickers).
-import type { DesktopApi, MenuCommand, OpenedFile, Recovery } from '@neuroloom/host-api';
+import type { DesktopApi, ImageExport, MenuCommand, OpenedFile, Recovery } from '@neuroloom/host-api';
 import { tr, type Locale } from './i18n';
+import { zip } from './lib/zip';
 
 export interface Host {
   kind: 'desktop' | 'web';
@@ -10,6 +11,10 @@ export interface Host {
   /** Returns where the file went (a path on desktop, a label on the web), or null if cancelled. */
   saveFile(args: { path?: string; text: string; suggestedName: string }): Promise<string | null>;
   exportPython(args: { text: string; suggestedName: string }): Promise<string | null>;
+  /** A Python package `suggestedName/` (a folder on desktop, a .zip download on the web); returns where it went, or null. */
+  exportPackage(args: { files: { name: string; text: string }[]; suggestedName: string }): Promise<string | null>;
+  /** An exported diagram; on the web a 'pdf' must already be PDF bytes. Returns where it went, or null. */
+  exportImage(args: ImageExport): Promise<string | null>;
   recent(): Promise<string[]>;
   recovery: { write(r: Recovery): Promise<void>; read(): Promise<Recovery | null>; clear(): Promise<void> };
   setDocState(state: { dirty: boolean; title: string }): void;
@@ -28,6 +33,8 @@ function desktopHost(api: DesktopApi): Host {
     openPath: (path) => api.file.openPath(path),
     saveFile: (args) => api.file.save(args),
     exportPython: (args) => api.file.exportPython(args),
+    exportPackage: (args) => api.file.exportPackage(args),
+    exportImage: (args) => api.file.exportImage(args),
     recent: () => api.file.recent(),
     recovery: api.recovery,
     setDocState: (state) => api.doc.setState(state),
@@ -38,8 +45,8 @@ function desktopHost(api: DesktopApi): Host {
   };
 }
 
-function download(text: string, name: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type }));
+function download(data: string | Uint8Array<ArrayBuffer>, name: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([data], { type }));
   const a = document.createElement('a');
   a.href = url;
   a.download = name;
@@ -73,6 +80,18 @@ function webHost(): Host {
     async exportPython({ text, suggestedName }) {
       const name = `${suggestedName}.py`;
       download(text, name, 'text/x-python');
+      return name;
+    },
+    async exportPackage({ files, suggestedName }) {
+      const name = `${suggestedName}.zip`;
+      download(zip(files.map((f) => ({ name: `${suggestedName}/${f.name}`, text: f.text }))) as Uint8Array<ArrayBuffer>, name, 'application/zip');
+      return name;
+    },
+    async exportImage({ format, data, suggestedName }) {
+      if (format === 'pdf' && typeof data === 'string') throw new Error('A PDF must be rendered before it is downloaded');
+      const name = `${suggestedName}.${format}`;
+      const type = { svg: 'image/svg+xml', png: 'image/png', pdf: 'application/pdf' }[format];
+      download(data as string | Uint8Array<ArrayBuffer>, name, type);
       return name;
     },
     recent: async () => [],

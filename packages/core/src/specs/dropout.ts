@@ -1,5 +1,5 @@
 import { msg } from '../i18n';
-import { fail, IN, inplaceParam, L, num, ok, OUT, P, rankError, resolveParams } from './helpers';
+import { fail, IN, inplaceParam, L, num, ok, OUT, P, rankError, resolveParams, SAME_SHAPE } from './helpers';
 import type { NodeSpec } from './types';
 
 function dropout(cls: string, zh: string, ranks: number[] | undefined, summary: [string, string], example: string): NodeSpec {
@@ -20,6 +20,7 @@ function dropout(cls: string, zh: string, ranks: number[] | undefined, summary: 
       const bad = ranks && rankError(x!, ranks, cls);
       return bad ? fail(bad) : ok([x!], resolveParams(params));
     },
+    shapeDoc: SAME_SHAPE,
     describe: (r) => `p = ${r.p}`,
     codegen: { ctor: `nn.${cls}` },
     example: { inputs: [{ shape: example }], params: { p: 0.1 } },

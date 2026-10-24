@@ -1,6 +1,6 @@
 import { msg } from '../i18n';
 import { axis } from '../shape';
-import { fail, inplaceParam, IN, L, lit, num, ok, OUT, P, resolveParams } from './helpers';
+import { fail, inplaceParam, IN, L, lit, num, ok, OUT, P, resolveParams, SAME_SHAPE } from './helpers';
 import type { Inputs, NodeSpec, ParamSpec, Params, PythonCall } from './types';
 
 const doc = (path: string) => `https://docs.pytorch.org/docs/stable/generated/${path}.html`;
@@ -35,6 +35,7 @@ function layer(
     outputs: OUT,
     defaultName: 'act',
     infer: elementwise,
+    shapeDoc: SAME_SHAPE,
     codegen: { ctor: `nn.${cls}` },
     example: EXAMPLE,
     ...extra,
@@ -60,6 +61,7 @@ function fn(
     outputs: OUT,
     defaultName: call.name,
     infer: elementwise,
+    shapeDoc: SAME_SHAPE,
     codegen: { fn: call.fn },
     python: {
       functions: python.functions,

@@ -160,7 +160,9 @@ class Net(nn.Module):
     result = import_static(source, inputs={"x": InputSpec(["B", 8])})
     net = modules(result)["Net"]
     assert net["constants"] == [{"name": "scale", "expr": "dim ** -0.5"}]
-    assert net["initCode"] == 'self.register_buffer("mask", torch.ones(dim))\nnn.init.zeros_(self.fc.bias)'
+    assert net["initCode"] == "nn.init.zeros_(self.fc.bias)"
+    mask = by_name(net)["mask"]
+    assert (mask["type"], mask["params"]) == ("neuroloom.Buffer", {"init": {"literal": "ones"}, "shape": {"expr": "(dim,)"}})
     assert by_name(net)["fc"]["params"]["out_features"] == {"expr": "HIDDEN"}
     mul = next(n for n in net["nodes"].values() if n["type"] == "torch.mul")
     assert mul["params"]["other"] == {"expr": "scale"}

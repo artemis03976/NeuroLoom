@@ -115,6 +115,7 @@ export const ACTIVATION_SPECS: NodeSpec[] = [
     example: { inputs: [{ shape: 'B, 8' }], params: { dim: -1 } },
   }),
   layer('Hardswish', 'Hardswish', ['A cheap approximation of Swish.', 'Swish 的低成本近似。'], [inplaceParam()]),
+  layer('Hardsigmoid', 'Hardsigmoid', ['A cheap approximation of sigmoid: relu6(x + 3) / 6.', 'sigmoid 的低成本近似：relu6(x + 3) / 6。'], [inplaceParam()]),
   layer('Softplus', 'Softplus', ['A smooth approximation of ReLU.', 'ReLU 的平滑近似。'], [
     P.float('beta', 'β', { default: 1.0 }),
     P.float('threshold', '阈值', { default: 20.0 }),

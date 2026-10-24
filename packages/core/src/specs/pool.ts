@@ -107,16 +107,52 @@ function adaptive(n: 1 | 2 | 3, kind: 'Max' | 'Avg'): NodeSpec {
   };
 }
 
+/** The function form of a pooling layer (F.max_pool2d(x, 2)): same parameters, in the function's argument order. */
+function functional(layer: NodeSpec, name: string): NodeSpec {
+  const { ctor: _, ...codegen } = layer.codegen;
+  return {
+    ...layer,
+    type: `torch.nn.functional.${name}`,
+    kind: 'op',
+    displayName: L(`F.${name}`, `${layer.displayName.zh}函数`),
+    summary: L(`${layer.displayName.en} as a function call.`, `函数形式的 ${layer.displayName.en}。`),
+    docUrl: `https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.${name}.html`,
+    defaultName: name,
+    codegen: { ...codegen, fn: `F.${name}` },
+    python: {
+      functions: [`torch.nn.functional.${name}`],
+      args: [{ name: 'input', port: 'in' }, ...layer.params.map((p) => ({ name: p.name, param: p.name }))],
+    },
+  };
+}
+
+const LAYERS = {
+  MaxPool1d: pool(1, 'Max'),
+  MaxPool2d: pool(2, 'Max'),
+  AvgPool1d: pool(1, 'Avg'),
+  AvgPool2d: pool(2, 'Avg'),
+  AdaptiveAvgPool1d: adaptive(1, 'Avg'),
+  AdaptiveAvgPool2d: adaptive(2, 'Avg'),
+  AdaptiveMaxPool2d: adaptive(2, 'Max'),
+};
+
 export const POOL_SPECS: NodeSpec[] = [
-  pool(1, 'Max'),
-  pool(2, 'Max'),
+  LAYERS.MaxPool1d,
+  LAYERS.MaxPool2d,
   pool(3, 'Max'),
-  pool(1, 'Avg'),
-  pool(2, 'Avg'),
+  LAYERS.AvgPool1d,
+  LAYERS.AvgPool2d,
   pool(3, 'Avg'),
-  adaptive(1, 'Avg'),
-  adaptive(2, 'Avg'),
+  LAYERS.AdaptiveAvgPool1d,
+  LAYERS.AdaptiveAvgPool2d,
   adaptive(3, 'Avg'),
   adaptive(1, 'Max'),
-  adaptive(2, 'Max'),
+  LAYERS.AdaptiveMaxPool2d,
+  functional(LAYERS.MaxPool1d, 'max_pool1d'),
+  functional(LAYERS.MaxPool2d, 'max_pool2d'),
+  functional(LAYERS.AvgPool1d, 'avg_pool1d'),
+  functional(LAYERS.AvgPool2d, 'avg_pool2d'),
+  functional(LAYERS.AdaptiveAvgPool1d, 'adaptive_avg_pool1d'),
+  functional(LAYERS.AdaptiveAvgPool2d, 'adaptive_avg_pool2d'),
+  functional(LAYERS.AdaptiveMaxPool2d, 'adaptive_max_pool2d'),
 ];

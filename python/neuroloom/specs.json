@@ -2,6 +2,71 @@
   "schemaVersion": "0.3",
   "specs": [
     {
+      "type": "neuroloom.Parameter",
+      "kind": "layer",
+      "defaultName": "weight",
+      "params": [
+        {
+          "name": "shape",
+          "type": "dims"
+        },
+        {
+          "name": "init",
+          "type": "enum",
+          "default": "zeros"
+        },
+        {
+          "name": "dtype",
+          "type": "enum",
+          "default": "float32"
+        },
+        {
+          "name": "requires_grad",
+          "type": "bool",
+          "default": true
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ]
+    },
+    {
+      "type": "neuroloom.Buffer",
+      "kind": "layer",
+      "defaultName": "buffer",
+      "params": [
+        {
+          "name": "shape",
+          "type": "dims"
+        },
+        {
+          "name": "init",
+          "type": "enum",
+          "default": "zeros"
+        },
+        {
+          "name": "dtype",
+          "type": "enum",
+          "default": "float32"
+        },
+        {
+          "name": "persistent",
+          "type": "bool",
+          "default": true
+        }
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "stateless": true
+    },
+    {
       "type": "torch.nn.Linear",
       "kind": "layer",
       "defaultName": "fc",
@@ -934,6 +999,423 @@
       "stateless": true
     },
     {
+      "type": "torch.nn.functional.max_pool1d",
+      "kind": "op",
+      "defaultName": "max_pool1d",
+      "params": [
+        {
+          "name": "kernel_size",
+          "type": "ints",
+          "arity": 1
+        },
+        {
+          "name": "stride",
+          "type": "ints",
+          "default": null,
+          "nullable": true,
+          "arity": 1
+        },
+        {
+          "name": "padding",
+          "type": "ints",
+          "default": 0,
+          "arity": 1
+        },
+        {
+          "name": "dilation",
+          "type": "ints",
+          "default": 1,
+          "arity": 1
+        },
+        {
+          "name": "ceil_mode",
+          "type": "bool",
+          "default": false
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.max_pool1d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "kernel_size",
+            "param": "kernel_size"
+          },
+          {
+            "name": "stride",
+            "param": "stride"
+          },
+          {
+            "name": "padding",
+            "param": "padding"
+          },
+          {
+            "name": "dilation",
+            "param": "dilation"
+          },
+          {
+            "name": "ceil_mode",
+            "param": "ceil_mode"
+          }
+        ]
+      }
+    },
+    {
+      "type": "torch.nn.functional.max_pool2d",
+      "kind": "op",
+      "defaultName": "max_pool2d",
+      "params": [
+        {
+          "name": "kernel_size",
+          "type": "ints",
+          "arity": 2
+        },
+        {
+          "name": "stride",
+          "type": "ints",
+          "default": null,
+          "nullable": true,
+          "arity": 2
+        },
+        {
+          "name": "padding",
+          "type": "ints",
+          "default": 0,
+          "arity": 2
+        },
+        {
+          "name": "dilation",
+          "type": "ints",
+          "default": 1,
+          "arity": 2
+        },
+        {
+          "name": "ceil_mode",
+          "type": "bool",
+          "default": false
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.max_pool2d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "kernel_size",
+            "param": "kernel_size"
+          },
+          {
+            "name": "stride",
+            "param": "stride"
+          },
+          {
+            "name": "padding",
+            "param": "padding"
+          },
+          {
+            "name": "dilation",
+            "param": "dilation"
+          },
+          {
+            "name": "ceil_mode",
+            "param": "ceil_mode"
+          }
+        ]
+      }
+    },
+    {
+      "type": "torch.nn.functional.avg_pool1d",
+      "kind": "op",
+      "defaultName": "avg_pool1d",
+      "params": [
+        {
+          "name": "kernel_size",
+          "type": "ints",
+          "arity": 1
+        },
+        {
+          "name": "stride",
+          "type": "ints",
+          "default": null,
+          "nullable": true,
+          "arity": 1
+        },
+        {
+          "name": "padding",
+          "type": "ints",
+          "default": 0,
+          "arity": 1
+        },
+        {
+          "name": "ceil_mode",
+          "type": "bool",
+          "default": false
+        },
+        {
+          "name": "count_include_pad",
+          "type": "bool",
+          "default": true
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.avg_pool1d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "kernel_size",
+            "param": "kernel_size"
+          },
+          {
+            "name": "stride",
+            "param": "stride"
+          },
+          {
+            "name": "padding",
+            "param": "padding"
+          },
+          {
+            "name": "ceil_mode",
+            "param": "ceil_mode"
+          },
+          {
+            "name": "count_include_pad",
+            "param": "count_include_pad"
+          }
+        ]
+      }
+    },
+    {
+      "type": "torch.nn.functional.avg_pool2d",
+      "kind": "op",
+      "defaultName": "avg_pool2d",
+      "params": [
+        {
+          "name": "kernel_size",
+          "type": "ints",
+          "arity": 2
+        },
+        {
+          "name": "stride",
+          "type": "ints",
+          "default": null,
+          "nullable": true,
+          "arity": 2
+        },
+        {
+          "name": "padding",
+          "type": "ints",
+          "default": 0,
+          "arity": 2
+        },
+        {
+          "name": "ceil_mode",
+          "type": "bool",
+          "default": false
+        },
+        {
+          "name": "count_include_pad",
+          "type": "bool",
+          "default": true
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.avg_pool2d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "kernel_size",
+            "param": "kernel_size"
+          },
+          {
+            "name": "stride",
+            "param": "stride"
+          },
+          {
+            "name": "padding",
+            "param": "padding"
+          },
+          {
+            "name": "ceil_mode",
+            "param": "ceil_mode"
+          },
+          {
+            "name": "count_include_pad",
+            "param": "count_include_pad"
+          }
+        ]
+      }
+    },
+    {
+      "type": "torch.nn.functional.adaptive_avg_pool1d",
+      "kind": "op",
+      "defaultName": "adaptive_avg_pool1d",
+      "params": [
+        {
+          "name": "output_size",
+          "type": "ints",
+          "arity": 1
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.adaptive_avg_pool1d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "output_size",
+            "param": "output_size"
+          }
+        ]
+      }
+    },
+    {
+      "type": "torch.nn.functional.adaptive_avg_pool2d",
+      "kind": "op",
+      "defaultName": "adaptive_avg_pool2d",
+      "params": [
+        {
+          "name": "output_size",
+          "type": "ints",
+          "arity": 2
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.adaptive_avg_pool2d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "output_size",
+            "param": "output_size"
+          }
+        ]
+      }
+    },
+    {
+      "type": "torch.nn.functional.adaptive_max_pool2d",
+      "kind": "op",
+      "defaultName": "adaptive_max_pool2d",
+      "params": [
+        {
+          "name": "output_size",
+          "type": "ints",
+          "arity": 2
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "python": {
+        "functions": [
+          "torch.nn.functional.adaptive_max_pool2d"
+        ],
+        "args": [
+          {
+            "name": "input",
+            "port": "in"
+          },
+          {
+            "name": "output_size",
+            "param": "output_size"
+          }
+        ]
+      }
+    },
+    {
       "type": "torch.nn.BatchNorm1d",
       "kind": "layer",
       "defaultName": "bn",
@@ -1563,6 +2045,30 @@
         }
       ],
       "layerClass": "torch.nn.Hardswish",
+      "stateless": true
+    },
+    {
+      "type": "torch.nn.Hardsigmoid",
+      "kind": "layer",
+      "defaultName": "act",
+      "params": [
+        {
+          "name": "inplace",
+          "type": "bool",
+          "default": false
+        }
+      ],
+      "inputs": [
+        {
+          "name": "in"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out"
+        }
+      ],
+      "layerClass": "torch.nn.Hardsigmoid",
       "stateless": true
     },
     {

@@ -206,6 +206,11 @@ def _describe(node) -> str:
 
 
 def _defaults(fn) -> dict[str, Any]:
+    # F.max_pool2d is a (*args, **kwargs) dispatcher; F._max_pool2d holds the signature.
+    if getattr(fn, "__module__", None) == "torch.nn.functional":
+        import torch.nn.functional as F
+
+        fn = getattr(F, f"_{fn.__name__}", fn)
     try:
         return {
             name: p.default
@@ -425,10 +430,42 @@ def import_source(
     return {"project": project, "observedShapes": observed, "batchProbe": BATCH_PROBE, "warnings": g.warnings}
 
 
+def _state_node(module, path: str) -> tuple[str, dict] | None:
+    """
+    A Parameter or Buffer held at `path` ("layer_scale", or "encoder.pos_embedding"),
+    as (node type, literal params); None for anything else (an fx tensor constant).
+    """
+    owner_path, _, name = path.rpartition(".")
+    try:
+        owner = module.get_submodule(owner_path) if owner_path else module
+    except AttributeError:
+        return None
+    params = dict(owner.named_parameters(recurse=False))
+    buffers = dict(owner.named_buffers(recurse=False))
+    tensor = params.get(name, buffers.get(name))
+    if tensor is None:
+        return None
+    values: dict[str, Any] = {"shape": list(tensor.shape), "init": "zeros"}
+    dtype = str(tensor.dtype).removeprefix("torch.")
+    if dtype != "float32":
+        values["dtype"] = dtype
+    if name in params and not tensor.requires_grad:
+        values["requires_grad"] = False
+    if name in buffers and name in owner._non_persistent_buffers_set:
+        values["persistent"] = False
+    return ("neuroloom.Parameter" if name in params else "neuroloom.Buffer"), values
+
+
 def _add_node(g: _Graph, gm, node, catalog: _Catalog, placeholders: list) -> None:
     from torch import fx
 
-    if node.op == "placeholder":
+    if node.op == "get_attr":
+        state = _state_node(gm, str(node.target))
+        if state is None:
+            raise ImportFailure(t(f"直接使用张量 self.{node.target}", f"the tensor self.{node.target} used directly"))
+        node_id = g.add("layer", state[0], _module_name(str(node.target), g), state[1])
+        g.value_of[node] = (node_id, "out")
+    elif node.op == "placeholder":
         node_id = g.add("input", INPUT, str(node.target), {})
         g.value_of[node] = (node_id, "out")
         placeholders.append((node, node_id))

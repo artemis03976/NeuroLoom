@@ -142,6 +142,24 @@ function opCall(
   return `${spec.codegen.fn}(${parts.join(', ')})`;
 }
 
+/** "(1, 1, d)" -> "1, 1, d" and "(d,)" -> "d"; undefined when the text is not a parenthesized tuple. */
+function tupleItems(text: string): string | undefined {
+  if (!text.startsWith('(') || !text.endsWith(')')) return undefined;
+  let depth = 0;
+  let comma = false;
+  for (let i = 1; i < text.length - 1; i++) {
+    const c = text[i]!;
+    if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c)) depth--;
+    if (depth < 0) return undefined; // "(a) + (b)" closes the first parenthesis early
+    if (c === ',' && depth === 0) comma = true;
+  }
+  return comma ? text.slice(1, -1).replace(/,\s*$/, '') : undefined;
+}
+
+/** A sequential module whose children are named 0, 1, …, as nn.Sequential(a, b) names them. */
+const numberedChain = (mod: ModuleDef) => sequentialChain(mod).every((n, i) => n.name === String(i));
+
 /** A loop variable for a repeat: "blocks" -> "block". */
 function singular(name: string): string {
   return name.length > 1 && name.endsWith('s') && !name.endsWith('ss') ? name.slice(0, -1) : `${name}_i`;
@@ -242,11 +260,14 @@ class ClassWriter {
     if (def.sequential) {
       const missing: string[] = [];
       const inner = new ClassWriter(this.gen, { ...def, hyperparams: this.mod.hyperparams, constants: this.mod.constants }, child ? [child] : this.gen.analysesOf(def.id));
-      const items = sequentialChain(def).map((n) => {
+      const chain = sequentialChain(def);
+      const items = chain.map((n) => {
         const r = inner.ctorOf(n, child);
         missing.push(...r.missing);
         return r.text;
       });
+      // Named children (features.conv0) keep their names, and so their state_dict keys.
+      if (!numberedChain(def)) return { text: `nn.Sequential(OrderedDict([${items.map((text, i) => `(${JSON.stringify(chain[i]!.name)}, ${text})`).join(', ')}]))`, missing };
       return { text: `nn.Sequential(${items.join(', ')})`, missing };
     }
     const verbatim = !!def.opaque && (!def.opaque.source || !!def.opaque.verbatimArgs);
@@ -301,8 +322,25 @@ class ClassWriter {
     return ports?.inputs.length === 1 && ports.outputs.length === 1;
   }
 
+  /** `self.cls_token = nn.Parameter(torch.zeros(1, 1, 768))`, or `self.register_buffer("index", torch.zeros(49, dtype=torch.int64))`. */
+  private stateLine(node: NodeInst, spec: NodeSpec): string {
+    const params = withDefaults(spec, node.params);
+    const resolved = this.resolvedFor(node.id).resolved;
+    const value = (name: string) => resolved?.[name] ?? literalOf(params[name]);
+    const shapeExpr = exprOf(params.shape);
+    // torch.zeros(1, 1, d) rather than torch.zeros((1, 1, d)): a tuple expression is written as its items.
+    const shapeText = shapeExpr !== undefined ? this.expr(shapeExpr, 'init') : undefined;
+    const shape = shapeText !== undefined ? (tupleItems(shapeText) ?? shapeText) : ((value('shape') as number[] | undefined) ?? []).join(', ');
+    const dtype = String(value('dtype') ?? 'float32');
+    const tensor = `torch.${String(value('init') ?? 'zeros')}(${shape}${dtype !== 'float32' ? `${shape ? ', ' : ''}dtype=torch.${dtype}` : ''})`;
+    if (spec.codegen.state === 'buffer') return `${I2}self.register_buffer(${JSON.stringify(node.name)}, ${tensor}${value('persistent') === false ? ', persistent=False' : ''})`;
+    return `${I2}self.${node.name} = nn.Parameter(${tensor}${value('requires_grad') === false ? ', requires_grad=False' : ''})`;
+  }
+
   /** The `self.name = ...` line of a layer or module node. */
   private initLine(node: NodeInst): { line: string; problems: string[] } {
+    const stateSpec = node.kind === 'layer' && !node.repeat ? getSpec(node.type) : undefined;
+    if (stateSpec?.codegen.state) return { line: this.stateLine(node, stateSpec), problems: [] };
     const problems: string[] = [];
     let text: string;
     if (node.repeat) {
@@ -359,7 +397,21 @@ class ClassWriter {
     gen.emit(`${I2}super().__init__()`);
     for (const name of this.storedHyperparams()) gen.emit(`${I2}self.${name} = ${name}`);
     for (const c of mod.constants ?? []) gen.emit(`${I2}self.${c.name} = ${this.expr(c.expr, 'init')}`);
-    for (const node of order) {
+    // __init__ order must survive a round trip, but the importers place nodes outside
+    // the data flow differently. Parameters and buffers (read wherever an expression
+    // happens to read them) come first, in the order forward() uses them; submodules
+    // without edges (unused, or called only from code kept as written) come last.
+    const position = new Map(order.map((n, i) => [n.id, i]));
+    const firstUse = (node: NodeInst) =>
+      Math.min(...mod.edges.filter((e) => e.source.node === node.id).map((e) => position.get(e.target.node) ?? Infinity));
+    const isolated = (node: NodeInst) => !mod.edges.some((e) => e.source.node === node.id || e.target.node === node.id);
+    const isState = (node: NodeInst) => node.kind === 'layer' && !node.repeat && !!getSpec(node.type)?.codegen.state;
+    const inits = [
+      ...order.filter((n) => isState(n) && !isolated(n)).sort((a, b) => firstUse(a) - firstUse(b)),
+      ...order.filter((n) => !isState(n) && !isolated(n)),
+      ...order.filter(isolated),
+    ];
+    for (const node of inits) {
       if (node.kind !== 'layer' && node.kind !== 'module') continue;
       const { line, problems } = this.initLine(node);
       gen.emit(problems.length > 0 ? `${line}  # TODO(neuroloom): ${problems.join('; ')}` : line, mod.id, node.id);
@@ -459,6 +511,11 @@ class ClassWriter {
         continue;
       }
       if (node.kind === 'output') continue;
+      // A parameter or buffer is read where it is used: `x + self.pos_embedding`.
+      if (node.kind === 'layer' && getSpec(node.type)?.codegen.state) {
+        varOf.set(portKey(node.id, 'out'), `self.${node.name}`);
+        continue;
+      }
       const ports = portsOf(gen.project, node);
       if (!ports) continue;
 
@@ -472,7 +529,9 @@ class ClassWriter {
         variadicEdges(mod, node.id, base).map((e) => varOf.get(portKey(e.source.node, e.source.port)) ?? 'None');
       const connected = ports.inputs.filter((p) => !p.optional);
       const hasEdges = mod.edges.some((e) => e.target.node === node.id);
-      if ((node.kind === 'layer' || node.kind === 'module') && !hasEdges && calledFromCode.has(node.name)) continue;
+      // Called only from code kept as written, or not at all: built in __init__, no call here.
+      const unused = !hasEdges && !mod.edges.some((e) => e.source.node === node.id);
+      if ((node.kind === 'layer' || node.kind === 'module') && !hasEdges && (calledFromCode.has(node.name) || unused)) continue;
       const missingInput = connected.some((p) => (p.variadic ? variadicExprs(p.name).length === 0 : sourceVar(node.id, p.name) === undefined));
       if (missingInput) {
         gen.emit(`${I2}# TODO(neuroloom): ${msg(`${node.name} 的输入未连接`, `${node.name} has unconnected inputs`)}`, mod.id, node.id);
@@ -571,7 +630,9 @@ class ClassWriter {
       const only = tensorInputs.length === 1 ? tensorInputs[0] : undefined;
       if (only && consumers(mod, only.source.node, only.source.port).length === 1) {
         const key = portKey(only.source.node, only.source.port);
-        target = inline.get(key)?.target ?? varOf.get(key)!;
+        const from = inline.get(key)?.target ?? varOf.get(key)!;
+        // `self.layer_scale` is read, never assigned.
+        if (!from.startsWith('self.')) target = from;
       }
 
       const consumer = uses.length === 1 ? mod.nodes[uses[0]!.target.node] : undefined;
@@ -683,7 +744,11 @@ class Generator {
       this.emit(`# ${project.name || project.modules[project.entry]!.className}: generated by NeuroLoom from a graph.`);
       this.emit('');
     }
-    // isort order: plain imports first, then from-imports.
+    // isort order: the standard library first; then plain imports, then from-imports.
+    if (/\bOrderedDict\b/.test(verbatim) || modules.some((m) => m.sequential && !numberedChain(m))) {
+      this.emit('from collections import OrderedDict');
+      this.emit('');
+    }
     this.emit('import torch');
     if (usesF) this.emit('import torch.nn.functional as F');
     this.emit('from torch import nn');
@@ -801,7 +866,13 @@ export function generateFiles(project: LoomProject, analysis: ProjectAnalysis = 
       .filter((other) => other !== id && new RegExp(`\\b${className(other)}\\b`).test(text))
       .map((other) => `from .${fileOf.get(other)} import ${className(other)}`)
       .sort();
-    const imports = ['import torch', ...(/\bF\./.test(text) ? ['import torch.nn.functional as F'] : []), 'from torch import nn', ...preamble];
+    const imports = [
+      ...(/\bOrderedDict\b/.test(text) ? ['from collections import OrderedDict', ''] : []),
+      'import torch',
+      ...(/\bF\./.test(text) ? ['import torch.nn.functional as F'] : []),
+      'from torch import nn',
+      ...preamble,
+    ];
     const selfTest = id === project.entry && gen.selfTestStart !== undefined ? gen.lines.slice(gen.selfTestStart) : [];
     const lines = [...header, ...imports, ...(siblings.length > 0 ? ['', ...siblings] : []), '', '', ...body, ...selfTest];
     return { name: `${fileOf.get(id)}.py`, text: `${lines.join('\n')}\n` };

@@ -48,9 +48,6 @@ for p in json.load(sys.stdin):
             "params": count(a),
             "flops": counter.get_total_flops(),
             "generatedParams": count(b),
-            # nn.Parameter attributes of the model's own classes (ViT's class token and
-            # position embeddings): kept as constants, not counted by NeuroLoom.
-            "direct": sum(t.numel() for m in a.modules() if type(m).__module__ == "m" for t in m.parameters(recurse=False)),
         })
         del a, b, oa, ob
     except Exception as e:
@@ -69,7 +66,6 @@ interface Check {
   params: number;
   flops: number;
   generatedParams: number;
-  direct: number;
   error?: string;
 }
 
@@ -121,7 +117,7 @@ function suite(kind: 'templates' | 'blocks', items: Item[]) {
       expect(check.error).toBeUndefined();
       expect(check.same).toBe(true);
       expect(check.generatedParams).toBe(check.params);
-      expect(analyzeModule(item.project, mod.id).totalParams).toBe(check.params - check.direct);
+      expect(analyzeModule(item.project, mod.id).totalParams).toBe(check.params);
     });
 
     it.skipIf(!hasTorch)(`${key} counts the FLOPs PyTorch counts`, () => {

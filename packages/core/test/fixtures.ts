@@ -163,7 +163,22 @@ export const twoInputs = () =>
     ['a -> fa', 'b -> fb', 'fa -> output', 'fb -> output_1'],
   );
 
-export const ROUND_TRIP_FIXTURES = { mlp, mlpFunctional, twoHeads, twoInputs };
+/** A function call on one branch level with a layer on the other (Inception's torch.cat): statement order must survive reading back. */
+export const branches = () =>
+  build(
+    'Branches',
+    [
+      ['x', 'Input', { shape: literal('B, 8') }, [0, 75]],
+      ['fa', 'Linear', lin('auto', 4), [220, 0]],
+      ['relu', 'relu', {}, [440, 0]],
+      ['fb', 'Linear', lin('auto', 4), [440, 150]],
+      ['output', 'Output', {}, [660, 0]],
+      ['output_1', 'Output', {}, [660, 150]],
+    ],
+    ['x -> fa', 'fa -> relu', 'x -> fb', 'relu -> output', 'fb -> output_1'],
+  );
+
+export const ROUND_TRIP_FIXTURES = { mlp, mlpFunctional, twoHeads, twoInputs, branches };
 
 // ---------------------------------------------------------------- multi-module projects
 

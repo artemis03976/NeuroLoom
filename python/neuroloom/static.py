@@ -36,7 +36,23 @@ SEQUENTIAL = "torch.nn.Sequential"
 MODULE_LIST = "torch.nn.ModuleList"
 
 # Bindings the generated code creates itself; imports that only create these are not kept.
-STANDARD_BINDINGS = {"torch": "torch", "nn": "torch.nn", "F": "torch.nn.functional"}
+# dtype= of a Parameter / Buffer initial value.
+STATE_DTYPES = {
+    "torch.float32": "float32",
+    "torch.float": "float32",
+    "torch.float64": "float64",
+    "torch.double": "float64",
+    "torch.float16": "float16",
+    "torch.half": "float16",
+    "torch.bfloat16": "bfloat16",
+    "torch.int64": "int64",
+    "torch.long": "int64",
+    "torch.int32": "int32",
+    "torch.int": "int32",
+    "torch.bool": "bool",
+}
+# Imports the generated code writes itself (OrderedDict: for nn.Sequential with named children).
+STANDARD_BINDINGS = {"torch": "torch", "nn": "torch.nn", "F": "torch.nn.functional", "OrderedDict": "collections.OrderedDict"}
 # Names expressions may use besides hyperparameters and constants (the TypeScript evaluator knows them).
 EXPR_BUILTINS = {"int", "float", "abs", "min", "max", "round", "len", "bool", "sum", "tuple", "list", "math", "True", "False", "None"}
 BINOPS = {ast.Add: "operator.add", ast.Sub: "operator.sub", ast.Mult: "operator.mul", ast.Div: "operator.truediv", ast.MatMult: "operator.matmul"}
@@ -289,11 +305,13 @@ class _Module:
             "interface": {"inputs": [], "outputs": []},
         }
         self.count = 0
+        self.reached: list[str] = []  # node ids in the order they are added or first used
 
     def add(self, kind: str, type_: str, name: str, params: dict | None = None, **extra: Any) -> str:
         self.count += 1
         node_id = f"n{self.count}"
         self.mod["nodes"][node_id] = {"id": node_id, "kind": kind, "type": type_, "name": name, "params": params or {}, **extra}
+        self.reached.append(node_id)
         return node_id
 
     def link(self, source: _Value, node_id: str, port: str) -> None:
@@ -326,6 +344,7 @@ class _ClassConverter:
         self.locals: dict[str, ast.expr] = {}
         self.local_stmts: dict[str, list[ast.stmt]] = {}  # every assignment, in order (n = 32; n = f(n))
         self.attrs: dict[str, str] = {}  # self.<attr> -> node id
+        self.state_attrs: set[str] = set()  # attrs that are Parameter / Buffer nodes, read as self.<attr> in forward()
         self.repeat_style: dict[str, str] = {}  # repeat attr -> "list" (for loop) or "sequential" (called)
         self.constants: dict[str, str] = {}
         self.plain_constants: set[str] = set()
@@ -353,7 +372,13 @@ class _ClassConverter:
         if init:
             self._signature(init)
             self._init_body(init.body)
+        self.m.reached = []
         self._forward(forward)
+        # Nodes in the order forward() reaches them, then those it never uses: the
+        # order breaks ties between parallel branches, so it must follow the code.
+        nodes = self.m.mod["nodes"]
+        order = list(dict.fromkeys(n for n in self.m.reached if n in nodes))
+        self.m.mod["nodes"] = {n: nodes[n] for n in order + [n for n in nodes if n not in order]}
         if members:
             self.m.mod["members"] = self.file.statements(members)
         if self.constants:
@@ -457,6 +482,9 @@ class _ClassConverter:
                         self.locals[target.id] = _Rewrite(self.locals).visit(copy.deepcopy(stmt.value))
                         self.local_stmts.setdefault(target.id, []).append(stmt)
                         continue
+                if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call) and _self_attr(stmt.value.func) == "register_buffer":
+                    self._buffer(stmt.value)
+                    continue
                 raise Unsupported(type(stmt).__name__)
             except Unsupported:
                 init_code.append(stmt)
@@ -483,9 +511,70 @@ class _ClassConverter:
                 )
             )
 
+    def _tensor_init(self, call: ast.expr) -> dict | None:
+        """`torch.zeros(1, 1, d, dtype=torch.int64)` as Parameter / Buffer params, or None for other initial values."""
+        if not isinstance(call, ast.Call):
+            return None
+        init = {f"torch.{name}": name for name in ("zeros", "ones", "randn", "rand", "empty")}.get(self.file.qualname(call.func) or "")
+        if init is None:
+            return None
+        params: dict[str, Any] = {"init": {"literal": init}}
+        for kw in call.keywords:
+            dtype = STATE_DTYPES.get(self.file.qualname(kw.value) or "") if kw.arg == "dtype" else None
+            if dtype is None:
+                return None
+            params["dtype"] = {"literal": dtype}
+        sizes = call.args[0].elts if len(call.args) == 1 and isinstance(call.args[0], (ast.Tuple, ast.List)) else call.args
+        if all(isinstance(s, ast.Constant) and type(s.value) is int for s in sizes):
+            params["shape"] = {"literal": [s.value for s in sizes]}
+        elif len(call.args) == 1 and not isinstance(call.args[0], (ast.Tuple, ast.List)):
+            params["shape"] = {"expr": f"({self._expr(call.args[0])},)"}  # torch.ones(dim): one dimension
+        else:
+            parts = [self._expr(s) for s in sizes]
+            params["shape"] = {"expr": f"({parts[0]},)" if len(parts) == 1 else f"({', '.join(parts)})"}
+        return params
+
+    def _state(self, attr: str, type_: str, params: dict) -> None:
+        self.attrs[attr] = self.m.add("layer", type_, attr, params)
+        self.state_attrs.add(attr)
+
+    def _parameter(self, attr: str, call: ast.Call) -> bool:
+        """`self.cls_token = nn.Parameter(torch.zeros(1, 1, d))`: a Parameter node."""
+        params = self._tensor_init(call.args[0]) if call.args else None
+        grad = call.args[1] if len(call.args) == 2 else next((k.value for k in call.keywords if k.arg == "requires_grad"), None)
+        if params is None or len(call.args) > 2 or any(k.arg != "requires_grad" for k in call.keywords):
+            return False
+        if grad is not None:
+            if not (isinstance(grad, ast.Constant) and isinstance(grad.value, bool)):
+                return False
+            if not grad.value:
+                params["requires_grad"] = {"literal": False}
+        self._state(attr, "neuroloom.Parameter", params)
+        return True
+
+    def _buffer(self, call: ast.Call) -> None:
+        """`self.register_buffer("index", torch.zeros(49, dtype=torch.int64))`: a Buffer node."""
+        name = call.args[0] if call.args else None
+        params = self._tensor_init(call.args[1]) if len(call.args) >= 2 else None
+        persistent = call.args[2] if len(call.args) == 3 else next((k.value for k in call.keywords if k.arg == "persistent"), None)
+        if not (isinstance(name, ast.Constant) and isinstance(name.value, str)) or params is None or len(call.args) > 3 or any(k.arg != "persistent" for k in call.keywords):
+            raise Unsupported(t("register_buffer 的写法", "this form of register_buffer"))
+        if persistent is not None:
+            if not (isinstance(persistent, ast.Constant) and isinstance(persistent.value, bool)):
+                raise Unsupported(t("register_buffer 的写法", "this form of register_buffer"))
+            if not persistent.value:
+                params["persistent"] = {"literal": False}
+        if name.value in self.attrs or name.value in self.constants or name.value in self.stored:
+            raise Unsupported(t(f"self.{name.value} 被重复赋值", f"self.{name.value} is assigned more than once"))
+        self._state(name.value, "neuroloom.Buffer", params)
+
     def _attribute(self, attr: str, value: ast.expr) -> None:
         if attr in self.attrs or attr in self.constants or attr in self.stored:
             raise Unsupported(t(f"self.{attr} 被重复赋值", f"self.{attr} is assigned more than once"))
+        if isinstance(value, ast.Call) and self.file.qualname(value.func) in ("torch.nn.Parameter", "torch.nn.parameter.Parameter"):
+            if self._parameter(attr, value):
+                return
+            raise Unsupported(t("nn.Parameter 的初始值", "the initial value of this nn.Parameter"))
         if isinstance(value, ast.Call):
             q = self.file.qualname(value.func)
             catalog = self.imp.catalog
@@ -600,17 +689,28 @@ class _ClassConverter:
         return params
 
     def _sequential(self, call: ast.Call, name: str) -> str:
-        """An nn.Sequential(...) of module constructors becomes an inline sequential module."""
-        if call.keywords or not call.args or any(not isinstance(a, ast.Call) for a in call.args):
+        """
+        An nn.Sequential(...) of module constructors becomes an inline sequential
+        module: children numbered 0, 1, …, or named by nn.Sequential(OrderedDict([("conv0", ...), ...])).
+        """
+        children = [(str(i), arg) for i, arg in enumerate(call.args)]
+        if len(call.args) == 1 and isinstance(call.args[0], ast.Call) and self.file.qualname(call.args[0].func) == "collections.OrderedDict":
+            pairs = call.args[0].args[0] if len(call.args[0].args) == 1 and not call.args[0].keywords else None
+            items = pairs.elts if isinstance(pairs, (ast.List, ast.Tuple)) else []
+            named = [e.elts for e in items if isinstance(e, ast.Tuple) and len(e.elts) == 2 and isinstance(e.elts[0], ast.Constant) and isinstance(e.elts[0].value, str)]
+            if not items or len(named) != len(items):
+                raise Unsupported(t("nn.Sequential 的写法", "this form of nn.Sequential"))
+            children = [(key.value, value) for key, value in named]
+        if call.keywords or not children or any(not isinstance(arg, ast.Call) for _, arg in children):
             raise Unsupported(t("nn.Sequential 的写法", "this form of nn.Sequential"))
         seq = _Module(self.imp.unique_id(f"{self.cls.name}_{name}"), f"{self.cls.name}_{name}")
         seq.mod["sequential"] = True
         prev = seq.add("input", INPUT, "x", {"shape": {"literal": ""}, "dtype": {"literal": "float32"}})
         seq.mod["interface"]["inputs"].append(prev)
         prev_port = "out"
-        for i, arg in enumerate(call.args):
-            kind, type_, params = self._ctor(arg, f"{name}_{i}")
-            node = seq.add(kind, type_, str(i), params)
+        for child_name, arg in children:
+            kind, type_, params = self._ctor(arg, f"{name}_{child_name}")
+            node = seq.add(kind, type_, child_name, params)
             seq.link(_Value(prev, prev_port), node, self._first_input(kind, type_))
             prev, prev_port = node, self._first_output(kind, type_)
         out = seq.add("output", OUTPUT, "output")
@@ -700,10 +800,11 @@ class _ClassConverter:
         self._flush(body, pending, later)
 
     def _snapshot(self) -> tuple:
-        return (copy.deepcopy(self.m.mod), self.m.count, dict(self.values), set(self.used), self.code_blocks, self.imp.snapshot())
+        return (copy.deepcopy(self.m.mod), self.m.count, len(self.m.reached), dict(self.values), set(self.used), self.code_blocks, self.imp.snapshot())
 
     def _restore(self, s: tuple) -> None:
-        self.m.mod, self.m.count, self.values, self.used, self.code_blocks, imp = s
+        self.m.mod, self.m.count, reached, self.values, self.used, self.code_blocks, imp = s
+        del self.m.reached[reached:]
         self.imp.restore(imp)
 
     def _flush(self, body: list[ast.stmt], pending: list[int], later: list[set[str]]) -> None:
@@ -842,6 +943,9 @@ class _ClassConverter:
     def _lower(self, node: ast.expr, hint: str | None = None) -> _Value:
         if isinstance(node, ast.Name):
             return self._value(node)
+        if _self_attr(node) in self.state_attrs:  # self.cls_token: a Parameter / Buffer node
+            self.m.reached.append(self.attrs[_self_attr(node)])
+            return _Value(self.attrs[_self_attr(node)], "out")
         if isinstance(node, ast.Call):
             attr = _self_attr(node.func)
             if attr is not None:
@@ -914,6 +1018,7 @@ class _ClassConverter:
         for port, value in links:
             self.m.link(value, node_id, port)
         self.used.add(node_id)
+        self.m.reached.append(node_id)
         if len(outputs) == 1 and not outputs[0].get("path"):
             return _Value(node_id, outputs[0]["name"])
         return _Value(node_id, None, [], outputs)
@@ -952,7 +1057,7 @@ class _ClassConverter:
             elif "port" in entry:
                 if isinstance(value, _Value):
                     links.append((entry["port"], value))
-                elif entry.get("scalarParam") and _is_scalar(value):
+                elif entry.get("scalarParam") and _is_scalar(value) and _self_attr(value) not in self.state_attrs:
                     params[entry["scalarParam"]] = self._param(value, params_by_name[entry["scalarParam"]], forward=True)
                 else:
                     links.append((entry["port"], self._tensor(value)))

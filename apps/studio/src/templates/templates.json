@@ -35,13 +35,6 @@
             }
           ],
           "nodes": {
-            "n1": {
-              "id": "n1",
-              "kind": "module",
-              "type": "Generator_main",
-              "name": "main",
-              "params": {}
-            },
             "n2": {
               "id": "n2",
               "kind": "input",
@@ -55,6 +48,13 @@
                   "literal": "float32"
                 }
               }
+            },
+            "n1": {
+              "id": "n1",
+              "kind": "module",
+              "type": "Generator_main",
+              "name": "main",
+              "params": {}
             },
             "n3": {
               "id": "n3",
@@ -116,13 +116,6 @@
             }
           ],
           "nodes": {
-            "n1": {
-              "id": "n1",
-              "kind": "module",
-              "type": "Discriminator_main",
-              "name": "main",
-              "params": {}
-            },
             "n2": {
               "id": "n2",
               "kind": "input",
@@ -136,6 +129,13 @@
                   "literal": "float32"
                 }
               }
+            },
+            "n1": {
+              "id": "n1",
+              "kind": "module",
+              "type": "Discriminator_main",
+              "name": "main",
+              "params": {}
             },
             "n3": {
               "id": "n3",
@@ -1056,39 +1056,25 @@
             }
           ],
           "nodes": {
+            "n10": {
+              "id": "n10",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
               "type": "torch.nn.Linear",
               "name": "q_proj",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "dim"
-                }
-              }
-            },
-            "n2": {
-              "id": "n2",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "k_proj",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "dim"
-                }
-              }
-            },
-            "n3": {
-              "id": "n3",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "v_proj",
               "params": {
                 "in_features": {
                   "expr": "dim"
@@ -1112,84 +1098,6 @@
                 }
               }
             },
-            "n5": {
-              "id": "n5",
-              "kind": "layer",
-              "type": "torch.nn.Unflatten",
-              "name": "k_heads",
-              "params": {
-                "dim": {
-                  "literal": -1
-                },
-                "unflattened_size": {
-                  "expr": "(num_heads, head_dim)"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "layer",
-              "type": "torch.nn.Unflatten",
-              "name": "v_heads",
-              "params": {
-                "dim": {
-                  "literal": -1
-                },
-                "unflattened_size": {
-                  "expr": "(num_heads, head_dim)"
-                }
-              }
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "layer",
-              "type": "torch.nn.Dropout",
-              "name": "attn_drop",
-              "params": {
-                "p": {
-                  "expr": "dropout"
-                }
-              }
-            },
-            "n8": {
-              "id": "n8",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "out_proj",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "dim"
-                }
-              }
-            },
-            "n9": {
-              "id": "n9",
-              "kind": "layer",
-              "type": "torch.nn.Dropout",
-              "name": "resid_drop",
-              "params": {
-                "p": {
-                  "expr": "dropout"
-                }
-              }
-            },
-            "n10": {
-              "id": "n10",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n11": {
               "id": "n11",
               "kind": "op",
@@ -1204,6 +1112,34 @@
                 }
               }
             },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "k_proj",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "dim"
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Unflatten",
+              "name": "k_heads",
+              "params": {
+                "dim": {
+                  "literal": -1
+                },
+                "unflattened_size": {
+                  "expr": "(num_heads, head_dim)"
+                }
+              }
+            },
             "n12": {
               "id": "n12",
               "kind": "op",
@@ -1215,6 +1151,34 @@
                 },
                 "dim1": {
                   "literal": 2
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "v_proj",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "dim"
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.Unflatten",
+              "name": "v_heads",
+              "params": {
+                "dim": {
+                  "literal": -1
+                },
+                "unflattened_size": {
+                  "expr": "(num_heads, head_dim)"
                 }
               }
             },
@@ -1294,6 +1258,17 @@
                 }
               }
             },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.Dropout",
+              "name": "attn_drop",
+              "params": {
+                "p": {
+                  "expr": "dropout"
+                }
+              }
+            },
             "n19": {
               "id": "n19",
               "kind": "op",
@@ -1326,6 +1301,31 @@
                 },
                 "end_dim": {
                   "literal": -1
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "out_proj",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "dim"
+                }
+              }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "layer",
+              "type": "torch.nn.Dropout",
+              "name": "resid_drop",
+              "params": {
+                "p": {
+                  "expr": "dropout"
                 }
               }
             },
@@ -1627,6 +1627,20 @@
             }
           ],
           "nodes": {
+            "n5": {
+              "id": "n5",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -1655,6 +1669,17 @@
                 }
               }
             },
+            "n6": {
+              "id": "n6",
+              "kind": "op",
+              "type": "torch.add",
+              "name": "add",
+              "params": {
+                "other": {
+                  "literal": null
+                }
+              }
+            },
             "n3": {
               "id": "n3",
               "kind": "layer",
@@ -1672,31 +1697,6 @@
               "type": "Block_mlp",
               "name": "mlp",
               "params": {}
-            },
-            "n5": {
-              "id": "n5",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "op",
-              "type": "torch.add",
-              "name": "add",
-              "params": {
-                "other": {
-                  "literal": null
-                }
-              }
             },
             "n7": {
               "id": "n7",
@@ -1870,6 +1870,39 @@
             }
           ],
           "nodes": {
+            "n6": {
+              "id": "n6",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "tokens",
+              "params": {
+                "shape": {
+                  "literal": "B, T"
+                },
+                "dtype": {
+                  "literal": "int64"
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "code",
+              "type": "neuroloom.Code",
+              "name": "code",
+              "params": {},
+              "code": {
+                "source": "pos = torch.arange(tokens.shape[1], device=tokens.device)",
+                "inputs": [
+                  "tokens"
+                ],
+                "outputs": [
+                  "pos"
+                ]
+              },
+              "shapes": {
+                "pos": "T:int64"
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -1895,6 +1928,17 @@
                 },
                 "embedding_dim": {
                   "expr": "dim"
+                }
+              }
+            },
+            "n8": {
+              "id": "n8",
+              "kind": "op",
+              "type": "torch.add",
+              "name": "add",
+              "params": {
+                "other": {
+                  "literal": null
                 }
               }
             },
@@ -1939,50 +1983,6 @@
               "params": {
                 "normalized_shape": {
                   "expr": "dim"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "tokens",
-              "params": {
-                "shape": {
-                  "literal": "B, T"
-                },
-                "dtype": {
-                  "literal": "int64"
-                }
-              }
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "code",
-              "type": "neuroloom.Code",
-              "name": "code",
-              "params": {},
-              "code": {
-                "source": "pos = torch.arange(tokens.shape[1], device=tokens.device)",
-                "inputs": [
-                  "tokens"
-                ],
-                "outputs": [
-                  "pos"
-                ]
-              },
-              "shapes": {
-                "pos": "T:int64"
-              }
-            },
-            "n8": {
-              "id": "n8",
-              "kind": "op",
-              "type": "torch.add",
-              "name": "add",
-              "params": {
-                "other": {
-                  "literal": null
                 }
               }
             },
@@ -2300,6 +2300,20 @@
           "className": "LeNet5",
           "hyperparams": [],
           "nodes": {
+            "n13": {
+              "id": "n13",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 1, 28, 28"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -2433,20 +2447,6 @@
                 },
                 "out_features": {
                   "literal": 10
-                }
-              }
-            },
-            "n13": {
-              "id": "n13",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 1, 28, 28"
-                },
-                "dtype": {
-                  "literal": "float32"
                 }
               }
             },
@@ -2633,6 +2633,20 @@
           "className": "LSTMClassifier",
           "hyperparams": [],
           "nodes": {
+            "n5": {
+              "id": "n5",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "tokens",
+              "params": {
+                "shape": {
+                  "literal": "B, T"
+                },
+                "dtype": {
+                  "literal": "int64"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -2676,6 +2690,20 @@
                 }
               }
             },
+            "n6": {
+              "id": "n6",
+              "kind": "op",
+              "type": "torch.Tensor.mean",
+              "name": "mean",
+              "params": {
+                "dim": {
+                  "literal": 1
+                },
+                "keepdim": {
+                  "literal": false
+                }
+              }
+            },
             "n3": {
               "id": "n3",
               "kind": "layer",
@@ -2698,34 +2726,6 @@
                 },
                 "out_features": {
                   "literal": 4
-                }
-              }
-            },
-            "n5": {
-              "id": "n5",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "tokens",
-              "params": {
-                "shape": {
-                  "literal": "B, T"
-                },
-                "dtype": {
-                  "literal": "int64"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "op",
-              "type": "torch.Tensor.mean",
-              "name": "mean",
-              "params": {
-                "dim": {
-                  "literal": 1
-                },
-                "keepdim": {
-                  "literal": false
                 }
               }
             },
@@ -2835,6 +2835,20 @@
           "className": "MLP",
           "hyperparams": [],
           "nodes": {
+            "n7": {
+              "id": "n7",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 784"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -2899,20 +2913,6 @@
                 },
                 "out_features": {
                   "literal": 10
-                }
-              }
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 784"
-                },
-                "dtype": {
-                  "literal": "float32"
                 }
               }
             },
@@ -3037,6 +3037,20 @@
             }
           ],
           "nodes": {
+            "n7": {
+              "id": "n7",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -3112,27 +3126,6 @@
                 }
               }
             },
-            "n6": {
-              "id": "n6",
-              "kind": "layer",
-              "type": "torch.nn.ReLU",
-              "name": "relu2",
-              "params": {}
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n8": {
               "id": "n8",
               "kind": "op",
@@ -3143,6 +3136,13 @@
                   "literal": null
                 }
               }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "relu2",
+              "params": {}
             },
             "n9": {
               "id": "n9",
@@ -3278,6 +3278,20 @@
             }
           ],
           "nodes": {
+            "n8": {
+              "id": "n8",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -3356,33 +3370,12 @@
                 }
               }
             },
-            "n6": {
-              "id": "n6",
-              "kind": "layer",
-              "type": "torch.nn.ReLU",
-              "name": "relu2",
-              "params": {}
-            },
             "n7": {
               "id": "n7",
               "kind": "module",
               "type": "BasicBlockProj_downsample",
               "name": "downsample",
               "params": {}
-            },
-            "n8": {
-              "id": "n8",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
             },
             "n9": {
               "id": "n9",
@@ -3394,6 +3387,13 @@
                   "literal": null
                 }
               }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "relu2",
+              "params": {}
             },
             "n10": {
               "id": "n10",
@@ -3537,6 +3537,20 @@
             }
           ],
           "nodes": {
+            "n11": {
+              "id": "n11",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 3, 224, 224"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -3637,34 +3651,6 @@
                 }
               }
             },
-            "n10": {
-              "id": "n10",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "fc",
-              "params": {
-                "in_features": {
-                  "literal": 512
-                },
-                "out_features": {
-                  "expr": "num_classes"
-                }
-              }
-            },
-            "n11": {
-              "id": "n11",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 3, 224, 224"
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n12": {
               "id": "n12",
               "kind": "op",
@@ -3676,6 +3662,20 @@
                 },
                 "end_dim": {
                   "literal": -1
+                }
+              }
+            },
+            "n10": {
+              "id": "n10",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc",
+              "params": {
+                "in_features": {
+                  "literal": 512
+                },
+                "out_features": {
+                  "expr": "num_classes"
                 }
               }
             },
@@ -4360,6 +4360,20 @@
             }
           ],
           "nodes": {
+            "n10": {
+              "id": "n10",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -4470,27 +4484,6 @@
                 }
               }
             },
-            "n9": {
-              "id": "n9",
-              "kind": "layer",
-              "type": "torch.nn.ReLU",
-              "name": "relu3",
-              "params": {}
-            },
-            "n10": {
-              "id": "n10",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n11": {
               "id": "n11",
               "kind": "op",
@@ -4501,6 +4494,13 @@
                   "literal": null
                 }
               }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "relu3",
+              "params": {}
             },
             "n12": {
               "id": "n12",
@@ -4669,6 +4669,20 @@
             }
           ],
           "nodes": {
+            "n11": {
+              "id": "n11",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -4782,33 +4796,12 @@
                 }
               }
             },
-            "n9": {
-              "id": "n9",
-              "kind": "layer",
-              "type": "torch.nn.ReLU",
-              "name": "relu3",
-              "params": {}
-            },
             "n10": {
               "id": "n10",
               "kind": "module",
               "type": "BottleneckProj_downsample",
               "name": "downsample",
               "params": {}
-            },
-            "n11": {
-              "id": "n11",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
             },
             "n12": {
               "id": "n12",
@@ -4820,6 +4813,13 @@
                   "literal": null
                 }
               }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "layer",
+              "type": "torch.nn.ReLU",
+              "name": "relu3",
+              "params": {}
             },
             "n13": {
               "id": "n13",
@@ -4996,6 +4996,20 @@
             }
           ],
           "nodes": {
+            "n11": {
+              "id": "n11",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 3, 224, 224"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -5096,34 +5110,6 @@
                 }
               }
             },
-            "n10": {
-              "id": "n10",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "fc",
-              "params": {
-                "in_features": {
-                  "literal": 2048
-                },
-                "out_features": {
-                  "expr": "num_classes"
-                }
-              }
-            },
-            "n11": {
-              "id": "n11",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 3, 224, 224"
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n12": {
               "id": "n12",
               "kind": "op",
@@ -5135,6 +5121,20 @@
                 },
                 "end_dim": {
                   "literal": -1
+                }
+              }
+            },
+            "n10": {
+              "id": "n10",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "fc",
+              "params": {
+                "in_features": {
+                  "literal": 2048
+                },
+                "out_features": {
+                  "expr": "num_classes"
                 }
               }
             },
@@ -5997,6 +5997,20 @@
           "className": "TransformerClassifier",
           "hyperparams": [],
           "nodes": {
+            "n6": {
+              "id": "n6",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "tokens",
+              "params": {
+                "shape": {
+                  "literal": "B, T"
+                },
+                "dtype": {
+                  "literal": "int64"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -6063,6 +6077,20 @@
                 }
               }
             },
+            "n7": {
+              "id": "n7",
+              "kind": "op",
+              "type": "torch.Tensor.mean",
+              "name": "mean",
+              "params": {
+                "dim": {
+                  "literal": 1
+                },
+                "keepdim": {
+                  "literal": false
+                }
+              }
+            },
             "n4": {
               "id": "n4",
               "kind": "layer",
@@ -6085,34 +6113,6 @@
                 },
                 "out_features": {
                   "literal": 2
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "tokens",
-              "params": {
-                "shape": {
-                  "literal": "B, T"
-                },
-                "dtype": {
-                  "literal": "int64"
-                }
-              }
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "op",
-              "type": "torch.Tensor.mean",
-              "name": "mean",
-              "params": {
-                "dim": {
-                  "literal": 1
-                },
-                "keepdim": {
-                  "literal": false
                 }
               }
             },
@@ -6240,6 +6240,20 @@
             }
           ],
           "nodes": {
+            "n5": {
+              "id": "n5",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -6293,20 +6307,6 @@
               "type": "torch.nn.ReLU",
               "name": "relu2",
               "params": {}
-            },
-            "n5": {
-              "id": "n5",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
             },
             "n6": {
               "id": "n6",
@@ -6395,6 +6395,20 @@
             }
           ],
           "nodes": {
+            "n3": {
+              "id": "n3",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -6417,20 +6431,6 @@
                 },
                 "out_channels": {
                   "expr": "out_channels"
-                }
-              }
-            },
-            "n3": {
-              "id": "n3",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
                 }
               }
             },
@@ -6499,40 +6499,6 @@
             }
           ],
           "nodes": {
-            "n1": {
-              "id": "n1",
-              "kind": "layer",
-              "type": "torch.nn.ConvTranspose2d",
-              "name": "up",
-              "params": {
-                "in_channels": {
-                  "expr": "in_channels"
-                },
-                "out_channels": {
-                  "expr": "in_channels // 2"
-                },
-                "kernel_size": {
-                  "literal": 2
-                },
-                "stride": {
-                  "literal": 2
-                }
-              }
-            },
-            "n2": {
-              "id": "n2",
-              "kind": "module",
-              "type": "DoubleConv",
-              "name": "conv",
-              "params": {
-                "in_channels": {
-                  "expr": "in_channels"
-                },
-                "out_channels": {
-                  "expr": "out_channels"
-                }
-              }
-            },
             "n3": {
               "id": "n3",
               "kind": "input",
@@ -6561,6 +6527,26 @@
                 }
               }
             },
+            "n1": {
+              "id": "n1",
+              "kind": "layer",
+              "type": "torch.nn.ConvTranspose2d",
+              "name": "up",
+              "params": {
+                "in_channels": {
+                  "expr": "in_channels"
+                },
+                "out_channels": {
+                  "expr": "in_channels // 2"
+                },
+                "kernel_size": {
+                  "literal": 2
+                },
+                "stride": {
+                  "literal": 2
+                }
+              }
+            },
             "n5": {
               "id": "n5",
               "kind": "op",
@@ -6569,6 +6555,20 @@
               "params": {
                 "dim": {
                   "literal": 1
+                }
+              }
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "module",
+              "type": "DoubleConv",
+              "name": "conv",
+              "params": {
+                "in_channels": {
+                  "expr": "in_channels"
+                },
+                "out_channels": {
+                  "expr": "out_channels"
                 }
               }
             },
@@ -6666,6 +6666,20 @@
             }
           ],
           "nodes": {
+            "n11": {
+              "id": "n11",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 1, 128, 128"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "module",
@@ -6806,20 +6820,6 @@
                 },
                 "kernel_size": {
                   "literal": 1
-                }
-              }
-            },
-            "n11": {
-              "id": "n11",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 1, 128, 128"
-                },
-                "dtype": {
-                  "literal": "float32"
                 }
               }
             },
@@ -7047,6 +7047,20 @@
             }
           ],
           "nodes": {
+            "n5": {
+              "id": "n5",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 784"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "module",
@@ -7082,27 +7096,6 @@
                 }
               }
             },
-            "n4": {
-              "id": "n4",
-              "kind": "module",
-              "type": "VAE_decoder",
-              "name": "decoder",
-              "params": {}
-            },
-            "n5": {
-              "id": "n5",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 784"
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n6": {
               "id": "n6",
               "kind": "code",
@@ -7122,6 +7115,13 @@
               "shapes": {
                 "z": "B, 20"
               }
+            },
+            "n4": {
+              "id": "n4",
+              "kind": "module",
+              "type": "VAE_decoder",
+              "name": "decoder",
+              "params": {}
             },
             "n7": {
               "id": "n7",
@@ -7522,6 +7522,20 @@
             }
           ],
           "nodes": {
+            "n4": {
+              "id": "n4",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 3, 224, 224"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "module",
@@ -7540,27 +7554,6 @@
                 }
               }
             },
-            "n3": {
-              "id": "n3",
-              "kind": "module",
-              "type": "VGG11_classifier",
-              "name": "classifier",
-              "params": {}
-            },
-            "n4": {
-              "id": "n4",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 3, 224, 224"
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n5": {
               "id": "n5",
               "kind": "op",
@@ -7574,6 +7567,13 @@
                   "literal": -1
                 }
               }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "module",
+              "type": "VGG11_classifier",
+              "name": "classifier",
+              "params": {}
             },
             "n6": {
               "id": "n6",
@@ -8436,39 +8436,25 @@
             }
           ],
           "nodes": {
+            "n8": {
+              "id": "n8",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
               "type": "torch.nn.Linear",
               "name": "q_proj",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "dim"
-                }
-              }
-            },
-            "n2": {
-              "id": "n2",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "k_proj",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "dim"
-                }
-              }
-            },
-            "n3": {
-              "id": "n3",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "v_proj",
               "params": {
                 "in_features": {
                   "expr": "dim"
@@ -8492,62 +8478,6 @@
                 }
               }
             },
-            "n5": {
-              "id": "n5",
-              "kind": "layer",
-              "type": "torch.nn.Unflatten",
-              "name": "k_heads",
-              "params": {
-                "dim": {
-                  "literal": -1
-                },
-                "unflattened_size": {
-                  "expr": "(num_heads, head_dim)"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "layer",
-              "type": "torch.nn.Unflatten",
-              "name": "v_heads",
-              "params": {
-                "dim": {
-                  "literal": -1
-                },
-                "unflattened_size": {
-                  "expr": "(num_heads, head_dim)"
-                }
-              }
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "out_proj",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "dim"
-                }
-              }
-            },
-            "n8": {
-              "id": "n8",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
             "n9": {
               "id": "n9",
               "kind": "op",
@@ -8562,6 +8492,34 @@
                 }
               }
             },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "k_proj",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "dim"
+                }
+              }
+            },
+            "n5": {
+              "id": "n5",
+              "kind": "layer",
+              "type": "torch.nn.Unflatten",
+              "name": "k_heads",
+              "params": {
+                "dim": {
+                  "literal": -1
+                },
+                "unflattened_size": {
+                  "expr": "(num_heads, head_dim)"
+                }
+              }
+            },
             "n10": {
               "id": "n10",
               "kind": "op",
@@ -8573,6 +8531,34 @@
                 },
                 "dim1": {
                   "literal": 2
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "v_proj",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "dim"
+                }
+              }
+            },
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.Unflatten",
+              "name": "v_heads",
+              "params": {
+                "dim": {
+                  "literal": -1
+                },
+                "unflattened_size": {
+                  "expr": "(num_heads, head_dim)"
                 }
               }
             },
@@ -8665,6 +8651,20 @@
                 },
                 "end_dim": {
                   "literal": -1
+                }
+              }
+            },
+            "n7": {
+              "id": "n7",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "out_proj",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "dim"
                 }
               }
             },
@@ -8933,6 +8933,20 @@
             }
           ],
           "nodes": {
+            "n5": {
+              "id": "n5",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": ""
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -8961,6 +8975,17 @@
                 }
               }
             },
+            "n6": {
+              "id": "n6",
+              "kind": "op",
+              "type": "torch.add",
+              "name": "add",
+              "params": {
+                "other": {
+                  "literal": null
+                }
+              }
+            },
             "n3": {
               "id": "n3",
               "kind": "layer",
@@ -8981,31 +9006,6 @@
               "type": "Block_mlp",
               "name": "mlp",
               "params": {}
-            },
-            "n5": {
-              "id": "n5",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": ""
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "op",
-              "type": "torch.add",
-              "name": "add",
-              "params": {
-                "other": {
-                  "literal": null
-                }
-              }
             },
             "n7": {
               "id": "n7",
@@ -9185,6 +9185,20 @@
             }
           ],
           "nodes": {
+            "n7": {
+              "id": "n7",
+              "kind": "input",
+              "type": "neuroloom.Input",
+              "name": "x",
+              "params": {
+                "shape": {
+                  "literal": "B, 3, 224, 224"
+                },
+                "dtype": {
+                  "literal": "float32"
+                }
+              }
+            },
             "n1": {
               "id": "n1",
               "kind": "layer",
@@ -9205,8 +9219,55 @@
                 }
               }
             },
-            "n2": {
-              "id": "n2",
+            "n8": {
+              "id": "n8",
+              "kind": "op",
+              "type": "torch.flatten",
+              "name": "flatten",
+              "params": {
+                "start_dim": {
+                  "literal": 2
+                },
+                "end_dim": {
+                  "literal": -1
+                }
+              }
+            },
+            "n9": {
+              "id": "n9",
+              "kind": "op",
+              "type": "torch.Tensor.transpose",
+              "name": "transpose",
+              "params": {
+                "dim0": {
+                  "literal": 1
+                },
+                "dim1": {
+                  "literal": 2
+                }
+              }
+            },
+            "n10": {
+              "id": "n10",
+              "kind": "code",
+              "type": "neuroloom.Code",
+              "name": "code",
+              "params": {},
+              "code": {
+                "source": "x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x], dim=1) + self.pos_embed",
+                "inputs": [
+                  "x"
+                ],
+                "outputs": [
+                  "x"
+                ]
+              },
+              "shapes": {
+                "x": "B, 197, 192"
+              }
+            },
+            "n4": {
+              "id": "n4",
               "kind": "module",
               "type": "Block",
               "name": "blocks",
@@ -9227,8 +9288,8 @@
                 }
               }
             },
-            "n3": {
-              "id": "n3",
+            "n5": {
+              "id": "n5",
               "kind": "layer",
               "type": "torch.nn.LayerNorm",
               "name": "norm",
@@ -9241,83 +9302,8 @@
                 }
               }
             },
-            "n4": {
-              "id": "n4",
-              "kind": "layer",
-              "type": "torch.nn.Linear",
-              "name": "head",
-              "params": {
-                "in_features": {
-                  "expr": "dim"
-                },
-                "out_features": {
-                  "expr": "num_classes"
-                }
-              }
-            },
-            "n5": {
-              "id": "n5",
-              "kind": "input",
-              "type": "neuroloom.Input",
-              "name": "x",
-              "params": {
-                "shape": {
-                  "literal": "B, 3, 224, 224"
-                },
-                "dtype": {
-                  "literal": "float32"
-                }
-              }
-            },
-            "n6": {
-              "id": "n6",
-              "kind": "op",
-              "type": "torch.flatten",
-              "name": "flatten",
-              "params": {
-                "start_dim": {
-                  "literal": 2
-                },
-                "end_dim": {
-                  "literal": -1
-                }
-              }
-            },
-            "n7": {
-              "id": "n7",
-              "kind": "op",
-              "type": "torch.Tensor.transpose",
-              "name": "transpose",
-              "params": {
-                "dim0": {
-                  "literal": 1
-                },
-                "dim1": {
-                  "literal": 2
-                }
-              }
-            },
-            "n8": {
-              "id": "n8",
-              "kind": "code",
-              "type": "neuroloom.Code",
-              "name": "code",
-              "params": {},
-              "code": {
-                "source": "x = torch.cat([self.cls_token.expand(x.shape[0], -1, -1), x], dim=1) + self.pos_embed",
-                "inputs": [
-                  "x"
-                ],
-                "outputs": [
-                  "x"
-                ]
-              },
-              "shapes": {
-                "x": "B, 197, 192"
-              }
-            },
-            "n9": {
-              "id": "n9",
+            "n11": {
+              "id": "n11",
               "kind": "code",
               "type": "neuroloom.Code",
               "name": "code_1",
@@ -9335,19 +9321,61 @@
                 "cls": "B, 192"
               }
             },
-            "n10": {
-              "id": "n10",
+            "n6": {
+              "id": "n6",
+              "kind": "layer",
+              "type": "torch.nn.Linear",
+              "name": "head",
+              "params": {
+                "in_features": {
+                  "expr": "dim"
+                },
+                "out_features": {
+                  "expr": "num_classes"
+                }
+              }
+            },
+            "n12": {
+              "id": "n12",
               "kind": "output",
               "type": "neuroloom.Output",
               "name": "output",
               "params": {}
+            },
+            "n2": {
+              "id": "n2",
+              "kind": "layer",
+              "type": "neuroloom.Parameter",
+              "name": "cls_token",
+              "params": {
+                "init": {
+                  "literal": "zeros"
+                },
+                "shape": {
+                  "expr": "(1, 1, dim)"
+                }
+              }
+            },
+            "n3": {
+              "id": "n3",
+              "kind": "layer",
+              "type": "neuroloom.Parameter",
+              "name": "pos_embed",
+              "params": {
+                "init": {
+                  "literal": "zeros"
+                },
+                "shape": {
+                  "expr": "(1, (image_size // patch_size) ** 2 + 1, dim)"
+                }
+              }
             }
           },
           "edges": [
             {
               "id": "e1",
               "source": {
-                "node": "n5",
+                "node": "n7",
                 "port": "out"
               },
               "target": {
@@ -9362,84 +9390,84 @@
                 "port": "out"
               },
               "target": {
-                "node": "n6",
+                "node": "n8",
                 "port": "in"
               }
             },
             {
               "id": "e3",
               "source": {
-                "node": "n6",
+                "node": "n8",
                 "port": "out"
               },
               "target": {
-                "node": "n7",
+                "node": "n9",
                 "port": "in"
               }
             },
             {
               "id": "e4",
               "source": {
-                "node": "n7",
+                "node": "n9",
                 "port": "out"
               },
               "target": {
-                "node": "n8",
+                "node": "n10",
                 "port": "x"
               }
             },
             {
               "id": "e5",
               "source": {
-                "node": "n8",
+                "node": "n10",
                 "port": "x"
               },
               "target": {
-                "node": "n2",
+                "node": "n4",
                 "port": "n5"
               }
             },
             {
               "id": "e6",
               "source": {
-                "node": "n2",
+                "node": "n4",
                 "port": "n8"
               },
               "target": {
-                "node": "n3",
+                "node": "n5",
                 "port": "in"
               }
             },
             {
               "id": "e7",
               "source": {
-                "node": "n3",
+                "node": "n5",
                 "port": "out"
               },
               "target": {
-                "node": "n9",
+                "node": "n11",
                 "port": "x"
               }
             },
             {
               "id": "e8",
               "source": {
-                "node": "n9",
+                "node": "n11",
                 "port": "cls"
               },
               "target": {
-                "node": "n4",
+                "node": "n6",
                 "port": "in"
               }
             },
             {
               "id": "e9",
               "source": {
-                "node": "n4",
+                "node": "n6",
                 "port": "out"
               },
               "target": {
-                "node": "n10",
+                "node": "n12",
                 "port": "in"
               }
             }
@@ -9447,13 +9475,13 @@
           "layout": {},
           "interface": {
             "inputs": [
-              "n5"
+              "n7"
             ],
             "outputs": [
-              "n10"
+              "n12"
             ]
           },
-          "initCode": "self.cls_token = nn.Parameter(torch.zeros(1, 1, dim))\nself.pos_embed = nn.Parameter(torch.zeros(1, (image_size // patch_size) ** 2 + 1, dim))\nnn.init.trunc_normal_(self.cls_token, std=0.02)\nnn.init.trunc_normal_(self.pos_embed, std=0.02)"
+          "initCode": "nn.init.trunc_normal_(self.cls_token, std=0.02)\nnn.init.trunc_normal_(self.pos_embed, std=0.02)"
         },
         "Block_mlp": {
           "id": "Block_mlp",

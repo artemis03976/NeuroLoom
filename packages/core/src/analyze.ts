@@ -356,13 +356,17 @@ class Analyzer {
 
       // Layers that only code blocks call have no edges, by design.
       const calledFromCode = (node.kind === 'layer' || node.kind === 'module') && codeUses.has(node.name) && !mod.edges.some((e) => e.target.node === nodeId);
-      if (unconnected.length > 0 && !calledFromCode) {
+      // A submodule forward() never calls (GoogLeNet's training-only aux heads, or one not wired up yet):
+      // built in __init__ and holding weights, but not run.
+      const unused = (node.kind === 'layer' || node.kind === 'module') && !mod.edges.some((e) => e.target.node === nodeId || e.source.node === nodeId);
+      if (unused && !calledFromCode) diagnostics.push({ severity: 'warning', nodeId, message: msg('没有在 forward() 中使用', 'not used in forward()') });
+      if (unconnected.length > 0 && !calledFromCode && !unused) {
         fail(nodeId, msg(`输入端口 ${unconnected.join('、')} 未连接`, `input ${unconnected.join(', ')} is not connected`));
         continue;
       }
 
       if (node.kind === 'module') {
-        const result = this.moduleNode(mod, node, env, calledFromCode ? undefined : inputs);
+        const result = this.moduleNode(mod, node, env, calledFromCode || unused ? undefined : inputs);
         nodes[nodeId] = { inputs, ...result.analysis };
         if (result.error) fail(nodeId, result.error);
         partial ||= result.partial;
@@ -381,8 +385,14 @@ class Analyzer {
         fail(nodeId, paramError);
         continue;
       }
-      // An upstream failure is already reported there; don't cascade it downstream.
-      if (upstreamFailed || calledFromCode) continue;
+      // An upstream failure is already reported there; don't cascade it downstream. Without
+      // input types nothing is inferred, but the weights are known when every parameter is given.
+      if (upstreamFailed || calledFromCode || unused) {
+        if (!Object.values(params).some(isAuto) && !node.repeat) {
+          nodes[nodeId]!.paramCount = spec.paramCount?.(Object.fromEntries(Object.entries(params).map(([k, v]) => [k, literalOf(v) ?? null]))) ?? 0;
+        }
+        continue;
+      }
 
       if (node.repeat && node.kind === 'layer') {
         const result = this.repeatLayer(spec, node, params, inputs, env);
@@ -478,7 +488,11 @@ class Analyzer {
       const outputs = def.interface.outputs.map((id) => declaredType(node, id));
       return { analysis: { outputs, resolved, paramCount: 0 }, partial: true };
     }
-    if (!inputs) return { analysis: { resolved, paramCount: 0 }, partial: false };
+    if (!inputs) {
+      // Not called with tensors here (only from code, or not at all): its weights still count.
+      const child = this.module(def.id, { env: base.env }, false);
+      return { analysis: { resolved, paramCount: child.totalParams, children: [child] }, partial: child.partial };
+    }
 
     let copies = 1;
     let first: { env: Env } | { error: string } = base;

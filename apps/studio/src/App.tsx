@@ -10,6 +10,8 @@ import { tr, useLocale } from './i18n';
 import { applyTheme, loadTheme, type ThemeChoice } from './lib/theme';
 import { BottomPanel } from './panels/BottomPanel';
 import { EnvironmentDialog } from './panels/EnvironmentDialog';
+import { ExportOptionsDialog } from './panels/ExportOptionsDialog';
+import { ImageExportDialog } from './panels/ImageExportDialog';
 import { ImportDialog } from './panels/ImportDialog';
 import { Inspector } from './panels/Inspector';
 import { Palette } from './panels/Palette';
@@ -106,6 +108,8 @@ export function App() {
       {dialog === 'new' && <TemplateDialog onClose={() => openDialog(null)} />}
       {dialog === 'import' && <ImportDialog onClose={() => openDialog(null)} />}
       {dialog === 'environment' && <EnvironmentDialog onClose={() => openDialog(null)} onChanged={backendChanged} />}
+      {dialog === 'exportOptions' && <ExportOptionsDialog onClose={() => openDialog(null)} />}
+      {dialog === 'exportImage' && <ImageExportDialog onClose={() => openDialog(null)} />}
     </ReactFlowProvider>
   );
 }

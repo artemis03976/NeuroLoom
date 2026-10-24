@@ -83,6 +83,7 @@ export function CodePanel({ tabs }: { tabs: ReactNode }) {
   };
 
   const button = 'rounded-md border border-line px-2.5 py-1 text-[12px] hover:bg-surface-2';
+  const split = !!project.exportOptions?.splitFiles;
   return (
     <section className="flex min-h-0 flex-col border-t border-line bg-surface">
       <header className="flex items-center gap-3 border-b border-line px-4 py-2">
@@ -92,11 +93,14 @@ export function CodePanel({ tabs }: { tabs: ReactNode }) {
         </span>
         {todos > 0 && <span className="text-[11px] text-warning">{tr(`${todos} 处 TODO`, `${todos} TODO${todos === 1 ? '' : 's'}`)}</span>}
         <span className="flex-1" />
+        <button type="button" className={button} onClick={() => runCommand('exportOptions')} title={tr('形状注释、类型标注、嵌套、自测片段…', 'Shape comments, type hints, nesting, self-test…')}>
+          {tr('选项…', 'Options…')}
+        </button>
         <button type="button" className={button} onClick={copy}>
           {copied ? tr('已复制', 'Copied') : tr('复制', 'Copy')}
         </button>
         <button type="button" className={button} onClick={() => runCommand('exportPy')}>
-          {tr('导出 .py', 'Export .py')}
+          {split ? tr('导出包', 'Export package') : tr('导出 .py', 'Export .py')}
         </button>
       </header>
       <div ref={scroller} className="min-h-0 flex-1 overflow-auto bg-code py-2">

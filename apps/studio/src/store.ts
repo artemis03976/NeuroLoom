@@ -39,6 +39,7 @@ import {
   type Clip,
   type CodeBlock,
   type CodegenResult,
+  type ExportOptions,
   type HyperParam,
   type LoomProject,
   type ModuleDef,
@@ -161,6 +162,8 @@ interface StudioState {
   setClassName(name: string, moduleId?: ModuleId): void;
   setEntry(moduleId: ModuleId): void;
   setHyperparams(hyperparams: HyperParam[], renamed?: Record<string, string>): void;
+  /** How the code is written (PRD F5.3); kept in the project, so it is an undoable edit. */
+  setExportOptions(options: ExportOptions): void;
   /** Free-text fields: the preamble, a module's __init__ tail, other members or opaque source. */
   setText(field: 'preamble' | 'initCode' | 'members' | 'source', text: string): void;
 
@@ -458,6 +461,11 @@ export const useStudio = create<StudioState>()((set, get) => {
 
     setHyperparams(hyperparams, renamed = {}) {
       commit(setModuleHyperparams(get().project, get().view.moduleId, hyperparams, renamed), { merge: `hyperparams:${get().view.moduleId}` });
+    },
+
+    setExportOptions(options) {
+      const { exportOptions: _, ...rest } = get().project;
+      commit(Object.keys(options).length > 0 ? { ...rest, exportOptions: options } : rest, { merge: 'exportOptions' });
     },
 
     setText(field, text) {

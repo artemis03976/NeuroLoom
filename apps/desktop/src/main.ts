@@ -1,6 +1,6 @@
 // Electron main process: window, menus, files, and the Python backend (PRD 15.2–15.4).
 import { createEnvironment, discoverPythons, PythonBackend, type RpcFailure } from '@neuroloom/backend-bridge';
-import { CHANNELS, type Recovery, type RpcEnvelope } from '@neuroloom/host-api';
+import { CHANNELS, type ImageExport, type Recovery, type RpcEnvelope } from '@neuroloom/host-api';
 import {
   app,
   BrowserWindow,
@@ -12,9 +12,10 @@ import {
   shell,
   type IpcMainInvokeEvent,
 } from 'electron';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { saveImage } from './imageExport';
 import { buildMenu } from './menu';
 import { SettingsStore, writeAtomic } from './settings';
 
@@ -170,6 +171,19 @@ function registerIpc(): void {
     writeAtomic(result.filePath, args.text);
     return result.filePath;
   });
+  handle(CHANNELS.fileExportPackage, async (e, args: { files: { name: string; text: string }[]; suggestedName: string }) => {
+    const result = await dialog.showOpenDialog(windowOf(e)!, {
+      title: t(`选择放置 ${args.suggestedName} 包的文件夹`, `Choose the folder for the ${args.suggestedName} package`),
+      defaultPath: app.getPath('documents'),
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (result.canceled || !result.filePaths[0]) return null;
+    const folder = join(result.filePaths[0], args.suggestedName);
+    mkdirSync(folder, { recursive: true });
+    for (const file of args.files) writeAtomic(join(folder, basename(file.name)), file.text);
+    return folder;
+  });
+  handle(CHANNELS.fileExportImage, (e, args: ImageExport) => saveImage(windowOf(e), args, t('导出图片', 'Export Image')));
   handle(CHANNELS.fileRecent, () => settings.recent());
 
   handle(CHANNELS.recoveryWrite, (_e, recovery: Recovery) => writeAtomic(recoveryFile(), JSON.stringify(recovery)));

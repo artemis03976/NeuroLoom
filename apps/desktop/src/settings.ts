@@ -10,8 +10,8 @@ export interface Settings {
 
 const MAX_RECENT = 10;
 
-/** Writes through a temp file and a rename, so a crash never leaves a half-written file. */
-export function writeAtomic(path: string, text: string): void {
+/** Writes text (as UTF-8) or bytes through a temp file and a rename, so a crash never leaves a half-written file. */
+export function writeAtomic(path: string, text: string | Uint8Array): void {
   mkdirSync(dirname(path), { recursive: true });
   const tmp = `${path}.${process.pid}.tmp`;
   writeFileSync(tmp, text, 'utf8');

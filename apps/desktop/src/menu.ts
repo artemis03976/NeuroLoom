@@ -36,6 +36,8 @@ export function buildMenu(recent: string[], locale: 'zh' | 'en'): void {
         { type: 'separator' },
         item(t('从代码导入…', 'Import from Code…'), 'import', 'CmdOrCtrl+I'),
         item(t('导出 .py…', 'Export .py…'), 'exportPy', 'CmdOrCtrl+E'),
+        item(t('导出选项…', 'Export Options…'), 'exportOptions'),
+        item(t('导出图片…', 'Export Image…'), 'exportImage'),
         { type: 'separator' },
         item(t('Python 环境…', 'Python Environment…'), 'environment'),
         { type: 'separator' },

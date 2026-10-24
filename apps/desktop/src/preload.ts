@@ -34,6 +34,8 @@ const api: DesktopApi = {
     openPath: (path) => invoke(CHANNELS.fileOpenPath, path),
     save: (args) => invoke(CHANNELS.fileSave, args),
     exportPython: (args) => invoke(CHANNELS.fileExportPython, args),
+    exportPackage: (args) => invoke(CHANNELS.fileExportPackage, args),
+    exportImage: (args) => invoke(CHANNELS.fileExportImage, args),
     recent: () => invoke(CHANNELS.fileRecent),
   },
   recovery: {

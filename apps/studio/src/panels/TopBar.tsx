@@ -86,6 +86,8 @@ function FileMenu() {
           <div className="my-1 border-t border-line" />
           {item(tr('从代码导入…', 'Import from Code…'), 'import', `${MOD}I`)}
           {item(tr('导出 .py…', 'Export .py…'), 'exportPy', `${MOD}E`)}
+          {item(tr('导出选项…', 'Export Options…'), 'exportOptions')}
+          {item(tr('导出图片…', 'Export Image…'), 'exportImage')}
           <div className="my-1 border-t border-line" />
           {item(tr('Python 环境…', 'Python Environment…'), 'environment')}
         </div>

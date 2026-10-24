@@ -8,16 +8,34 @@ import { entryModule, getSpec, literalOf, outputsOf, withDefaults, type Analysis
 export const pythonDir = join(dirname(fileURLToPath(import.meta.url)), '../../../python');
 const venvPython = join(pythonDir, process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
 export const python = process.env.NEUROLOOM_PYTHON ?? (existsSync(venvPython) ? venvPython : 'python');
-export const hasTorch = spawnSync(python, ['-c', 'import torch'], { encoding: 'utf8' }).status === 0;
 
-export function runPython(args: string[], input: string): string {
+/** Whether the test Python can import these modules ("torch", "timm, transformers"). */
+export const canImport = (modules: string) => spawnSync(python, ['-c', `import ${modules}`], { encoding: 'utf8', timeout: 120_000 }).status === 0;
+export const hasTorch = canImport('torch');
+
+/**
+ * How long one Python call may take. spawnSync blocks the event loop, so vitest's
+ * own timeouts cannot end a call that hangs: this one kills it and fails the test
+ * with the call's last output (the batch steps log progress to stderr) instead of
+ * stalling CI.
+ */
+const PYTHON_TIMEOUT = 10 * 60_000;
+
+export function runPython(args: string[], input: string, timeout = PYTHON_TIMEOUT): string {
   const proc = spawnSync(python, args, {
     cwd: pythonDir,
     input,
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
     env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    timeout,
+    killSignal: 'SIGKILL',
   });
+  if ((proc.error as NodeJS.ErrnoException | undefined)?.code === 'ETIMEDOUT') {
+    const call = args.map((a) => (a.includes('\n') ? '<script>' : a)).join(' ');
+    const tail = (proc.stderr ?? '').trim().split('\n').slice(-15).join('\n');
+    throw new Error(`python ${call} did not finish in ${timeout / 1000} s; its last output:\n${tail}`);
+  }
   if (proc.error) throw proc.error;
   return proc.stdout.trim().split('\n').at(-1) ?? '';
 }

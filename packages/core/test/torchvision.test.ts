@@ -8,10 +8,9 @@
 // the same outputs, and read back as the same code.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { generateCode, parseProject, type LoomProject } from '../src';
-import { hasTorch, importMany, inputShapesOf, python, runPython, type ImportResult } from './python';
-import { spawnSync } from 'node:child_process';
+import { canImport, hasTorch, importMany, inputShapesOf, runPython, type ImportResult } from './python';
 
-const hasTorchvision = hasTorch && spawnSync(python, ['-c', 'import torchvision'], { encoding: 'utf8' }).status === 0;
+const hasTorchvision = hasTorch && canImport('torchvision');
 
 /** Structured today; the test fails if fewer are. */
 const FLOOR = 60;
@@ -61,6 +60,7 @@ const EQUIVALENCE = `
 import json, sys, torch
 results = []
 for i, p in enumerate(json.load(sys.stdin)):
+    print(f"equivalence {i}", file=sys.stderr, flush=True)
     try:
         def load(name, src):
             module = type(sys)(name)

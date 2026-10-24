@@ -92,6 +92,7 @@
 FLOPs 的计算口径：
 - 与 `torch.utils.flop_counter.FlopCounterMode` 一致：一次乘加计 2，只有矩阵乘、卷积和注意力计入。
 - 在前端按 NodeSpec 公式计算，不需要 Python。
+- 循环层（RNN / GRU / LSTM）按输入投影和逐步的隐状态投影计入。PyTorch 在 x86 上把 LSTM 作为融合的 oneDNN 算子执行，FlopCounterMode 看不到，计为 0；在 ARM（macOS）上则按矩阵乘计入。编辑器按实际计算量计入，测试中关闭 oneDNN 后与 PyTorch 比对，各平台结果一致。
 - 验证：
   - 每个带公式的节点和 12 个变体，与 FlopCounterMode 逐个比对一致；
   - 整个模型（ResNet、首份不同的重复层）的 FLOPs 和参数量与 PyTorch 相等；

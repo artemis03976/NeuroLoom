@@ -70,13 +70,13 @@ function recurrent(cls: keyof typeof GATES): NodeSpec {
       }
       return total;
     },
-    // On CPU, RNN and GRU run as one input projection over the whole sequence plus a
-    // hidden projection per step, all (add)mm: 2·T·B·gates·H·(in + H) per layer and
-    // direction, biases not counted. LSTM runs as the fused oneDNN op mkldnn_rnn_layer,
-    // which FlopCounterMode has no formula for, so it reports 0 and so do we (with
-    // oneDNN disabled it would count the same formula with 4 gates).
+    // One input projection over the whole sequence plus a hidden projection per step,
+    // all (add)mm: 2·T·B·gates·H·(in + H) per layer and direction, biases not counted.
+    // That is what FlopCounterMode counts when the layer runs as those products (on
+    // ARM, or with oneDNN off). On x86 PyTorch runs LSTM as the fused oneDNN op
+    // mkldnn_rnn_layer, which FlopCounterMode cannot see and counts as 0; the work is
+    // the same, so the formula holds there too (the tests count with oneDNN off).
     flops: (r, [x]) => {
-      if (isLstm) return 0;
       const [steps, batch] = r.batch_first ? [x![1]!, x![0]!] : [x![0]!, x![1]!];
       const h = r.hidden_size as number;
       const dirs = r.bidirectional ? 2 : 1;

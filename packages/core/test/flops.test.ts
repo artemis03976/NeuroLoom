@@ -14,8 +14,9 @@ const SYMBOL = 2;
  * reports, keyed by case name, with the reason. Each one must still differ, so
  * stale entries get noticed. None at the moment; the deliberate choices whose
  * cases still agree are noted at the formulas themselves:
- * - LSTM counts 0, because on CPU it runs as the fused mkldnn_rnn_layer op that
- *   FlopCounterMode has no formula for.
+ * - PyTorch counts with oneDNN off, so that every platform runs LSTM as the
+ *   matrix products FlopCounterMode sees (on x86 it would otherwise be one fused
+ *   mkldnn_rnn_layer op, counted as 0).
  * - The transformer layers count the attention core even though PyTorch's CPU
  *   flash kernel (used when dropout = 0 or in eval mode) has no formula; with the
  *   default dropout = 0.1 in training mode it runs as counted bmm calls.
@@ -78,7 +79,7 @@ for case in json.load(sys.stdin):
         exec(compile(case['source'], case['name'], 'exec'), scope)
         model = scope['Example']()
         args = [torch.randint(0, 2, shape) if dtype == 'int64' else torch.randn(shape) for shape, dtype in case['inputs']]
-        with FlopCounterMode(display=False) as counter:
+        with torch.backends.mkldnn.flags(enabled=False), FlopCounterMode(display=False) as counter:
             model(*args)
         results.append(counter.get_total_flops())
     except Exception as e:

@@ -65,7 +65,7 @@ for case in json.load(sys.stdin):
     exec(compile(case["source"], case["name"], "exec"), scope)
     model = scope[case["className"]]()
     args = [torch.randn(shape) for shape in case["inputs"]]
-    with FlopCounterMode(display=False) as counter:
+    with torch.backends.mkldnn.flags(enabled=False), FlopCounterMode(display=False) as counter:
         model(*args)
     results.append({"flops": counter.get_total_flops(), "params": sum(p.numel() for p in model.parameters())})
 print(json.dumps(results))

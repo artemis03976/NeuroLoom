@@ -5,7 +5,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { analyzeProject, entryModule, generateCode, generateFiles, parseProject, type ExportOptions, type LoomProject } from '../src';
 import { mlp, resnet, sequentialHead, twoHeads, withCodeBlock } from './fixtures';
-import { hasTorch, importCode, inputShapesOf, runPython } from './python';
+import { hasTorch, importMany, inputShapesOf, runPython } from './python';
 
 const FIXTURES: Record<string, () => LoomProject> = { mlp, resnet, sequentialHead, twoHeads, withCodeBlock };
 
@@ -144,12 +144,10 @@ describe.skipIf(!hasTorch)('export options keep the model the same', () => {
     });
   });
 
-  it('nested code reads back as the same graph', () => {
-    for (const make of [resnet, mlp]) {
-      const p = make();
-      const again = parseProject(importCode(code(p, { nesting: 3 }), inputShapesOf(p)).project);
-      expect(generateCode(again).code).toBe(generateCode(p).code);
-    }
+  it('nested code reads back as the same graph', { timeout: 60_000 }, () => {
+    const projects = [resnet(), mlp()];
+    const again = importMany(projects.map((p) => ({ source: code(p, { nesting: 3 }), inputShapes: inputShapesOf(p) })));
+    projects.forEach((p, i) => expect(generateCode(parseProject(again[i]!.project)).code).toBe(generateCode(p).code));
   });
 
   it('analysis is unaffected', () => {

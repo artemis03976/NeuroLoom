@@ -40,7 +40,7 @@ for p in json.load(sys.stdin):
         oa, ob = run(a), run(b)
         # FLOPs as F8.2 counts them: one forward pass in training mode, like flops.test.ts.
         a.train()
-        with FlopCounterMode(display=False) as counter:
+        with torch.backends.mkldnn.flags(enabled=False), FlopCounterMode(display=False) as counter:
             run(a)
         count = lambda m: sum(t.numel() for t in m.parameters())
         results.append({

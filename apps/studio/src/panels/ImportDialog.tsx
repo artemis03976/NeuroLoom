@@ -18,11 +18,12 @@ function parseShapes(text: string): Record<string, string> {
   return shapes;
 }
 
-type Mode = 'static' | 'trace';
+type Mode = 'static' | 'dynamic';
 
 const LEVEL: Record<ImportReportEntry['level'], { zh: string; en: string; tone: string }> = {
   L1: { zh: '完整结构化', en: 'fully structured', tone: 'text-success' },
   'L1+L3': { zh: '部分保留为代码块', en: 'partly kept as code', tone: 'text-warning' },
+  L2: { zh: '运行后结构化，表达式变为数值', en: 'structured from a run, expressions became numbers', tone: 'text-success' },
   L3: { zh: '整个类保留为源码', en: 'kept as source', tone: 'text-error' },
 };
 
@@ -150,9 +151,12 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                   tr('不执行代码；保留层级、变量名和超参数表达式。', 'Does not run the code; keeps hierarchy, names and expressions.'),
                 )}
                 {modeButton(
-                  'trace',
-                  tr('动态追踪', 'Trace by running'),
-                  tr('在子进程中执行一次并用 torch.fx 追踪；适合循环构造的模型，层级会被展平。', 'Runs once in a subprocess under torch.fx; for models built in loops. Flattens the hierarchy.'),
+                  'dynamic',
+                  tr('运行后导入', 'Import by running'),
+                  tr(
+                    '在子进程中执行一次，保留层级；静态读不懂的类（循环构造、条件分支）按实际运行结构化，其余与静态解析相同。',
+                    'Runs once in a subprocess and keeps the hierarchy; classes the reader cannot follow (built in loops, branches) are structured from the run, the rest as read.',
+                  ),
                 )}
               </div>
               {error && <pre className="mt-3 whitespace-pre-wrap rounded-md bg-error/10 px-3 py-2 text-[12px] text-error">{error}</pre>}
@@ -194,7 +198,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                 onClick={run}
                 className="rounded-md bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-fg hover:bg-primary-hover disabled:opacity-60"
               >
-                {busy ? (mode === 'trace' ? tr('正在追踪…', 'Tracing…') : tr('正在解析…', 'Reading…')) : mode === 'trace' ? tr('执行并导入', 'Run and import') : tr('导入', 'Import')}
+                {busy ? (mode === 'dynamic' ? tr('正在运行…', 'Running…') : tr('正在解析…', 'Reading…')) : mode === 'dynamic' ? tr('运行并导入', 'Run and import') : tr('导入', 'Import')}
               </button>
             </>
           )}

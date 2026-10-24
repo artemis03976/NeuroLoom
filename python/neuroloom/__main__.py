@@ -52,7 +52,10 @@ def main(argv: list[str] | None = None) -> int:
         "--input", action="append", default=[], metavar="NAME=DIMS[:DTYPE]", help="input shape, e.g. x=B,784 or ids=B,16:int64"
     )
     p_import.add_argument(
-        "--mode", choices=["static", "trace"], default="static", help="static: read the source without running it (default); trace: run it under torch.fx"
+        "--mode",
+        choices=["static", "dynamic", "trace"],
+        default="static",
+        help="static: read the source without running it (default); dynamic: run it and keep the hierarchy; trace: one flat torch.fx graph",
     )
     sub.add_parser("import-batch", help="import a JSON list of {source, className, inputShapes, mode} from stdin (prints a JSON list)")
 

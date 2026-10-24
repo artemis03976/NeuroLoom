@@ -7,7 +7,7 @@ import { host } from './host';
 import { useClipboard, useCommands, useDocumentLifecycle } from './hooks';
 import { tr, useLocale } from './i18n';
 import { applyTheme, loadTheme, type ThemeChoice } from './lib/theme';
-import { CodePanel } from './panels/CodePanel';
+import { BottomPanel } from './panels/BottomPanel';
 import { EnvironmentDialog } from './panels/EnvironmentDialog';
 import { ImportDialog } from './panels/ImportDialog';
 import { Inspector } from './panels/Inspector';
@@ -96,7 +96,7 @@ export function App() {
           </main>
           <Inspector />
         </div>
-        <CodePanel />
+        <BottomPanel />
       </div>
       {quickAdd && <QuickAdd key={`${quickAdd.screen.x},${quickAdd.screen.y}`} state={quickAdd} />}
       <ContextMenuView />

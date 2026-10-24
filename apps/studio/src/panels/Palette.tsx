@@ -5,7 +5,8 @@ import { NODE_DRAG_TYPE } from '../canvas/FlowCanvas';
 import { categoryColor, categoryLabel, glyphOf } from '../canvas/glyph';
 import { attempt, newModule, renameModulePrompt } from '../commands';
 import { pick, tr } from '../i18n';
-import { moduleType, useStudio } from '../store';
+import { blockType, moduleType, useStudio } from '../store';
+import { BLOCKS } from '../templates';
 
 const ORDER: Category[] = ['io', 'linear', 'conv', 'pool', 'norm', 'activation', 'dropout', 'recurrent', 'attention', 'tensor', 'math'];
 
@@ -62,6 +63,13 @@ function NodeLibrary() {
   const addAtCenter = useAddAtCenter();
   const [query, setQuery] = useState('');
   const specs = useMemo(() => allSpecs().filter((s) => matches(s, query)), [query]);
+  const blocks = useMemo(() => {
+    const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return BLOCKS.filter((b) => {
+      const haystack = [b.title, b.titleZh, b.project.modules[b.project.entry]!.className].join(' ').toLowerCase();
+      return words.every((w) => haystack.includes(w));
+    });
+  }, [query]);
   const showCode = !query.trim() || ['code', 'python', '代码'].some((w) => w.includes(query.trim().toLowerCase()) || query.toLowerCase().includes(w));
 
   return (
@@ -76,7 +84,7 @@ function NodeLibrary() {
         />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
-        {specs.length === 0 && !showCode && <p className="px-2 py-4 text-[12px] text-muted">{tr('没有匹配的节点', 'No matching nodes')}</p>}
+        {specs.length === 0 && blocks.length === 0 && !showCode && <p className="px-2 py-4 text-[12px] text-muted">{tr('没有匹配的节点', 'No matching nodes')}</p>}
         {ORDER.map((category) => {
           const group = specs.filter((s) => s.category === category);
           if (group.length === 0) return null;
@@ -92,7 +100,7 @@ function NodeLibrary() {
                   draggable
                   onDragStart={dragType(spec.type)}
                   onClick={() => addAtCenter(spec.type)}
-                  title={`${pick(spec.summary)}\n${spec.type}`}
+                  title={[pick(spec.summary), spec.shapeDoc && `${tr('输出形状：', 'Output shape: ')}${pick(spec.shapeDoc)}`, spec.type].filter(Boolean).join('\n')}
                   className={itemClass}
                 >
                   <Glyph text={glyphOf(spec)} color={categoryColor(spec)} />
@@ -105,6 +113,30 @@ function NodeLibrary() {
             </section>
           );
         })}
+        {blocks.length > 0 && (
+          <section className="mb-2">
+            <div className="sticky top-0 bg-surface px-2 py-1 text-[11px] text-muted">
+              {tr('复合模块', 'Blocks')} <span className="opacity-60">{blocks.length}</span>
+            </div>
+            {blocks.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                draggable
+                onDragStart={dragType(blockType(b.id))}
+                onClick={() => addAtCenter(blockType(b.id))}
+                title={tr(b.descriptionZh, b.description)}
+                className={itemClass}
+              >
+                <Glyph text="M" color="var(--nl-cat-module)" />
+                <span className="min-w-0">
+                  <span className="block truncate font-mono text-[12.5px] leading-tight">{b.project.modules[b.project.entry]!.className}</span>
+                  <span className="block truncate text-[11px] leading-tight text-muted">{tr(b.titleZh, b.title)}</span>
+                </span>
+              </button>
+            ))}
+          </section>
+        )}
         {showCode && (
           <section className="mb-2">
             <div className="sticky top-0 bg-surface px-2 py-1 text-[11px] text-muted">{categoryLabel('code')}</div>

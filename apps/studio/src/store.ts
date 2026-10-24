@@ -17,6 +17,7 @@ import {
   deleteModule as deleteModuleDef,
   findPath,
   generateCode,
+  insertModuleFrom,
   makeUnique,
   packAsModule,
   pasteClip,
@@ -51,6 +52,7 @@ import { applyNodeChanges, type Connection, type EdgeChange, type Node, type Nod
 import { create } from 'zustand';
 import { alignPositions, type AlignMode } from './lib/align';
 import { sampleProject } from './lib/sample';
+import { BLOCKS } from './templates';
 
 export type FlowNode = Node<Record<string, never>, 'layer'>;
 
@@ -63,6 +65,8 @@ export interface PortLink {
 
 /** Node types that are not NodeSpecs: an instance of a module, or a code block. */
 export const moduleType = (moduleId: ModuleId) => `module:${moduleId}`;
+/** A built-in composite module (PRD 9.6), added with the definitions it uses. */
+export const blockType = (blockId: string) => `block:${blockId}`;
 
 /**
  * The module on the canvas, and the drill-down path that led there (PRD F4.2),
@@ -119,7 +123,7 @@ interface StudioState {
   onEdgesChange(changes: EdgeChange[]): void;
   onConnect(connection: Connection): void;
   /**
-   * Adds a node (a NodeSpec type, `module:<id>` or the code block type); with
+   * Adds a node (a NodeSpec type, `module:<id>`, `block:<id>` or the code block type); with
    * `link`, also connects it to an existing port in the same undo step. Returns
    * its id. Throws EditError when the module cannot go here.
    */
@@ -300,7 +304,10 @@ export const useStudio = create<StudioState>()((set, get) => {
       const moduleId = get().view.moduleId;
       let project: LoomProject;
       let nodeId: NodeId;
-      if (type.startsWith('module:')) {
+      const block = type.startsWith('block:') ? BLOCKS.find((b) => b.id === type.slice('block:'.length)) : undefined;
+      if (block) {
+        ({ project, nodeId } = insertModuleFrom(get().project, moduleId, block.project, position));
+      } else if (type.startsWith('module:')) {
         ({ project, nodeId } = addModuleNode(get().project, moduleId, type.slice('module:'.length), position));
       } else {
         const result = type === CODE_TYPE ? addCodeNode(current(), position) : addNode(current(), type, position);

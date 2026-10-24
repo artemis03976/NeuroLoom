@@ -5,8 +5,10 @@ import {
   isAuto,
   literalOf,
   literalSource,
+  nodeFlops,
   parseShape,
   portsOf,
+  symbolsOf,
   withDefaults,
   type Literal,
   type NodeAnalysis,
@@ -15,12 +17,14 @@ import {
   type ParamValue,
   type Repeat,
 } from '@neuroloom/core';
-import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { nodeBadge } from '../canvas/glyph';
 import { attempt, unpackSelection } from '../commands';
 import { pick, tr } from '../i18n';
+import { formatFlops } from '../lib/format';
 import { fallbackValue } from '../lib/paramText';
 import { useCurrentModule, useSelectedNodeId, useStudio } from '../store';
+import { useSymbols } from './AnalysisPanel';
 import { CodeArea, ExprParam, field, NamesField, Section, TextParam, ValueField } from './inspector/fields';
 import { ModelInspector } from './inspector/ModelInspector';
 
@@ -142,8 +146,18 @@ function NameSection({ node }: { node: NodeInst }) {
   );
 }
 
+/** FLOPs of the node's forward call at the analysis panel's symbol values. */
+function useNodeFlops(node: NodeInst): { flops: number; partial: boolean } | undefined {
+  const project = useStudio((s) => s.project);
+  const entry = useStudio((s) => s.analysis.entry);
+  const analysis = useStudio((s) => s.viewAnalysis);
+  const values = useSymbols(useMemo(() => symbolsOf(entry), [entry]));
+  return useMemo(() => nodeFlops(project, analysis, node.id, values), [project, analysis, node.id, values]);
+}
+
 function TensorSection({ node, info }: { node: NodeInst; info?: NodeAnalysis }) {
   const project = useStudio((s) => s.project);
+  const cost = useNodeFlops(node);
   const ports = portsOf(project, node);
   const inputs = ports?.inputs ?? [];
   const outputs = node.kind === 'output' ? [] : (ports?.outputs ?? []);
@@ -167,6 +181,14 @@ function TensorSection({ node, info }: { node: NodeInst; info?: NodeAnalysis }) 
           <>
             <dt className="text-muted">{tr('参数量', 'Parameters')}</dt>
             <dd>{(info?.paramCount ?? 0).toLocaleString()}</dd>
+          </>
+        )}
+        {cost && (cost.flops > 0 || cost.partial) && (
+          <>
+            <dt className="text-muted">{tr('计算量', 'FLOPs')}</dt>
+            <dd title={tr('一次前向传播，符号维度取分析面板中的值', 'One forward pass, with the symbol values of the analysis panel')}>
+              {cost.partial ? (cost.flops > 0 ? `≥ ${formatFlops(cost.flops)}` : '?') : formatFlops(cost.flops)}
+            </dd>
           </>
         )}
       </dl>
@@ -278,6 +300,12 @@ function SpecNodeInspector({ node, info }: { node: NodeInst; info?: NodeAnalysis
       <Issues nodeId={node.id} />
       <Section title={tr('说明', 'About')}>
         <p className="text-[12px] leading-relaxed text-muted">{pick(spec.summary)}</p>
+        {spec.shapeDoc && (
+          <p className="mt-1.5 text-[12px] leading-relaxed">
+            <span className="text-muted">{tr('输出形状：', 'Output shape: ')}</span>
+            <span className="font-mono text-[11.5px]">{pick(spec.shapeDoc)}</span>
+          </p>
+        )}
         {spec.docUrl && (
           <a className="mt-1 inline-block text-[12px] text-primary hover:underline" href={spec.docUrl} target="_blank" rel="noreferrer">
             {tr('PyTorch 官方文档 ↗', 'PyTorch documentation ↗')}

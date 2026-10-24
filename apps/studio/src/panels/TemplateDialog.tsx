@@ -12,6 +12,7 @@ interface Choice {
   title: string;
   subtitle: string;
   description: string;
+  paper?: string;
   make: () => LoomProject;
 }
 
@@ -33,6 +34,7 @@ export function TemplateDialog({ onClose }: { onClose: () => void }) {
         title: tr(t.titleZh, t.title),
         subtitle: t.title,
         description: tr(t.descriptionZh, t.description),
+        paper: t.paper,
         make: () => structuredClone(t.project),
       })),
     ];
@@ -69,19 +71,21 @@ export function TemplateDialog({ onClose }: { onClose: () => void }) {
         </header>
         <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-auto p-5 md:grid-cols-3">
           {choices.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => choose(c)}
-              className="flex flex-col rounded-lg border border-line p-4 text-left transition-colors hover:border-primary hover:bg-primary-soft"
-            >
-              <span className="text-[13.5px] font-semibold">{c.title}</span>
-              <span className="font-mono text-[11px] text-muted">{c.subtitle}</span>
-              <span className="mt-2 flex-1 text-[12px] leading-relaxed text-muted">{c.description}</span>
-              <span className="mt-3 font-mono text-[11px] text-muted">
+            <div key={c.id} className="flex flex-col rounded-lg border border-line transition-colors hover:border-primary hover:bg-primary-soft">
+              <button type="button" onClick={() => choose(c)} className="flex flex-1 flex-col p-4 pb-2 text-left">
+                <span className="text-[13.5px] font-semibold">{c.title}</span>
+                <span className="font-mono text-[11px] text-muted">{c.subtitle}</span>
+                <span className="mt-2 flex-1 text-[12px] leading-relaxed text-muted">{c.description}</span>
+              </button>
+              <span className="flex items-center justify-between gap-2 px-4 pb-3 font-mono text-[11px] text-muted">
                 {tr(`${c.nodes} 个节点 · ${formatCount(c.params)} 参数`, `${c.nodes} nodes · ${formatCount(c.params)} parameters`)}
+                {c.paper && (
+                  <a href={c.paper} target="_blank" rel="noreferrer" className="font-sans text-primary hover:underline" title={c.paper}>
+                    {tr('论文', 'Paper')}
+                  </a>
+                )}
               </span>
-            </button>
+            </div>
           ))}
         </div>
         <footer className="flex justify-end border-t border-line px-5 py-3">

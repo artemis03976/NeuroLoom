@@ -1,12 +1,12 @@
 import { findPath, type ModuleId, type NodeId } from '@neuroloom/core';
 import { useReactFlow } from '@xyflow/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { runCommand } from '../commands';
 import { tr } from '../i18n';
 import { tokenizeLine } from '../lib/highlight';
 import { useSelectedNodeId, useStudio } from '../store';
 
-export function CodePanel() {
+export function CodePanel({ tabs }: { tabs: ReactNode }) {
   const { code, lineMap, classLines, todos } = useStudio((s) => s.codegen);
   const project = useStudio((s) => s.project);
   const moduleId = useStudio((s) => s.view.moduleId);
@@ -57,7 +57,7 @@ export function CodePanel() {
   return (
     <section className="flex min-h-0 flex-col border-t border-line bg-surface">
       <header className="flex items-center gap-3 border-b border-line px-4 py-2">
-        <span className="text-[12px] font-semibold">{tr('代码预览', 'Code preview')}</span>
+        {tabs}
         <span className="font-mono text-[11px] text-muted">
           {className.toLowerCase()}.py · {tr('实时生成', 'live')}
         </span>

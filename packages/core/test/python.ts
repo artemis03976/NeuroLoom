@@ -51,7 +51,7 @@ export function importCode(code: string, inputShapes: Record<string, string> = {
   return out;
 }
 
-export function importMany(requests: { source: string; inputShapes: Record<string, string>; mode?: ImportMode }[]): ImportResult[] {
+export function importMany(requests: { source: string; inputShapes: Record<string, string>; mode?: ImportMode; locale?: 'zh' | 'en' }[]): ImportResult[] {
   return JSON.parse(runPython(['-m', 'neuroloom', 'import-batch'], JSON.stringify(requests)));
 }
 

@@ -187,13 +187,45 @@ class Net(nn.Module):
     def __init__(self):
         super().__init__()
         self.fc = nn.Linear(4, 2)
-        self.extra = torch.nn.Parameter(torch.zeros(2))
 
     def forward(self, x):
-        return self.fc(x) + self.extra
+        y = self.fc(x)
+        if y.sum() > 0:  # data-dependent: neither reader nor tracer can follow it
+            y = y * 2
+        return y
 """
     inputs = {"x": InputSpec(["B", 4])}
     result = import_dynamic(source, inputs=inputs)
     static = import_static(source, inputs=inputs)
     assert result["project"]["modules"].keys() == static["project"]["modules"].keys()
     assert levels(result) == levels(static)
+
+
+STATE = """
+import torch
+from torch import nn
+
+
+class Scaled(nn.Module):
+    def __init__(self, dim: int = 8):
+        super().__init__()
+        self.fc = nn.Linear(dim, dim)
+        self.layer_scale = nn.Parameter(torch.ones(dim) * 1e-6)
+        self.register_buffer("offset", torch.zeros(dim))
+
+    def forward(self, x):
+        return self.layer_scale * self.fc(x) + self.offset
+"""
+
+
+def test_parameters_and_buffers_used_in_forward_become_nodes():
+    inputs = {"x": InputSpec(["B", 8])}
+    # The reader keeps an initial value it cannot express (ones * 1e-6) as code; the run turns it into a node.
+    result = import_dynamic(STATE, inputs=inputs)
+    scaled = by_class(result)["Scaled"]
+    states = {n["name"]: (n["type"], n["params"]) for n in scaled["nodes"].values() if n["type"] in ("neuroloom.Parameter", "neuroloom.Buffer")}
+    assert states == {
+        "layer_scale": ("neuroloom.Parameter", {"shape": {"literal": [8]}, "init": {"literal": "zeros"}}),
+        "offset": ("neuroloom.Buffer", {"shape": {"literal": [8]}, "init": {"literal": "zeros"}}),
+    }
+    assert not any(n["kind"] == "code" for n in scaled["nodes"].values())

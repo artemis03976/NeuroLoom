@@ -23,13 +23,14 @@ import copy
 import inspect
 import json
 import operator
+import re
 import sys
 import types
 from typing import Any
 
 from . import SCHEMA_VERSION
 from .i18n import t
-from .importer import BATCH_PROBE, INPUT, OUTPUT, ImportFailure, InputSpec, _catalog, _describe, _layer_params, _op_params, _outputs
+from .importer import BATCH_PROBE, INPUT, OUTPUT, ImportFailure, InputSpec, _catalog, _describe, _layer_params, _op_params, _outputs, _state_node
 from .probe import RUNS
 from .static import import_static
 
@@ -75,6 +76,33 @@ def _record_constructor_args(records: dict[int, tuple[tuple, dict]]):
         yield
     finally:
         _recording = None
+
+
+@contextlib.contextmanager
+def _weights_on_meta():
+    """Parameters and buffers move to the meta device as modules register them; other tensors stay where they are."""
+    from torch import nn
+
+    register_parameter = nn.Module.register_parameter
+    register_buffer = nn.Module.register_buffer
+
+    def parameter(self, name, param):
+        register_parameter(self, name, param)
+        if param is not None:
+            self._parameters[name] = nn.Parameter(param.to("meta"), requires_grad=param.requires_grad)
+
+    def buffer(self, name, tensor, persistent=True):
+        register_buffer(self, name, tensor, persistent)
+        if tensor is not None:
+            self._buffers[name] = tensor.to("meta")
+
+    nn.Module.register_parameter = parameter
+    nn.Module.register_buffer = buffer
+    try:
+        yield
+    finally:
+        nn.Module.register_parameter = register_parameter
+        nn.Module.register_buffer = register_buffer
 
 
 def _literal(value: Any) -> Any:
@@ -200,6 +228,7 @@ class _Builder:
         self.warnings: list[str] = []
         self.origin: dict[str, str] = {}  # registered id -> the static definition it came from
         self.pure_memo: dict[str, bool] = {}
+        self.import_of: dict[str, tuple[str, str]] = {}  # external definition -> (import line, name it binds)
         self.root = None  # the model being imported
         self.root_graph = None  # (fx graph, definition, fx node -> (node id, port)) when the entry was traced
 
@@ -221,7 +250,9 @@ class _Builder:
             module_id, i = f"{base}_{i}", i + 1
         class_name, i = mod["className"], 2
         taken = {m["className"] for m in self.modules.values()}
-        while class_name in taken and not mod.get("sequential"):
+        # An external call keeps the name it is imported by; other classes get unique names.
+        external = mod.get("opaque") is not None and "source" not in mod["opaque"]
+        while class_name in taken and not mod.get("sequential") and not external:
             class_name, i = f"{mod['className']}{i}", i + 1
         self.modules[module_id] = {**mod, "id": module_id, "className": class_name, "layout": {}}
         self.by_content[key] = module_id
@@ -285,7 +316,10 @@ class _Builder:
                 notes.append(t("构造参数不是常量，改为追踪", "constructor arguments are not constants, traced instead"))
         if result is None and isinstance(m, nn.Sequential) and type(m).forward is nn.Sequential.forward:
             result = (self.sequential(m, name), {})
-        if result is None and not self.is_user(cls):
+        # A library module without submodules (DropPath) stays one call; one with submodules
+        # (a whole torchvision model) is traced for its structure, and called only if that fails.
+        composite = next(m.children(), None) is not None
+        if result is None and not self.is_user(cls) and not composite:
             params = self.verbatim_params(m)
             if params is not None:
                 result = (self.external(m), params)
@@ -295,7 +329,13 @@ class _Builder:
                 result = (self.register(mod, "L2", notes + [t("用 torch.fx 追踪", "traced with torch.fx")]), {})
             except TraceFailed as e:
                 reason = str(e)
-                if static is not None and "opaque" not in static:
+                params = None if self.is_user(cls) or static is not None else self.verbatim_params(m)
+                if params is not None:
+                    self.warnings.append(
+                        t(f"{cls.__module__}.{name} 无法追踪（{reason}），按外部模块导入", f"{cls.__module__}.{name} cannot be traced ({reason}) and is imported as an external module")
+                    )
+                    result = (self.external(m), params)
+                elif static is not None and "opaque" not in static:
                     params = self.constructor_params(m)
                     if params is None:
                         raise Fallback(t(f"{name} 无法追踪（{reason}），构造参数也不是常量", f"{name} cannot be traced ({reason}) and its constructor arguments are not constants")) from e
@@ -315,10 +355,14 @@ class _Builder:
         """A third-party class kept as a call: ports from its forward signature and observed outputs."""
         cls = type(m)
         # The name as the code writes it (timm.layers.DropPath, DropPath): from the static result when it has one.
-        written = next(
-            (s["className"] for s in self.static.values() if s.get("opaque") == {} and s["className"].rsplit(".", 1)[-1] == cls.__name__),
-            f"nn.{cls.__name__}" if cls.__module__.startswith("torch.nn") else cls.__name__,
+        # Otherwise the class imported by name (from torchvision.ops.stochastic_depth import StochasticDepth):
+        # a module path can be shadowed (torchvision.ops.stochastic_depth is also a function).
+        static_name = next(
+            (s["className"] for s in self.static.values() if s.get("opaque") == {} and s["className"].rsplit(".", 1)[-1] == cls.__name__), None
         )
+        torch_nn = cls.__module__.startswith("torch.nn")
+        imported = None if static_name or torch_nn else self.import_name(cls)
+        written = static_name or (f"nn.{cls.__name__}" if torch_nn else imported[1] + cls.__qualname__[len(cls.__qualname__.split(".")[0]) :])
         mod = self.empty(f"ext_{cls.__name__}", written)
         mod["opaque"] = {}
         params = self.verbatim_params(m) or {}
@@ -331,7 +375,25 @@ class _Builder:
             self.add_output(mod, i)
         if not cls.__module__.startswith("torch."):
             self.warnings.append(t(f"{cls.__module__}.{cls.__name__} 来自其他库，按外部模块导入", f"{cls.__module__}.{cls.__name__} comes from another library and is imported as an external module"))
-        return self.register(mod, "L3")
+        module_id = self.register(mod, "L3")
+        if imported is not None:
+            self.import_of[module_id] = imported
+        return module_id
+
+    def import_name(self, cls) -> tuple[str, str]:
+        """The import line for a library class and the name it binds; another class of the same name gets an alias."""
+        root = cls.__qualname__.split(".")[0]
+        taken = {name for _, name in self.import_of.values()} | set(self.static) | {m["className"] for m in self.modules.values()}
+        line = f"from {cls.__module__} import {root}"
+        existing = next((name for imp, name in self.import_of.values() if imp.startswith(line)), None)
+        if existing:
+            return next(imp for imp, name in self.import_of.values() if name == existing), existing
+        name = root
+        for i in range(2, 100):
+            if name not in taken:
+                break
+            name = f"{root}_{i}"
+        return (line if name == root else f"{line} as {name}"), name
 
     # .................................................... definitions
 
@@ -384,10 +446,9 @@ class _Builder:
         return shapes
 
     def sequential(self, container, base: str) -> str:
-        """An nn.Sequential as an inline container: children 0..n-1 in a chain."""
-        names = [n for n, _ in container.named_children()]
-        if names != [str(i) for i in range(len(names))] or not names:
-            raise TraceFailed(t("带名字的 nn.Sequential", "an nn.Sequential with named children"))
+        """An nn.Sequential as an inline container: its children in a chain, numbered (0, 1, …) or named (conv0, norm0)."""
+        if next(container.children(), None) is None:
+            raise TraceFailed(t("空的 nn.Sequential", "an empty nn.Sequential"))
         mod = self.empty(f"{base}_seq", f"{base}_seq")
         mod["sequential"] = True
         prev, port = self.add_input(mod, "x"), "out"
@@ -483,12 +544,16 @@ class _Builder:
 
     def concrete_args(self, m) -> dict:
         """Forward arguments that are not tensors (None masks, flags), and omitted ones with defaults, specialized away."""
-        calls = self.obs.calls.get(id(m), {})
+        calls = self.obs.calls.get(id(m))
         concrete = {}
         for name, p in inspect.signature(m.forward).parameters.items():
             if p.kind in (p.VAR_POSITIONAL, p.VAR_KEYWORD):
                 raise TraceFailed(t("forward 使用了 *args 或 **kwargs", "forward() takes *args or **kwargs"))
-            if name in calls and calls[name] != "tensor":
+            if calls is None:
+                # Never called in the run (a training-only head): required arguments are tensors.
+                if p.default is not inspect.Parameter.empty:
+                    concrete[name] = p.default
+            elif name in calls and calls[name] != "tensor":
                 concrete[name] = calls[name]
             elif name not in calls:
                 if p.default is inspect.Parameter.empty:
@@ -549,7 +614,13 @@ class _Builder:
                     continue
                 values[node] = (self.add_input(mod, name), "out")
             elif node.op == "get_attr":
-                raise TraceFailed(t(f"forward 直接使用了参数或缓冲区 self.{node.target}", f"forward() uses the parameter or buffer self.{node.target} directly"))
+                # The module's own nn.Parameter or buffer (ConvNeXt's layer_scale): a Parameter / Buffer node.
+                target = str(node.target)
+                held = self.state_node(m, target)
+                if held is None:
+                    raise TraceFailed(t(f"forward 直接使用了张量 self.{target}", f"forward() uses the tensor self.{target} directly"))
+                existing = next((k for k, n in mod["nodes"].items() if n["name"] == target), None)
+                values[node] = (existing or add(held, target), "out")
             elif node.op == "call_module":
                 target = str(node.target)
                 if target in groups:
@@ -566,7 +637,10 @@ class _Builder:
                     raise TraceFailed(t(f"调用了更深一层的子模块 self.{target}", f"calls the nested submodule self.{target}"))
                 child = m.get_submodule(target)
                 content = self.traced_child(child, f"{class_name}_{target}")
-                stateless = content["kind"] == "layer" and self.layer_spec(content["type"]).get("stateless")
+                # Without parameters or buffers, a second call is the same as a second copy (ReLU, StochasticDepth).
+                stateless = (content["kind"] == "layer" and self.layer_spec(content["type"]).get("stateless")) or (
+                    next(child.parameters(), None) is None and next(child.buffers(), None) is None
+                )
                 if any(n["name"] == target for n in mod["nodes"].values()) and not stateless:
                     raise TraceFailed(t(f"self.{target} 被调用了多次（共享权重）", f"self.{target} is called more than once (shared weights)"))
                 node_id = add(content, unique(target))
@@ -620,9 +694,22 @@ class _Builder:
             else:
                 raise TraceFailed(f"{node.op} {getattr(node.target, '__name__', node.target)}")
 
+        # Submodules forward() did not call in this run (GoogLeNet's aux heads only run in training)
+        # are still built, so the model keeps their weights.
+        present = {n["name"] for n in mod["nodes"].values()} | {g["container"] for g in groups.values()}
+        for name, child in m.named_children():
+            if name not in present:
+                add(self.traced_child(child, f"{class_name}_{name}"), name)
+
         if m is self.root:
             self.root_graph = (graph, mod, values)
         return mod
+
+    @staticmethod
+    def state_node(m, name: str) -> dict | None:
+        """Node content for a Parameter or Buffer the module itself holds, or None (a child's weight, an fx constant)."""
+        state = None if "." in name else _state_node(m, name)
+        return state and {"kind": "layer", "type": state[0], "params": {k: {"literal": v} for k, v in state[1].items()}}
 
     def traced_child(self, child, name: str) -> dict:
         """A child while tracing its parent: if the child cannot be expressed, the parent falls back instead of the import."""
@@ -728,8 +815,6 @@ class _Builder:
 
 def _verbatim_text(builder: _Builder, preamble: str) -> str:
     """All Python the project keeps as written: it may name the user's classes."""
-    import re
-
     parts = [preamble]
     for mod in builder.modules.values():
         source = (mod.get("opaque") or {}).get("source", "")
@@ -745,8 +830,6 @@ def _define_referenced_classes(builder: _Builder, static_project: dict) -> None:
     are defined as the static importer read them; traced variants of the same
     class take other names.
     """
-    import re
-
     user_classes = [k for k, m in static_project["modules"].items() if k == m["className"] and not m.get("sequential")]
     done: set[str] = set()
     while True:
@@ -852,8 +935,19 @@ def import_dynamic(
     specs = [(name, spec) for name, spec in specs if name in (inputs or {}) or forward.get(name) is None or forward[name].default is inspect.Parameter.empty]
     try:
         model = instantiate("meta")
-    except Exception as e:
-        raise ImportFailure(t(f"无法用默认参数实例化 {entry}：{e}", f"cannot instantiate {entry} with default arguments: {e}")) from e
+    except Exception:
+        # Some constructors compute with tensors (RegNet's widths): those stay on the CPU,
+        # while weights still go to the meta device; failing that, everything on the CPU.
+        records.clear()
+        try:
+            with _weights_on_meta():
+                model = instantiate("cpu")
+        except Exception:
+            records.clear()
+            try:
+                model = instantiate("cpu")
+            except Exception as e:
+                raise ImportFailure(t(f"无法用默认参数实例化 {entry}：{e}", f"cannot instantiate {entry} with default arguments: {e}")) from e
     model.eval()
     try:
         obs = _observe(model, specs)
@@ -897,8 +991,14 @@ def import_dynamic(
 
     # The entry first in the report and last in the file, as in a static import.
     project: dict[str, Any] = {"schemaVersion": SCHEMA_VERSION, "name": entry, "entry": root_id, "modules": builder.modules}
-    if static_project.get("preamble"):
-        project["preamble"] = static_project["preamble"]
+    # Classes that external definitions are written as (from torchvision.ops.stochastic_depth import StochasticDepth).
+    preamble = static_project.get("preamble", "")
+    imports = sorted({builder.import_of[k][0] for k in builder.modules if k in builder.import_of})
+    missing = [line for line in imports if not re.search(rf"^{re.escape(line)}$", preamble, re.M)]
+    if missing:
+        preamble = "\n".join([*missing, preamble] if preamble else missing)
+    if preamble:
+        project["preamble"] = preamble
     observed = _observed_root(builder, model, specs)
     report = list(builder.report.values())
     return {

@@ -3,3 +3,5 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+# Third-party corpus files are kept byte for byte (their sha256 is recorded).
+python/tests/corpus/third_party/** -text

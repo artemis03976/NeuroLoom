@@ -229,6 +229,8 @@ export function runCommand(command: MenuCommand): void {
       return useReplay.getState().open ? useReplay.getState().close() : useReplay.getState().start();
     case 'toggleSnap':
       return useUi.getState().toggleSnap();
+    case 'toggleBottomPanel':
+      return useUi.getState().toggleBottomPanel();
     case 'locale:zh':
     case 'locale:en':
       return useLocale.getState().setLocale(command === 'locale:zh' ? 'zh' : 'en');

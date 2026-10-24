@@ -38,7 +38,7 @@ function sorted(rows: CostRow[], key: SortKey): CostRow[] {
 
 const share = (part: number, whole: number) => (whole > 0 ? `${((part / whole) * 100).toFixed(1)}%` : '');
 
-export function AnalysisPanel({ tabs }: { tabs: ReactNode }) {
+export function AnalysisPanel({ tabs, panelToggle, collapsed }: { tabs: ReactNode; panelToggle: ReactNode; collapsed: boolean }) {
   const project = useStudio((s) => s.project);
   const entry = useStudio((s) => s.analysis.entry);
   const symbols = useMemo(() => symbolsOf(entry), [entry]);
@@ -83,7 +83,7 @@ export function AnalysisPanel({ tabs }: { tabs: ReactNode }) {
 
   return (
     <section className="flex min-h-0 flex-col border-t border-line bg-surface">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-4 py-2 text-[12px]">
+      <header className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-[12px] ${collapsed ? '' : 'border-b border-line'}`}>
         {tabs}
         <span title={tr('参数按 float32 计', 'Parameters as float32')}>
           {tr('参数', 'Params')} <b>{formatCount(cost.params)}</b> <span className="text-muted">({formatBytes(cost.paramBytes)})</span>
@@ -117,54 +117,57 @@ export function AnalysisPanel({ tabs }: { tabs: ReactNode }) {
             ))}
           </span>
         )}
+        {panelToggle}
       </header>
-      <div className="min-h-0 flex-1 overflow-auto px-2 py-1 text-[12px]">
-        <div className={`${grid} sticky top-0 z-[1] bg-surface px-2 py-1 text-[11px] text-muted`}>
-          {header('name', tr('名称', 'Name'), 'text-left')}
-          <span>{tr('类型', 'Type')}</span>
-          {header('params', tr('参数', 'Params'))}
-          {header('flops', 'FLOPs')}
-          {header('activationBytes', tr('激活', 'Activations'))}
-        </div>
-        {lines.map(({ row, depth }) => (
-          <div
-            key={row.name}
-            role="button"
-            tabIndex={0}
-            onClick={() => jump(row)}
-            onKeyDown={(e) => e.key === 'Enter' && jump(row)}
-            title={row.partial ? tr('包含无法计算的部分：代码块、外部模块或未知形状', 'Includes parts that cannot be counted: code blocks, external modules or unknown shapes') : undefined}
-            className={`${grid} cursor-pointer rounded px-2 py-0.5 hover:bg-surface-2`}
-          >
-            <span className="flex min-w-0 items-center font-mono" style={{ paddingLeft: depth * 14 }}>
-              {row.children ? (
-                <button
-                  type="button"
-                  aria-label={open.has(row.name) ? tr('收起', 'Collapse') : tr('展开', 'Expand')}
-                  className="mr-1 w-3 flex-none text-muted hover:text-fg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggle(row.name);
-                  }}
-                >
-                  {open.has(row.name) ? '▾' : '▸'}
-                </button>
-              ) : (
-                <span className="mr-1 w-3 flex-none" />
-              )}
-              <span className="truncate">{row.name.split('.').pop()}</span>
-            </span>
-            <span className="truncate text-muted">{row.type}</span>
-            <span className="text-right font-mono">{row.params > 0 ? formatCount(row.params) : ''}</span>
-            <span className="text-right font-mono" title={share(row.flops, cost.flops)}>
-              {row.flops > 0 ? formatFlops(row.flops) : row.partial ? '?' : ''}
-            </span>
-            <span className="text-right font-mono" title={share(row.activationBytes, cost.activationBytes)}>
-              {row.activationBytes > 0 ? formatBytes(row.activationBytes) : row.partial ? '?' : ''}
-            </span>
+      {!collapsed && (
+        <div className="min-h-0 flex-1 overflow-auto px-2 py-1 text-[12px]">
+          <div className={`${grid} sticky top-0 z-[1] bg-surface px-2 py-1 text-[11px] text-muted`}>
+            {header('name', tr('名称', 'Name'), 'text-left')}
+            <span>{tr('类型', 'Type')}</span>
+            {header('params', tr('参数', 'Params'))}
+            {header('flops', 'FLOPs')}
+            {header('activationBytes', tr('激活', 'Activations'))}
           </div>
-        ))}
-      </div>
+          {lines.map(({ row, depth }) => (
+            <div
+              key={row.name}
+              role="button"
+              tabIndex={0}
+              onClick={() => jump(row)}
+              onKeyDown={(e) => e.key === 'Enter' && jump(row)}
+              title={row.partial ? tr('包含无法计算的部分：代码块、外部模块或未知形状', 'Includes parts that cannot be counted: code blocks, external modules or unknown shapes') : undefined}
+              className={`${grid} cursor-pointer rounded px-2 py-0.5 hover:bg-surface-2`}
+            >
+              <span className="flex min-w-0 items-center font-mono" style={{ paddingLeft: depth * 14 }}>
+                {row.children ? (
+                  <button
+                    type="button"
+                    aria-label={open.has(row.name) ? tr('收起', 'Collapse') : tr('展开', 'Expand')}
+                    className="mr-1 w-3 flex-none text-muted hover:text-fg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggle(row.name);
+                    }}
+                  >
+                    {open.has(row.name) ? '▾' : '▸'}
+                  </button>
+                ) : (
+                  <span className="mr-1 w-3 flex-none" />
+                )}
+                <span className="truncate">{row.name.split('.').pop()}</span>
+              </span>
+              <span className="truncate text-muted">{row.type}</span>
+              <span className="text-right font-mono">{row.params > 0 ? formatCount(row.params) : ''}</span>
+              <span className="text-right font-mono" title={share(row.flops, cost.flops)}>
+                {row.flops > 0 ? formatFlops(row.flops) : row.partial ? '?' : ''}
+              </span>
+              <span className="text-right font-mono" title={share(row.activationBytes, cost.activationBytes)}>
+                {row.activationBytes > 0 ? formatBytes(row.activationBytes) : row.partial ? '?' : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -44,6 +44,8 @@ interface UiState {
   /** Bumped when the Python environment changes, so status displays refetch. */
   backendVersion: number;
   snapToGrid: boolean;
+  /** The code / analysis panel under the canvas is folded down to its header. */
+  bottomCollapsed: boolean;
   openDialog(dialog: UiState['dialog']): void;
   setPrompt(prompt: Prompt | null): void;
   setContextMenu(menu: ContextMenu | null): void;
@@ -51,14 +53,24 @@ interface UiState {
   backendChanged(): void;
   setQuickAdd(quickAdd: QuickAdd | null): void;
   toggleSnap(): void;
+  toggleBottomPanel(): void;
 }
 
+// View preferences, remembered per browser / install (not part of the document).
 const SNAP_KEY = 'neuroloom.snapToGrid';
-const loadSnap = () => {
+const BOTTOM_KEY = 'neuroloom.bottomCollapsed';
+const loadFlag = (key: string) => {
   try {
-    return localStorage.getItem(SNAP_KEY) === '1';
+    return localStorage.getItem(key) === '1';
   } catch {
     return false;
+  }
+};
+const saveFlag = (key: string, on: boolean) => {
+  try {
+    localStorage.setItem(key, on ? '1' : '0');
+  } catch {
+    // Not persisted; the toggle still applies to this session.
   }
 };
 
@@ -71,7 +83,8 @@ export const useUi = create<UiState>()((set, get) => ({
   quickAdd: null,
   pointer: null,
   backendVersion: 0,
-  snapToGrid: loadSnap(),
+  snapToGrid: loadFlag(SNAP_KEY),
+  bottomCollapsed: loadFlag(BOTTOM_KEY),
   openDialog: (dialog) => set({ dialog }),
   setPrompt: (prompt) => set({ prompt }),
   setContextMenu: (contextMenu) => set({ contextMenu }),
@@ -80,12 +93,13 @@ export const useUi = create<UiState>()((set, get) => ({
   setQuickAdd: (quickAdd) => set({ quickAdd }),
   toggleSnap() {
     const snapToGrid = !get().snapToGrid;
-    try {
-      localStorage.setItem(SNAP_KEY, snapToGrid ? '1' : '0');
-    } catch {
-      // Not persisted; the toggle still applies to this session.
-    }
+    saveFlag(SNAP_KEY, snapToGrid);
     set({ snapToGrid });
+  },
+  toggleBottomPanel() {
+    const bottomCollapsed = !get().bottomCollapsed;
+    saveFlag(BOTTOM_KEY, bottomCollapsed);
+    set({ bottomCollapsed });
   },
 }));
 

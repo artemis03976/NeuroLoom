@@ -30,7 +30,7 @@ const CodeLine = memo(function CodeLine({ n, text, highlighted, linked, onReveal
   );
 });
 
-export function CodePanel({ tabs }: { tabs: ReactNode }) {
+export function CodePanel({ tabs, panelToggle, collapsed }: { tabs: ReactNode; panelToggle: ReactNode; collapsed: boolean }) {
   const { code, lineMap, classLines, todos } = useStudio((s) => s.codegen);
   const project = useStudio((s) => s.project);
   const moduleId = useStudio((s) => s.view.moduleId);
@@ -65,12 +65,13 @@ export function CodePanel({ tabs }: { tabs: ReactNode }) {
   );
   const highlighted = useMemo(() => new Set(selected ? (lineMap[moduleId]?.[selected] ?? []) : []), [selected, lineMap, moduleId]);
 
-  // Bring the selected node's code into view, or the class shown on the canvas.
+  // Bring the selected node's code into view, or the class shown on the canvas
+  // (again when the panel is expanded).
   useEffect(() => {
     const first = highlighted.size > 0 ? Math.min(...highlighted) : classLines[moduleId];
-    if (first === undefined || !Number.isFinite(first)) return;
+    if (collapsed || first === undefined || !Number.isFinite(first)) return;
     scroller.current?.querySelector(`[data-line="${first}"]`)?.scrollIntoView({ block: highlighted.size > 0 ? 'nearest' : 'start', behavior: 'smooth' });
-  }, [highlighted, classLines, moduleId]);
+  }, [highlighted, classLines, moduleId, collapsed]);
 
   const copy = async () => {
     try {
@@ -86,7 +87,7 @@ export function CodePanel({ tabs }: { tabs: ReactNode }) {
   const split = !!project.exportOptions?.splitFiles;
   return (
     <section className="flex min-h-0 flex-col border-t border-line bg-surface">
-      <header className="flex items-center gap-3 border-b border-line px-4 py-2">
+      <header className={`flex items-center gap-3 px-4 py-2 ${collapsed ? '' : 'border-b border-line'}`}>
         {tabs}
         <span className="font-mono text-[11px] text-muted">
           {className.toLowerCase()}.py · {tr('实时生成', 'live')}
@@ -102,14 +103,17 @@ export function CodePanel({ tabs }: { tabs: ReactNode }) {
         <button type="button" className={button} onClick={() => runCommand('exportPy')}>
           {split ? tr('导出包', 'Export package') : tr('导出 .py', 'Export .py')}
         </button>
+        {panelToggle}
       </header>
-      <div ref={scroller} className="min-h-0 flex-1 overflow-auto bg-code py-2">
-        <pre className="nl-code m-0">
-          {lines.map((text, i) => (
-            <CodeLine key={i} n={i + 1} text={text} highlighted={highlighted.has(i + 1)} linked={nodeOfLine.has(i + 1)} onReveal={reveal} />
-          ))}
-        </pre>
-      </div>
+      {!collapsed && (
+        <div ref={scroller} className="min-h-0 flex-1 overflow-auto bg-code py-2">
+          <pre className="nl-code m-0">
+            {lines.map((text, i) => (
+              <CodeLine key={i} n={i + 1} text={text} highlighted={highlighted.has(i + 1)} linked={nodeOfLine.has(i + 1)} onReveal={reveal} />
+            ))}
+          </pre>
+        </div>
+      )}
     </section>
   );
 }

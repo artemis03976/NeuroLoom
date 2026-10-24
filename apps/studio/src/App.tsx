@@ -69,6 +69,7 @@ export function App() {
   const openDialog = useUi((s) => s.openDialog);
   const backendChanged = useUi((s) => s.backendChanged);
   const quickAdd = useUi((s) => s.quickAdd);
+  const bottomCollapsed = useUi((s) => s.bottomCollapsed);
 
   useEffect(() => applyTheme(theme), [theme]);
   // A new language: native menus follow, and diagnostics are produced again in it.
@@ -82,8 +83,8 @@ export function App() {
 
   return (
     <ReactFlowProvider>
-      {/* Keyed by language so every label re-renders in it. */}
-      <div key={locale} className="grid h-full grid-rows-[48px_minmax(0,1fr)_minmax(160px,34%)] bg-bg text-fg">
+      {/* Keyed by language so every label re-renders in it. A collapsed bottom panel keeps only its header row. */}
+      <div key={locale} className={`grid h-full ${bottomCollapsed ? 'grid-rows-[48px_minmax(0,1fr)_auto]' : 'grid-rows-[48px_minmax(0,1fr)_minmax(160px,34%)]'} bg-bg text-fg`}>
         <TopBar theme={theme} onTheme={setTheme} />
         <div className="grid min-h-0 grid-cols-[208px_minmax(0,1fr)_300px]">
           <Palette />

@@ -37,6 +37,8 @@ function shortcut(e: KeyboardEvent): MenuCommand | undefined {
       return 'import';
     case 'l':
       return 'autoLayout';
+    case 'j':
+      return 'toggleBottomPanel';
     default:
       return undefined;
   }

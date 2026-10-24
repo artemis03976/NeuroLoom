@@ -9,11 +9,13 @@
   },
   "scripts": {
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit -p .",
     "specs": "node scripts/export-manifest.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^5.0.5",
     "vitest": "^5.0.5"
   }
 }

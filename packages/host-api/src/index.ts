@@ -88,6 +88,7 @@ export type MenuCommand =
   | 'goUp'
   | 'newModule'
   | 'toggleSnap'
+  | 'toggleBottomPanel'
   | 'replay'
   | 'locale:zh'
   | 'locale:en'

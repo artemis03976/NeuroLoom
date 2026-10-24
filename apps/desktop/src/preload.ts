@@ -10,6 +10,11 @@ function subscribe<T>(channel: string, listener: (value: T) => void): () => void
   return () => ipcRenderer.removeListener(channel, wrapped);
 }
 
+// A project opened from the file manager can be sent while the editor is still
+// starting; hold commands until it subscribes instead of dropping them.
+let early: MenuCommand[] | undefined = [];
+ipcRenderer.on(CHANNELS.command, (_e: IpcRendererEvent, command: MenuCommand) => early?.push(command));
+
 const api: DesktopApi = {
   platform: process.platform,
   async rpc(method, params = {}) {
@@ -41,7 +46,13 @@ const api: DesktopApi = {
     closeAfterSave: () => ipcRenderer.send(CHANNELS.docCloseAfterSave),
   },
   setLocale: (locale) => ipcRenderer.send(CHANNELS.locale, locale),
-  onCommand: (listener) => subscribe<MenuCommand>(CHANNELS.command, listener),
+  onCommand(listener) {
+    const unsubscribe = subscribe<MenuCommand>(CHANNELS.command, listener);
+    const queued = early ?? [];
+    early = undefined;
+    queued.forEach((command) => listener(command));
+    return unsubscribe;
+  },
 };
 
 contextBridge.exposeInMainWorld('neuroloom', api);

@@ -13,6 +13,7 @@
     "desktop": "npm run dev -w @neuroloom/desktop",
     "build": "npm run build -w @neuroloom/studio",
     "build:desktop": "npm run build -w @neuroloom/desktop",
+    "dist": "npm run dist -w @neuroloom/desktop --",
     "test": "npm run test --workspaces --if-present",
     "test:py": "node scripts/py.mjs -m pytest -q",
     "smoke": "npm run smoke -w @neuroloom/desktop",

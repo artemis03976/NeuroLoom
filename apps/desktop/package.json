@@ -4,21 +4,26 @@
   "version": "0.0.0",
   "type": "module",
   "description": "NeuroLoom desktop app (Electron shell around the studio UI)",
+  "author": {
+    "name": "NeuroLoom"
+  },
+  "homepage": "https://github.com/artemis03976/NeuroLoom",
   "main": "dist/main.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "start": "electron .",
     "smoke": "node scripts/smoke.mjs",
+    "dist": "node scripts/build.mjs && electron-builder --config electron-builder.config.mjs --publish never",
+    "smoke:packaged": "node scripts/smoke-packaged.mjs",
     "typecheck": "tsc --noEmit -p ."
   },
-  "dependencies": {
-    "@neuroloom/backend-bridge": "*",
-    "@neuroloom/host-api": "*"
-  },
   "devDependencies": {
+    "@neuroloom/backend-bridge": "*",
+    "@neuroloom/host-api": "*",
     "@types/node": "^24.0.0",
     "electron": "^45.0.0",
+    "electron-builder": "^26.17.0",
     "esbuild": "^0.28.2",
     "playwright-core": "^1.64.1"
   }

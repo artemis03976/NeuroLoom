@@ -1,0 +1,138 @@
+name: Release
+
+# Pushing a tag such as v0.3.0 builds the installers on all three platforms, smoke-tests
+# the packaged apps and attaches the installers to a draft GitHub release.
+# Run it by hand (Actions → Release → Run workflow) to get the installers as workflow
+# artifacts without a release.
+#
+# Signing is optional: without these repository secrets the installers are unsigned.
+#   CSC_LINK, CSC_KEY_PASSWORD          certificate (base64 .p12/.pfx or https URL) and password;
+#                                       on macOS a Developer ID Application certificate
+#   WIN_CSC_LINK, WIN_CSC_KEY_PASSWORD  a separate Windows certificate, if it differs
+#   APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID   macOS notarization
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: package (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # electron-builder downloads the Electron build for the target itself, so the
+      # node_modules/electron binary (electron/install.js) is not needed here.
+      - name: Build and package
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Empty secrets mean "not configured"; electron-builder must not see them as set.
+          for name in CSC_LINK CSC_KEY_PASSWORD WIN_CSC_LINK WIN_CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!name}" ]; then unset "$name"; fi
+          done
+          if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; fi
+          args=()
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then args+=("-c.extraMetadata.version=${GITHUB_REF_NAME#v}"); fi
+          npm run dist -- "${args[@]}"
+
+      - name: Smoke-test the packaged app
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a npm run smoke:packaged -w @neuroloom/desktop
+          else
+            npm run smoke:packaged -w @neuroloom/desktop
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ runner.os }}
+          path: |
+            apps/desktop/release/*-setup.exe
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Smoke-test screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-packaged-${{ runner.os }}
+          path: apps/desktop/dist/smoke-packaged.png
+          if-no-files-found: ignore
+
+      # PRD M3 budget: every installer at most 150 MB. Reported in the run summary, with a
+      # warning annotation (not a failure) for an installer over the budget.
+      - name: Installer sizes
+        shell: bash
+        run: |
+          limit=150000000
+          echo "| Installer | Size |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          for f in apps/desktop/release/*-setup.exe apps/desktop/release/*.dmg apps/desktop/release/*.AppImage apps/desktop/release/*.deb; do
+            [ -f "$f" ] || continue
+            size=$(wc -c < "$f" | tr -d ' ')
+            mb=$(awk "BEGIN { printf \"%.1f\", $size / 1000000 }")
+            note=""
+            if [ "$size" -gt "$limit" ]; then
+              note=" (over the 150 MB budget)"
+              echo "::warning::$(basename "$f") is $mb MB, over the 150 MB budget"
+            fi
+            echo "$(basename "$f"): $mb MB$note"
+            echo "| $(basename "$f") | $mb MB$note |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+  release:
+    name: draft release
+    needs: package
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          merge-multiple: true
+          path: installers
+
+      - name: Attach installers to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -l installers
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" installers/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" installers/* --repo "$GITHUB_REPOSITORY" --draft --title "NeuroLoom $TAG" --generate-notes --verify-tag
+          fi

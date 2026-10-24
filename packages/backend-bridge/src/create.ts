@@ -1,8 +1,8 @@
 // One-click environment creation: a venv with CPU PyTorch (PRD F10.1).
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { venvPython } from './discover';
-import { run } from './run';
+import { venvPython } from './discover.ts';
+import { run } from './run.ts';
 
 export const TORCH_CPU_INDEX = 'https://download.pytorch.org/whl/cpu';
 export const PYPI_INDEX = 'https://pypi.org/simple';

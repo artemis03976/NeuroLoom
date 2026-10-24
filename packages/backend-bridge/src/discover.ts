@@ -1,7 +1,7 @@
 // Finds Python interpreters on this machine and checks which can run the backend (PRD F10.1).
 import { existsSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
-import { run } from './run';
+import { run } from './run.ts';
 
 export const MIN_PYTHON = [3, 10] as const;
 export const MIN_TORCH = [2, 4] as const;

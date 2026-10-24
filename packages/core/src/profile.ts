@@ -209,7 +209,8 @@ function rowsOf(project: LoomProject, analysis: Analysis, path: NodeId[], prefix
     }
     const cost = node.repeat
       ? repeatedLayer(spec, node, info, analysis.env, values)
-      : { flops: specFlops(spec, info.resolved, info.inputs, info.outputs, values), bytes: outputBytes() };
+      : // A parameter or buffer is held, not produced by the forward pass (parameters count in paramBytes).
+        { flops: specFlops(spec, info.resolved, info.inputs, info.outputs, values), bytes: spec.codegen.state ? 0 : outputBytes() };
     rows.push({
       ...base,
       type: spec.displayName.en,

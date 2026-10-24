@@ -95,6 +95,12 @@ export interface CodegenSpec {
   operator?: string;
   /** How a tuple result is unpacked, e.g. "{out}, ({h_n}, {c_n})". Default: one name per output, flat. */
   unpack?: string;
+  /**
+   * A tensor the module holds (nn.Parameter, a buffer): created in __init__ as
+   * `self.x = nn.Parameter(...)` ("parameter") or `self.register_buffer("x", ...)`
+   * ("buffer"), and read in forward() as `self.x`.
+   */
+  state?: 'parameter' | 'buffer';
 }
 
 /** Python argument order of an op, so the importer can map call arguments back to ports and params. */

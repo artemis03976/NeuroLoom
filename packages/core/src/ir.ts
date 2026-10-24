@@ -130,6 +130,26 @@ export interface ModuleDef {
   members?: string;
 }
 
+/** How exported code is written (PRD F5.3). Every field is optional; absent means the default. */
+export interface ExportOptions {
+  /** `# [B, 64, 56, 56]` after forward() lines. Default true. */
+  shapeComments?: boolean;
+  /** Annotations in signatures (`x: torch.Tensor`, `-> torch.Tensor`, `width: int`). Default true. */
+  typeHints?: boolean;
+  /** How many calls may nest in one line (`F.relu(self.bn1(self.conv1(x)))` is 2); 0 writes one step per line. Default 0. */
+  nesting?: number;
+  /** Repeats with one input and one output as an nn.Sequential called once, instead of nn.ModuleList + for. Default false. */
+  sequentialRepeats?: boolean;
+  /** Class docstrings with the parameter count. Default false. */
+  docstrings?: boolean;
+  /** A comment naming the project at the top of each file. Default false. */
+  header?: boolean;
+  /** `if __name__ == "__main__":` that runs the model once on example inputs and checks the output shapes. Default false. */
+  selfTest?: boolean;
+  /** One file per class plus __init__.py, instead of a single file. Default false. */
+  splitFiles?: boolean;
+}
+
 export interface LoomProject {
   schemaVersion: typeof SCHEMA_VERSION;
   name: string;
@@ -137,6 +157,7 @@ export interface LoomProject {
   modules: Record<ModuleId, ModuleDef>;
   /** Top-of-file Python that code blocks and opaque classes need (imports, helpers), verbatim. */
   preamble?: string;
+  exportOptions?: ExportOptions;
 }
 
 export const literal = (value: Literal): ParamValue => ({ literal: value });

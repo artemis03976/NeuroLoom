@@ -14,3 +14,4 @@ export * from './validate';
 export * from './serialize';
 export * from './manifest';
 export * from './clipboard';
+export * from './profile';

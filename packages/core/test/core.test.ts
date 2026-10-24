@@ -3,6 +3,7 @@ import {
   analyzeModule,
   connect,
   copyNodes,
+  insertModuleFrom,
   parseClip,
   pasteClip,
   entryModule,
@@ -16,7 +17,7 @@ import {
   setLayout,
   setParam,
 } from '../src';
-import { editEntry, mlp, mlpFunctional, twoHeads, twoInputs } from './fixtures';
+import { editEntry, mlp, mlpFunctional, resnet, twoHeads, twoInputs } from './fixtures';
 
 describe('parseShape', () => {
   it('accepts symbols, numbers and optional brackets', () => {
@@ -234,6 +235,24 @@ describe('clipboard', () => {
     const mod = entryModule(project);
     expect(nodeIds.map((id) => mod.nodes[id]!.name)).toEqual(['x', 'fc2']);
     expect(mod.interface.inputs).toEqual(['a', 'b', nodeIds[0]]);
+  });
+
+  it('inserts a library module with the definitions it uses, reusing them the second time', () => {
+    const block = resnet(); // entry "main" (ResNet) uses ResBlock
+    const once = insertModuleFrom(mlp(), 'main', block, { x: 10, y: 20 });
+    const main = entryModule(once.project);
+    const node = main.nodes[once.nodeId]!;
+    expect(node).toMatchObject({ kind: 'module', name: 'res_net' });
+    expect(main.layout[once.nodeId]).toEqual({ x: 10, y: 20 });
+    const def = once.project.modules[node.type]!;
+    expect(def.className).toBe('ResNet');
+    expect(node.type).not.toBe('main'); // the project's own entry keeps its id
+    expect(Object.values(def.nodes).find((n) => n.name === 'blocks')!.type).toBe('ResBlock');
+
+    const twice = insertModuleFrom(once.project, 'main', block, { x: 10, y: 200 });
+    expect(Object.keys(twice.project.modules).sort()).toEqual(Object.keys(once.project.modules).sort());
+    expect(entryModule(twice.project).nodes[twice.nodeId]).toMatchObject({ type: node.type, name: 'res_net1' });
+    expect(analyzeModule(twice.project, node.type).diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   });
 
   it('ignores clipboard text that is not a NeuroLoom clip', () => {

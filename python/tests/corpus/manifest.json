@@ -1,0 +1,2431 @@
+[
+ {
+  "id": "timm_resnet",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "huggingface/pytorch-image-models",
+  "stars": 37236,
+  "path": "timm/models/resnet.py",
+  "license": "Apache-2.0",
+  "entry": "ResNet",
+  "commit": "0df212b369a5385b16dfe513d5143a7311ea1ddc",
+  "library": {
+   "name": "timm",
+   "version": "1.0.30"
+  },
+  "root": "",
+  "module": "timm.models.resnet",
+  "package": "timm.models",
+  "files": [
+   "timm/models/resnet.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "ResNet(block=BasicBlock, layers=(1, 1, 1, 1), num_classes=10, channels=(16, 32, 64, 128))",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "timm/models/resnet.py": "1f5f941e35961769ad95dd9fa80ad55596f5daf2da955097396230b4513fb2a9",
+   "LICENSE": "71b111620fa32c17a80ccd6db2da759d31a591e497d8b5f382174f59d1b59d49"
+  }
+ },
+ {
+  "id": "efficientnet_pytorch",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "lukemelas/EfficientNet-PyTorch",
+  "stars": 8219,
+  "path": "efficientnet_pytorch/model.py",
+  "license": "Apache-2.0",
+  "entry": "EfficientNet",
+  "commit": "7e8b0d312162f335785fb5dcfa1df29a75a1783a",
+  "root": "",
+  "module": "efficientnet_pytorch.model",
+  "package": "efficientnet_pytorch",
+  "files": [
+   "efficientnet_pytorch/__init__.py",
+   "efficientnet_pytorch/model.py",
+   "efficientnet_pytorch/utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "EfficientNet.from_name('efficientnet-b0', num_classes=10, image_size=64)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "inputs": "B,3,64,64"
+  },
+  "sha256": {
+   "efficientnet_pytorch/__init__.py": "d138f56b6f2cff028cfc0a6193f97909ed5041335596da3d40892f06e3145f2b",
+   "efficientnet_pytorch/model.py": "a3ace3559651b33be3901be3f37a485f81b9767623fb0a329a69ae17d551316d",
+   "efficientnet_pytorch/utils.py": "5a1eae58f2f532b7a5afafe285519ba5cb36ef6a4415b2479e8d7aca33612d40",
+   "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+ },
+ {
+  "id": "kuangliu_vgg",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "kuangliu/pytorch-cifar",
+  "stars": 6447,
+  "path": "models/vgg.py",
+  "license": "MIT",
+  "entry": "VGG",
+  "commit": "49b7aa97b0c12fe0d4054e670403a16b6b834ddd",
+  "root": "",
+  "module": "models.vgg",
+  "package": "models",
+  "files": [
+   "models/__init__.py",
+   "models/densenet.py",
+   "models/dla.py",
+   "models/dla_simple.py",
+   "models/dpn.py",
+   "models/efficientnet.py",
+   "models/googlenet.py",
+   "models/lenet.py",
+   "models/mobilenet.py",
+   "models/mobilenetv2.py",
+   "models/pnasnet.py",
+   "models/preact_resnet.py",
+   "models/regnet.py",
+   "models/resnet.py",
+   "models/resnext.py",
+   "models/senet.py",
+   "models/shufflenet.py",
+   "models/shufflenetv2.py",
+   "models/vgg.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "VGG('VGG11')",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "x": "B,3,32,32"
+  },
+  "sha256": {
+   "models/__init__.py": "52e08c404afcaffc95c5d38ea4f2850f3ba66742fcac3409464ebf61a35ff3f3",
+   "models/densenet.py": "617c3a85b760e5606d75e45453ee3c90f7eedea4bf0070ffafc6ed4424249290",
+   "models/dla.py": "110e9b7317f74d51a1c859bb672ff9e9ca7016a389b7abf0491228fb528c0d59",
+   "models/dla_simple.py": "c7454baa2ed7e71406275f4232f29e2b4d4a9034cc9cc3d724e65839f62beea1",
+   "models/dpn.py": "d99b63939f23dd1cbc18c1432de2b8f63a7d4248729f45d31e9092d7919c1b37",
+   "models/efficientnet.py": "58adf6107ffbe8cf073d03da21c804e38fde8593695542ef7ae5e7c32d86f333",
+   "models/googlenet.py": "165d505255db8e9f38d1dc041a7f1541904aa2f229aff725262ce00bbf2cdd70",
+   "models/lenet.py": "bb87a7053653351d346f3b69a7f3713567cd9a9fa74a5d3454af9f5e24b867db",
+   "models/mobilenet.py": "3f6ef2c6371289b50908f1b60c4c533c025ec120294e802861c373fe853761ff",
+   "models/mobilenetv2.py": "7e5ee0d8d9ecd923fb9acb28499d44554d57091f5f81375e1a731d8624d928b0",
+   "models/pnasnet.py": "f6421290b066d8e1ea9d983def4c390431c8679a73c58faabf67dd6bee34cecf",
+   "models/preact_resnet.py": "3cb4ae02d7c419dc3b9adccc47617e0310805c3cfa07dfee1b73816a5ff2a04a",
+   "models/regnet.py": "a694137f828af1ba5eca57a28f8d8c59c5932b5361bd86b33a241c3cd0013c32",
+   "models/resnet.py": "7bcbe6bba6544645a5da6037bf3e5ddf90e97d0b3ef4183be90e17a0443b4510",
+   "models/resnext.py": "da94de29613d495384ec8ae4a24031149798e1a541b96bca0d7323da6a70b098",
+   "models/senet.py": "d790bd677eec6ff126c686731624f8634361d7d21742ddeea0aa37cad72f6071",
+   "models/shufflenet.py": "49e88cb68accd64351bf4bcccc53ce8de7f9a45b8d9c0c36e5d534f6b2a91390",
+   "models/shufflenetv2.py": "5fa2c82d48ee9feec75c44126f75bfe33050c63f8b1e626251635b9c86678f25",
+   "models/vgg.py": "20f9a5ef048ef91c3144ecbb22708347d48299ad419bbfc122b74ceed89d3016",
+   "LICENSE": "c1ae623a43452c53afe03e2e04c81aee0cb1e06e9274a06de8c60908c9d048f0"
+  }
+ },
+ {
+  "id": "resnet3d",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "kenshohara/3D-ResNets-PyTorch",
+  "stars": 4037,
+  "path": "models/resnet.py",
+  "license": "MIT",
+  "entry": "ResNet",
+  "commit": "540a0ea1abaee379fa3651d4d5afbd2d667a1f49",
+  "root": "",
+  "module": "models.resnet",
+  "package": "models",
+  "files": [
+   "models/__init__.py",
+   "models/resnet.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "ResNet(BasicBlock, [1, 1, 1, 1], [16, 32, 64, 128], n_classes=10)",
+  "example": "(torch.randn(2, 3, 8, 32, 32),)",
+  "inputs": {
+   "x": "B,3,8,32,32"
+  },
+  "sha256": {
+   "models/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "models/resnet.py": "996cbbaf8b9241307018700a4642d024ea86c40736019a8ab1babbf787e0c562",
+   "LICENSE": "bbd6a5bce57e56da6ba80ab9e20ab77febe06f4639f55fbcfbbe919db34235de"
+  }
+ },
+ {
+  "id": "darts_cifar",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "quark0/darts",
+  "stars": 3997,
+  "path": "cnn/model.py",
+  "license": "Apache-2.0",
+  "entry": "NetworkCIFAR",
+  "commit": "f276dd346a09ae3160f8e3aca5c7b193fda1da37",
+  "root": "cnn",
+  "module": "model",
+  "package": "",
+  "files": [
+   "cnn/genotypes.py",
+   "cnn/model.py",
+   "cnn/operations.py",
+   "cnn/utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "from genotypes import DARTS\n\ndef _build():\n    model = NetworkCIFAR(8, 10, 3, False, DARTS)\n    model.drop_path_prob = 0.0\n    return model\n",
+  "construct": "_build()",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "input": "B,3,32,32"
+  },
+  "sha256": {
+   "cnn/genotypes.py": "4be7d314115a8d606439829e9f5ba2083b7c92f807c6a4888834f7983c7474d9",
+   "cnn/model.py": "ba813efc70ba512b5ad1b90b056f200744fa2b8da90fa73a1c34e073324e75c0",
+   "cnn/operations.py": "da5cfc07924cd0e96efeca16fc6f55f4e83ffbcb8430ff24826bc7315bf34d5a",
+   "cnn/utils.py": "b48cc8f661c0fd37ce9cda6dc24b62cefe7cd2418ea23f53c6fc8e7e530f4aa4",
+   "LICENSE": "06c9338b4787f3d6983cb323585edc8a5817122d2ec7b32ec363985dea9d639d"
+  }
+ },
+ {
+  "id": "mobilenetv3_xiaolai",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "xiaolai-sqlai/mobilenetv3",
+  "stars": 1870,
+  "path": "mobilenetv3.py",
+  "license": "MIT",
+  "entry": "MobileNetV3_Small",
+  "commit": "1a7088358ec7f27d8917d5c32c9d1182ab79a711",
+  "root": "",
+  "module": "mobilenetv3",
+  "package": "",
+  "files": [
+   "mobilenetv3.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "MobileNetV3_Small(num_classes=10)",
+  "example": "(torch.randn(2, 3, 224, 224),)",
+  "inputs": {
+   "x": "B,3,224,224"
+  },
+  "sha256": {
+   "mobilenetv3.py": "dae7536b10b6a664a29b4e050ca70f8ab742f9c97ad1323138b44d3bb8d79659",
+   "LICENSE": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+  }
+ },
+ {
+  "id": "geffnet",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "rwightman/gen-efficientnet-pytorch",
+  "stars": 1577,
+  "path": "geffnet/gen_efficientnet.py",
+  "license": "Apache-2.0",
+  "entry": "GenEfficientNet",
+  "commit": "771ce082b2ce6d033f55b3d47c1f77389ad3c180",
+  "root": "",
+  "module": "geffnet.gen_efficientnet",
+  "package": "geffnet",
+  "files": [
+   "geffnet/__init__.py",
+   "geffnet/activations/__init__.py",
+   "geffnet/activations/activations.py",
+   "geffnet/activations/activations_jit.py",
+   "geffnet/activations/activations_me.py",
+   "geffnet/config.py",
+   "geffnet/conv2d_layers.py",
+   "geffnet/efficientnet_builder.py",
+   "geffnet/gen_efficientnet.py",
+   "geffnet/helpers.py",
+   "geffnet/mobilenetv3.py",
+   "geffnet/model_factory.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "_gen_efficientnet('efficientnet_b0', channel_multiplier=0.25, depth_multiplier=0.25, num_classes=10)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "geffnet/__init__.py": "1dcde27254dc19485d90b2f8d2a6ccd6aef1036e1a742b2158fa5868faa75309",
+   "geffnet/activations/__init__.py": "2b1cadb7eb1f107a68faae1f3789d7a958cc2e887f3a2d19dcb190e2def1500d",
+   "geffnet/activations/activations.py": "9b42a5284658e723530decbead9b8d0e600e34cb14e78edcc19c76e57f1d01e5",
+   "geffnet/activations/activations_jit.py": "a8636690d86c7b2ae6f2b1bc558bf5ed6c7b4a0b879eaa78f2a7f0a00cba0372",
+   "geffnet/activations/activations_me.py": "1f360fb8789d688abf2f82bd3d501320bbf0417e70c2e7140f0e87d90acc093b",
+   "geffnet/config.py": "c999834ac28916f3e0e2b591733cf19f3a4e70308c35c67660c50d021a4b8fd3",
+   "geffnet/conv2d_layers.py": "1ae6bc2eab9dae1822ab0cdb57342f390436ebd3ca5ae053851d4f9ab89e761c",
+   "geffnet/efficientnet_builder.py": "476cfea0edb379d0a1ecbe911556165f6bd8c59b159251326bb122b881b6b04c",
+   "geffnet/gen_efficientnet.py": "353ace0689f526e70e5941f4c9590b6dd88e1d063ed139f4d5a6e6c508c5e859",
+   "geffnet/helpers.py": "15565ffca282912b3bf9af1ba5b753e8569dd64038566297f8167ab4e8904f16",
+   "geffnet/mobilenetv3.py": "a5cf20e385c6ff7e1935edac5ae2a6e965174653d475b1dec4601cabd5b1b289",
+   "geffnet/model_factory.py": "e8666720ca6c4500126486abccd29bae359aafac4dc6b23a428737716d3111e8",
+   "LICENSE": "7187e79d7b369ce3b3b815b3bec8727dbbf79c87e8e37fea10ba5709d9a93902"
+  }
+ },
+ {
+  "id": "bayesian_alexnet",
+  "set": "measure",
+  "category": "cnn",
+  "repo": "kumar-shridhar/PyTorch-BayesianCNN",
+  "stars": 1574,
+  "path": "models/BayesianModels/BayesianAlexNet.py",
+  "license": "MIT",
+  "entry": "BBBAlexNet",
+  "commit": "d93bad543c3226cd0fe05c0cb0ba033c41b3caa6",
+  "root": "models/BayesianModels",
+  "module": "BayesianAlexNet",
+  "package": "",
+  "files": [
+   "config_bayesian.py",
+   "layers/BBB/BBBConv.py",
+   "layers/BBB/BBBLinear.py",
+   "layers/BBB/__init__.py",
+   "layers/BBB_LRT/BBBConv.py",
+   "layers/BBB_LRT/BBBLinear.py",
+   "layers/BBB_LRT/__init__.py",
+   "layers/__init__.py",
+   "layers/misc.py",
+   "metrics.py",
+   "models/BayesianModels/BayesianAlexNet.py",
+   "utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "BBBAlexNet(outputs=10, inputs=3, priors=None, layer_type='lrt', activation_type='softplus')",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "x": "B,3,32,32"
+  },
+  "sha256": {
+   "config_bayesian.py": "b75633027b1d059ab68dd01f3991ed8ac1d802fc9ac4b593f2d7f163af1fe4f0",
+   "layers/BBB/BBBConv.py": "2731e27d54bc5075a0bd2cd770580ea949ecfd46c112c81594bb9d9684c4614c",
+   "layers/BBB/BBBLinear.py": "a06bd537d1f630e59c5eb504a7be5b6e5c9dd9cc9c33c9506bc4bda71f9fc77a",
+   "layers/BBB/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "layers/BBB_LRT/BBBConv.py": "3fffe1a2b98b0143e2de86de7b9b5b7c96891d84f9d1721dfc9ad5919066ba77",
+   "layers/BBB_LRT/BBBLinear.py": "b3ee8f422c29b321addb552a88bf344f8c8bcd6e2b060fcc0a8fce1939fb6b0d",
+   "layers/BBB_LRT/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "layers/__init__.py": "7646d8ed73d3b622693e99d2d338e22d1cf4db67ca997153ef6ccb37ad795749",
+   "layers/misc.py": "8b9db7c54d223f29cc23b5162065a40c78f8fa3f1804373beeeb31415545c979",
+   "metrics.py": "1cd5b5504b9282afbae97f608355c496d4298861810c9b115818f3a158653b7f",
+   "models/BayesianModels/BayesianAlexNet.py": "688b1e2fbac4bc6e6c71d3a192fbd25770ed86252856e8a6e862f6a62e6e9cc9",
+   "utils.py": "39416068c5c17a18652f51980cdde26dd160deb125db910876675122a951e0ad",
+   "LICENSE": "4cd8647d0f322538be37b60b31afec415c7375392cae8b68f36db257b68be309"
+  }
+ },
+ {
+  "id": "timm_vit",
+  "set": "measure",
+  "category": "vit",
+  "repo": "huggingface/pytorch-image-models",
+  "stars": 37236,
+  "path": "timm/models/vision_transformer.py",
+  "license": "Apache-2.0",
+  "entry": "VisionTransformer",
+  "commit": "0df212b369a5385b16dfe513d5143a7311ea1ddc",
+  "library": {
+   "name": "timm",
+   "version": "1.0.30"
+  },
+  "root": "",
+  "module": "timm.models.vision_transformer",
+  "package": "timm.models",
+  "files": [
+   "timm/models/vision_transformer.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "VisionTransformer(img_size=32, patch_size=8, num_classes=10, embed_dim=64, depth=2, num_heads=2)",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "x": "B,3,32,32"
+  },
+  "sha256": {
+   "timm/models/vision_transformer.py": "88891e4af894a7797b2d625db1be93c85c9843110d8491fd6aba927320b06df7",
+   "LICENSE": "71b111620fa32c17a80ccd6db2da759d31a591e497d8b5f382174f59d1b59d49"
+  }
+ },
+ {
+  "id": "timm_swin",
+  "set": "measure",
+  "category": "vit",
+  "repo": "huggingface/pytorch-image-models",
+  "stars": 37236,
+  "path": "timm/models/swin_transformer.py",
+  "license": "Apache-2.0",
+  "entry": "SwinTransformer",
+  "commit": "0df212b369a5385b16dfe513d5143a7311ea1ddc",
+  "library": {
+   "name": "timm",
+   "version": "1.0.30"
+  },
+  "root": "",
+  "module": "timm.models.swin_transformer",
+  "package": "timm.models",
+  "files": [
+   "timm/models/swin_transformer.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "SwinTransformer(img_size=64, patch_size=4, num_classes=10, embed_dim=32, depths=(1, 1), num_heads=(2, 4), window_size=4)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "timm/models/swin_transformer.py": "712f5ca827f87d17efbc797ad8e822674b12d5f1cf482c3e03aacd109a23da0f",
+   "LICENSE": "71b111620fa32c17a80ccd6db2da759d31a591e497d8b5f382174f59d1b59d49"
+  }
+ },
+ {
+  "id": "vit_pytorch",
+  "set": "measure",
+  "category": "vit",
+  "repo": "lucidrains/vit-pytorch",
+  "stars": 25550,
+  "path": "vit_pytorch/vit.py",
+  "license": "MIT",
+  "entry": "ViT",
+  "commit": "86c8b9af00465ad1aead9834ae6d79a839ebe2ac",
+  "root": "",
+  "module": "vit_pytorch.vit",
+  "package": "vit_pytorch",
+  "files": [
+   "vit_pytorch/__init__.py",
+   "vit_pytorch/dino.py",
+   "vit_pytorch/looped_vit.py",
+   "vit_pytorch/mae.py",
+   "vit_pytorch/simple_vit.py",
+   "vit_pytorch/vit.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "ViT(image_size=32, patch_size=8, num_classes=10, dim=64, depth=2, heads=2, mlp_dim=128, dim_head=32)",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "img": "B,3,32,32"
+  },
+  "sha256": {
+   "vit_pytorch/__init__.py": "5386cf64ad1ed20438bba8816485115ba486af205a9808adb34e39beb19c17b2",
+   "vit_pytorch/dino.py": "6a728860d53d4b01e2d8b184b83b71d16d752928466a0f29c8eb26e0eee831b0",
+   "vit_pytorch/looped_vit.py": "46c9c5690710546a1cabb875d821657b90836bd2aa6fe3dda1dca9c1527ec224",
+   "vit_pytorch/mae.py": "5d5640546417abe457ca3fef38c7a5723845894b6a93390b5e733bc8cbaad4db",
+   "vit_pytorch/simple_vit.py": "ad03683a1fdef197a5cbccae716f32d9feabcbaac4a75a055a08b47a63ebfe9c",
+   "vit_pytorch/vit.py": "60c502dc805bffa20ef03ecf22537491576b08d8082fd542b624af1f945ba578",
+   "LICENSE": "02cf6ed7df17f94fafa61e67a089ee51faac006db35ffa173c70e6763c253cf6"
+  }
+ },
+ {
+  "id": "swin_transformer",
+  "set": "measure",
+  "category": "vit",
+  "repo": "microsoft/Swin-Transformer",
+  "stars": 16094,
+  "path": "models/swin_transformer.py",
+  "license": "MIT",
+  "entry": "SwinTransformer",
+  "commit": "f82860bfb5225915aca09c3227159ee9e1df874d",
+  "root": "",
+  "module": "models.swin_transformer",
+  "package": "models",
+  "files": [
+   "kernels/window_process/window_process.py",
+   "models/__init__.py",
+   "models/build.py",
+   "models/simmim.py",
+   "models/swin_mlp.py",
+   "models/swin_transformer.py",
+   "models/swin_transformer_moe.py",
+   "models/swin_transformer_v2.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "SwinTransformer(img_size=64, patch_size=4, num_classes=10, embed_dim=32, depths=[1, 1], num_heads=[2, 4], window_size=4)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "kernels/window_process/window_process.py": "e9ad25065537e4dbc8dc66c3af68e0bb0e14f92a9058a32e0dddc55ed6b187eb",
+   "models/__init__.py": "3f5f2123ed1f29396ab645a0cc71b710f5542246f9ba7d95d1aa5d314038f069",
+   "models/build.py": "be6b1f6851cbd5372c1f0dff77df05cbc3ff29b85b887b53ed939f8809b93126",
+   "models/simmim.py": "8264bdda30969f072e74d60c25a62f68803276a9dde4c36ffce938daf7cb1ff8",
+   "models/swin_mlp.py": "749c6f6601d6d0e83303e24fc317b992ddb6260e4907f8f0bcfa722cea15d872",
+   "models/swin_transformer.py": "779c9ad487e2c577eff12a60c7a2f92267e2bb55c68f7bb32c8edad5ad5bd1e1",
+   "models/swin_transformer_moe.py": "0b58ca0d5507455df31d602d5fe2d06787fe49ca07811d082247ce53a10c13e1",
+   "models/swin_transformer_v2.py": "faccc1ff0ad4760716de985084eafa3998ceb5005f8496f8ac2956dbf96cfe07",
+   "LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+  }
+ },
+ {
+  "id": "dino_vit",
+  "set": "measure",
+  "category": "vit",
+  "repo": "facebookresearch/dino",
+  "stars": 7608,
+  "path": "vision_transformer.py",
+  "license": "Apache-2.0",
+  "entry": "VisionTransformer",
+  "commit": "7c446df5b9f45747937fb0d72314eb9f7b66930a",
+  "root": "",
+  "module": "vision_transformer",
+  "package": "",
+  "files": [
+   "utils.py",
+   "vision_transformer.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "VisionTransformer(img_size=[32], patch_size=8, embed_dim=64, depth=2, num_heads=2, qkv_bias=True)",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "x": "B,3,32,32"
+  },
+  "sha256": {
+   "utils.py": "962a97e1acda1c986dfd921275325e4083f9016dddadcf018f1ccf03fa600eab",
+   "vision_transformer.py": "b1f998d5f49ab43666b9fc6d007c5f6540c3ead2e8645e144f74045f63ff44d7",
+   "LICENSE": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a"
+  }
+ },
+ {
+  "id": "swinir",
+  "set": "measure",
+  "category": "vit",
+  "repo": "JingyunLiang/SwinIR",
+  "stars": 5617,
+  "path": "models/network_swinir.py",
+  "license": "Apache-2.0",
+  "entry": "SwinIR",
+  "commit": "6545850fbf8df298df73d81f3e8cba638787c8bd",
+  "root": "models",
+  "module": "network_swinir",
+  "package": "",
+  "files": [
+   "models/network_swinir.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "SwinIR(upscale=2, img_size=(32, 32), window_size=8, img_range=1.0, depths=[2, 2], embed_dim=32, num_heads=[2, 2], mlp_ratio=2, upsampler='pixelshuffledirect')",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "x": "B,3,32,32"
+  },
+  "sha256": {
+   "models/network_swinir.py": "9e143898679ebeebc5d2fc94ad1b89c38aa4a4d43da4e0fcba0f93e476994913",
+   "LICENSE": "d66ccc11682c7458b19b376e1335e8665cbe412ff71f554bfec25f1791cddfa0"
+  }
+ },
+ {
+  "id": "eva01_mim",
+  "set": "measure",
+  "category": "vit",
+  "repo": "baaivision/EVA",
+  "stars": 2697,
+  "path": "EVA-01/eva/modeling_pretrain.py",
+  "license": "MIT",
+  "entry": "VisionTransformerForMaskedImageModeling",
+  "commit": "5623d08bb08a8268c7bc18e1d9b8b4bd651fe4d9",
+  "root": "EVA-01/eva",
+  "module": "modeling_pretrain",
+  "package": "",
+  "files": [
+   "EVA-01/eva/modeling_finetune.py",
+   "EVA-01/eva/modeling_pretrain.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "from functools import partial\n",
+  "construct": "VisionTransformerForMaskedImageModeling(img_size=32, patch_size=8, embed_dim=64, depth=2, num_heads=2, predict_feature_dim=32, norm_layer=partial(nn.LayerNorm, eps=1e-6))",
+  "example": "(torch.randn(2, 3, 32, 32), torch.rand(2, 16) > 0.5)",
+  "inputs": {
+   "x": "B,3,32,32",
+   "bool_masked_pos": "B,16:bool"
+  },
+  "sha256": {
+   "EVA-01/eva/modeling_finetune.py": "be2fb8f46f4635aad49b6df0d0d7ee1853bbb214f689e3b5f83a3a036893e141",
+   "EVA-01/eva/modeling_pretrain.py": "36239e36d7827b2275e666ce38ecf63368f5fc5a019561ef41303094dcd43882",
+   "LICENSE": "80c5e100f36b0dc7dd87341705dc8a310fc7c2dcae2bff6831055bf205ee4d2e"
+  }
+ },
+ {
+  "id": "transformers_bert",
+  "set": "measure",
+  "category": "lm",
+  "repo": "huggingface/transformers",
+  "stars": 168052,
+  "path": "src/transformers/models/bert/modeling_bert.py",
+  "license": "Apache-2.0",
+  "entry": "BertModel",
+  "commit": "18329f1065382e54db698e242cf98bd3f3e5a766",
+  "library": {
+   "name": "transformers",
+   "version": "5.20.2"
+  },
+  "root": "src",
+  "module": "transformers.models.bert.modeling_bert",
+  "package": "transformers.models.bert",
+  "files": [
+   "src/transformers/models/bert/modeling_bert.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "BertModel(BertConfig(vocab_size=100, hidden_size=64, num_hidden_layers=2, num_attention_heads=2, intermediate_size=128, max_position_embeddings=64))",
+  "example": "(torch.randint(0, 100, (2, 12)),)",
+  "inputs": {
+   "input_ids": "B,T:int64"
+  },
+  "sha256": {
+   "src/transformers/models/bert/modeling_bert.py": "fca25539f04aa121d000de218baedb619d744aaef7e93726e71ef555419c6a43",
+   "LICENSE": "77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049"
+  }
+ },
+ {
+  "id": "transformers_llama",
+  "set": "measure",
+  "category": "lm",
+  "repo": "huggingface/transformers",
+  "stars": 168052,
+  "path": "src/transformers/models/llama/modeling_llama.py",
+  "license": "Apache-2.0",
+  "entry": "LlamaForCausalLM",
+  "commit": "18329f1065382e54db698e242cf98bd3f3e5a766",
+  "library": {
+   "name": "transformers",
+   "version": "5.20.2"
+  },
+  "root": "src",
+  "module": "transformers.models.llama.modeling_llama",
+  "package": "transformers.models.llama",
+  "files": [
+   "src/transformers/models/llama/modeling_llama.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "LlamaForCausalLM(LlamaConfig(vocab_size=100, hidden_size=64, intermediate_size=128, num_hidden_layers=2, num_attention_heads=2, num_key_value_heads=2, max_position_embeddings=64))",
+  "example": "(torch.randint(0, 100, (2, 12)),)",
+  "inputs": {
+   "input_ids": "B,T:int64"
+  },
+  "sha256": {
+   "src/transformers/models/llama/modeling_llama.py": "affc6a4ab36b562a6b4c90b84c4e7939c5417a69ad7bd37e858be5583f189830",
+   "LICENSE": "77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049"
+  }
+ },
+ {
+  "id": "minimind",
+  "set": "measure",
+  "category": "lm",
+  "repo": "jingyaogong/minimind",
+  "stars": 64324,
+  "path": "model/model_minimind.py",
+  "license": "Apache-2.0",
+  "entry": "MiniMindForCausalLM",
+  "commit": "f659b55761b754d306bd140573493a6543cafd7f",
+  "root": "",
+  "module": "model.model_minimind",
+  "package": "model",
+  "files": [
+   "model/__init__.py",
+   "model/model_minimind.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "MiniMindForCausalLM(MiniMindConfig(hidden_size=64, num_hidden_layers=2, num_attention_heads=4, num_key_value_heads=2, vocab_size=100, max_position_embeddings=64, flash_attn=False))",
+  "example": "(torch.randint(0, 100, (2, 12)),)",
+  "inputs": {
+   "input_ids": "B,T:int64"
+  },
+  "sha256": {
+   "model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "model/model_minimind.py": "548f1203282dccb3be43227b11463f469b976afbab614df52828bdd246c3786f",
+   "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+ },
+ {
+  "id": "nanogpt",
+  "set": "measure",
+  "category": "lm",
+  "repo": "karpathy/nanoGPT",
+  "stars": 64039,
+  "path": "model.py",
+  "license": "MIT",
+  "entry": "GPT",
+  "commit": "3adf61e154c3fe3fca428ad6bc3818b27a3b8291",
+  "root": "",
+  "module": "model",
+  "package": "",
+  "files": [
+   "model.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "GPT(GPTConfig(n_layer=2, n_head=2, n_embd=64, block_size=32, vocab_size=100))",
+  "example": "(torch.randint(0, 100, (2, 16)),)",
+  "inputs": {
+   "idx": "B,T:int64"
+  },
+  "sha256": {
+   "model.py": "7c01703240dbec5d554527dc666e35b3df8391d0b117fddc07afcf325a21d11c",
+   "LICENSE": "a59ec5cdb1c1e447e5266a014b3e7ded511f8d6e5a08931e931c87490ff821fe"
+  }
+ },
+ {
+  "id": "mingpt",
+  "set": "measure",
+  "category": "lm",
+  "repo": "karpathy/minGPT",
+  "stars": 24965,
+  "path": "mingpt/model.py",
+  "license": "MIT",
+  "entry": "GPT",
+  "commit": "37baab71b9abea1b76ab957409a1cc2fbfba8a26",
+  "root": "",
+  "module": "mingpt.model",
+  "package": "mingpt",
+  "files": [
+   "mingpt/__init__.py",
+   "mingpt/model.py",
+   "mingpt/utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "def _config():\n    config = GPT.get_default_config()\n    config.model_type = None\n    config.n_layer, config.n_head, config.n_embd = 2, 2, 64\n    config.vocab_size, config.block_size = 100, 32\n    return config\n",
+  "construct": "GPT(_config())",
+  "example": "(torch.randint(0, 100, (2, 16)),)",
+  "inputs": {
+   "idx": "B,T:int64"
+  },
+  "sha256": {
+   "mingpt/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "mingpt/model.py": "3586d4a957722864f7a790689a094478d3ee0b7de34d7456cb635923e4779576",
+   "mingpt/utils.py": "243dd4f91c68ea45421bcd4a82fa7fe9e0ee01bf90d52b5feefdb777db6e0568",
+   "LICENSE": "f372f582c99dc5b0e8dcf5ca5542183a735365468857ec6416af628490187cc1"
+  }
+ },
+ {
+  "id": "gpt_oss",
+  "set": "measure",
+  "category": "lm",
+  "repo": "openai/gpt-oss",
+  "stars": 20490,
+  "path": "gpt_oss/torch/model.py",
+  "license": "Apache-2.0",
+  "entry": "Transformer",
+  "commit": "5681a6b6552635e7b29cde94a61ca6a7aee90ebd",
+  "root": "",
+  "module": "gpt_oss.torch.model",
+  "package": "gpt_oss.torch",
+  "files": [
+   "gpt_oss/__init__.py",
+   "gpt_oss/torch/__init__.py",
+   "gpt_oss/torch/model.py",
+   "gpt_oss/torch/weights.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "Transformer(ModelConfig(num_hidden_layers=2, num_experts=4, experts_per_token=2, vocab_size=100, hidden_size=64, intermediate_size=64, num_attention_heads=2, num_key_value_heads=1, sliding_window=8))",
+  "example": "(torch.randint(0, 100, (12,)),)",
+  "inputs": {
+   "x": "T:int64"
+  },
+  "sha256": {
+   "gpt_oss/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "gpt_oss/torch/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "gpt_oss/torch/model.py": "319ba3c6e4d827eb3115fe4838942af448376b513c02cea4b6b471bf6c21a346",
+   "gpt_oss/torch/weights.py": "960df62a4605522099848a458ef21726f20adf33587e1d97196520bb67ab0957",
+   "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  }
+ },
+ {
+  "id": "aiayn_transformer",
+  "set": "measure",
+  "category": "lm",
+  "repo": "jadore801120/attention-is-all-you-need-pytorch",
+  "stars": 9820,
+  "path": "transformer/Models.py",
+  "license": "MIT",
+  "entry": "Transformer",
+  "commit": "132907dd272e2cc92e3c10e6c4e783a87ff8893d",
+  "root": "",
+  "module": "transformer.Models",
+  "package": "transformer",
+  "files": [
+   "transformer/Constants.py",
+   "transformer/Layers.py",
+   "transformer/Models.py",
+   "transformer/Modules.py",
+   "transformer/Optim.py",
+   "transformer/SubLayers.py",
+   "transformer/Translator.py",
+   "transformer/__init__.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "Transformer(n_src_vocab=100, n_trg_vocab=100, src_pad_idx=0, trg_pad_idx=0, d_word_vec=64, d_model=64, d_inner=128, n_layers=2, n_head=2, d_k=32, d_v=32, n_position=64)",
+  "example": "(torch.randint(1, 100, (2, 10)), torch.randint(1, 100, (2, 9)))",
+  "inputs": {
+   "src_seq": "B,S:int64",
+   "trg_seq": "B,T:int64"
+  },
+  "sha256": {
+   "transformer/Constants.py": "e281e03f8a71ea325b73e659ca5c12206e3feee59f63658e3d13d2efd35ec748",
+   "transformer/Layers.py": "eac780a304cc7b8fecfdb9d5928cb514bef5bc6c05526b41da37981b00ba974a",
+   "transformer/Models.py": "2afd3e81244c9b5a75081969de2069bd71780589310adf077d65c6d892f8e6dd",
+   "transformer/Modules.py": "fd41b526925e57dac750cd564955b17ee0a18057398bcc909df850de272dc20c",
+   "transformer/Optim.py": "be33557cbb550aed1c2b11c28b6d897ea79b600462ea1edc40e215d06affacdc",
+   "transformer/SubLayers.py": "b578dc8c7b95cb7950ac98294bb63b550121834ff10f7b8b9c859371ed46850e",
+   "transformer/Translator.py": "9e09a58aae45e88c27297885e077574d733a2e9dbafb60d733ad8cc3126a06ad",
+   "transformer/__init__.py": "de94538ce1a12d042720fbf27f80eb82a504ba9fa80ebd7f32253e36f4500888",
+   "LICENSE": "3f1c9ba4cb0db7f394e08c2236b1eadb58ba0b64d1be24858d85601c7da8a0f6"
+  }
+ },
+ {
+  "id": "bert_pytorch",
+  "set": "measure",
+  "category": "lm",
+  "repo": "codertimo/BERT-pytorch",
+  "stars": 6531,
+  "path": "bert_pytorch/model/bert.py",
+  "license": "Apache-2.0",
+  "entry": "BERT",
+  "commit": "d10dc4f9d5a6f2ca74380f62039526eb7277c671",
+  "root": "",
+  "module": "bert_pytorch.model.bert",
+  "package": "bert_pytorch.model",
+  "files": [
+   "bert_pytorch/__init__.py",
+   "bert_pytorch/model/__init__.py",
+   "bert_pytorch/model/attention/__init__.py",
+   "bert_pytorch/model/attention/multi_head.py",
+   "bert_pytorch/model/attention/single.py",
+   "bert_pytorch/model/bert.py",
+   "bert_pytorch/model/embedding/__init__.py",
+   "bert_pytorch/model/embedding/bert.py",
+   "bert_pytorch/model/embedding/position.py",
+   "bert_pytorch/model/embedding/segment.py",
+   "bert_pytorch/model/embedding/token.py",
+   "bert_pytorch/model/language_model.py",
+   "bert_pytorch/model/transformer.py",
+   "bert_pytorch/model/utils/__init__.py",
+   "bert_pytorch/model/utils/feed_forward.py",
+   "bert_pytorch/model/utils/gelu.py",
+   "bert_pytorch/model/utils/layer_norm.py",
+   "bert_pytorch/model/utils/sublayer.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "BERT(vocab_size=100, hidden=64, n_layers=2, attn_heads=2)",
+  "example": "(torch.randint(1, 100, (2, 12)), torch.randint(0, 3, (2, 12)))",
+  "inputs": {
+   "x": "B,T:int64",
+   "segment_info": "B,T:int64"
+  },
+  "sha256": {
+   "bert_pytorch/__init__.py": "0aeccea2b473c2f4f73574118d3ae58e1f4d54bb5d0d9f372128f1ae53eddc0a",
+   "bert_pytorch/model/__init__.py": "4eda76dfbd1bc9de3b0d468dede3435f236a5f4d6992fce0a2803fca2d815daf",
+   "bert_pytorch/model/attention/__init__.py": "b960b90e41cc442b12a6ba6975c45c3d57280147480863eb1758f2774ca73a1e",
+   "bert_pytorch/model/attention/multi_head.py": "082ec660d66b24cae25e6c1de4787f308df8383a82e38ec4735690b2fab59a8b",
+   "bert_pytorch/model/attention/single.py": "e6e3de0b9ec45d0146cdbf7c4cdeba67534a17052d53666d8c1f409cdd6b3f3e",
+   "bert_pytorch/model/bert.py": "30c5b33d4e8bfe7db861e783d1a0b50021501b2471fea5a7d6d6d30f4ff111d7",
+   "bert_pytorch/model/embedding/__init__.py": "2beb74bd742aa9fe20cf40fb683710ea818d4ac8ba04e431ba8c7ad6a3b327fb",
+   "bert_pytorch/model/embedding/bert.py": "bddbb3bfa1d37ab49fe2d8b4b2d58b9834bba536636ffd9cbc3518f8e19614c5",
+   "bert_pytorch/model/embedding/position.py": "5409b901394bd55b4030dd4e300de99f0ae275a170bb9a29a0598373702b5e7d",
+   "bert_pytorch/model/embedding/segment.py": "3180d53c3aef6051edc73b159a1fff97bc76c3be0dc1a9d652834514a5b3bb3a",
+   "bert_pytorch/model/embedding/token.py": "2314fec0427fd806fb4868d54d8458084224d543e899b83f630aa4996e6b1084",
+   "bert_pytorch/model/language_model.py": "2cc0ad0f4ce53216bc56a1bcacbc87e8a9ec2b7637d078a1e50acb339abf0a96",
+   "bert_pytorch/model/transformer.py": "b63120f9f8cbaaad76305bdd99b2ed105a2b7818b32615bb6615c785d2ed279d",
+   "bert_pytorch/model/utils/__init__.py": "4717efcd60045c838a274f7946c910b0f4b97dfd3613136b64f68f612b7480f3",
+   "bert_pytorch/model/utils/feed_forward.py": "635758da34fcad0237364065fb1406d9eb5862c0b30aed51121f73de02471657",
+   "bert_pytorch/model/utils/gelu.py": "09218e3b396d04b3c80ab9661f81cc8628cbe874c98810359ea386ed41e8787f",
+   "bert_pytorch/model/utils/layer_norm.py": "359929617a45c5630413fb016ced3b3411d65a92e16b1c13a7ba5d3a6598053e",
+   "bert_pytorch/model/utils/sublayer.py": "79660a62f2dd02808580a9437a57e2850cfbef2ae0e3a011b2023642bfe8fccf",
+   "LICENSE": "f4868c75b779cd9d7f36676a0f48d298ee3627d32fadc08645291cafccca0f6b"
+  }
+ },
+ {
+  "id": "textcnn",
+  "set": "measure",
+  "category": "lm",
+  "repo": "649453932/Chinese-Text-Classification-Pytorch",
+  "stars": 5731,
+  "path": "models/TextCNN.py",
+  "license": "MIT",
+  "entry": "Model",
+  "commit": "6cb26819af7b646275aff8a4693676f2849e67f6",
+  "root": "models",
+  "module": "TextCNN",
+  "package": "",
+  "files": [
+   "models/TextCNN.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import types as _types\n",
+  "construct": "Model(_types.SimpleNamespace(embedding_pretrained=None, n_vocab=100, embed=32, filter_sizes=(2, 3, 4), num_filters=16, dropout=0.5, num_classes=10))",
+  "example": "((torch.randint(0, 100, (2, 20)), torch.tensor([20, 20])),)",
+  "inputs": {
+   "x": "B,20:int64"
+  },
+  "sha256": {
+   "models/TextCNN.py": "20b2f66ec3325d49c1b57f1e0f07fc5b10cfb817562f7c4594d6d43bff2e9fa1",
+   "LICENSE": "c59122f7624279cb08820f671fc5a30fb72d97fbe84fc2f1603ba4df70967ad4"
+  }
+ },
+ {
+  "id": "diffusers_unet2d_condition",
+  "set": "measure",
+  "category": "generative",
+  "repo": "huggingface/diffusers",
+  "stars": 34787,
+  "path": "src/diffusers/models/unets/unet_2d_condition.py",
+  "license": "Apache-2.0",
+  "entry": "UNet2DConditionModel",
+  "commit": "95f9b8925c34469ccac829866d7ad4e3fca1bd89",
+  "library": {
+   "name": "diffusers",
+   "version": "0.42.0"
+  },
+  "root": "src",
+  "module": "diffusers.models.unets.unet_2d_condition",
+  "package": "diffusers.models.unets",
+  "files": [
+   "src/diffusers/models/unets/unet_2d_condition.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "UNet2DConditionModel(sample_size=16, in_channels=4, out_channels=4, down_block_types=('CrossAttnDownBlock2D', 'DownBlock2D'), up_block_types=('UpBlock2D', 'CrossAttnUpBlock2D'), block_out_channels=(32, 64), layers_per_block=1, cross_attention_dim=32, attention_head_dim=8, norm_num_groups=8)",
+  "example": "(torch.randn(2, 4, 16, 16), torch.tensor([10, 20]), torch.randn(2, 8, 32))",
+  "inputs": {
+   "sample": "B,4,16,16",
+   "timestep": "B:int64",
+   "encoder_hidden_states": "B,8,32"
+  },
+  "sha256": {
+   "src/diffusers/models/unets/unet_2d_condition.py": "0976bd0b650b2d6889f78fd3c8776ba365bd1f193dec18f72bdafdbadf91fe50",
+   "LICENSE": "f9e2070c247517b1ddf65f7b11b393484a18da91a958fd18a97bd0f241c3125c"
+  }
+ },
+ {
+  "id": "diffusers_autoencoder_kl",
+  "set": "measure",
+  "category": "generative",
+  "repo": "huggingface/diffusers",
+  "stars": 34787,
+  "path": "src/diffusers/models/autoencoders/autoencoder_kl.py",
+  "license": "Apache-2.0",
+  "entry": "AutoencoderKL",
+  "commit": "95f9b8925c34469ccac829866d7ad4e3fca1bd89",
+  "library": {
+   "name": "diffusers",
+   "version": "0.42.0"
+  },
+  "root": "src",
+  "module": "diffusers.models.autoencoders.autoencoder_kl",
+  "package": "diffusers.models.autoencoders",
+  "files": [
+   "src/diffusers/models/autoencoders/autoencoder_kl.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "AutoencoderKL(in_channels=3, out_channels=3, down_block_types=('DownEncoderBlock2D', 'DownEncoderBlock2D'), up_block_types=('UpDecoderBlock2D', 'UpDecoderBlock2D'), block_out_channels=(32, 64), latent_channels=4, norm_num_groups=8)",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "sample": "B,3,32,32"
+  },
+  "sha256": {
+   "src/diffusers/models/autoencoders/autoencoder_kl.py": "091d72ea9ae2f45f465e70f05142e04850d1153052dca520291ceb707bda8c98",
+   "LICENSE": "f9e2070c247517b1ddf65f7b11b393484a18da91a958fd18a97bd0f241c3125c"
+  }
+ },
+ {
+  "id": "cyclegan_resnet_generator",
+  "set": "measure",
+  "category": "generative",
+  "repo": "junyanz/pytorch-CycleGAN-and-pix2pix",
+  "stars": 25265,
+  "path": "models/networks.py",
+  "license": "BSD-2-Clause (+ BSD notices for pix2pix / DCGAN code)",
+  "entry": "ResnetGenerator",
+  "commit": "2a7afba2895d52556dd5dfe07e8555ef657ced6f",
+  "root": "",
+  "module": "models.networks",
+  "package": "models",
+  "files": [
+   "models/__init__.py",
+   "models/base_model.py",
+   "models/networks.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "ResnetGenerator(3, 3, ngf=8, norm_layer=get_norm_layer('instance'), n_blocks=2)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "input": "B,3,64,64"
+  },
+  "sha256": {
+   "models/__init__.py": "eb0d9965b9de8625a242c786ed20f528f10bc412398bd0c7151b60206f2a682a",
+   "models/base_model.py": "9140f4a33c1fd432fc341f86d717e939df6dc38651a71ae16839f6eff0e50c20",
+   "models/networks.py": "2bfcb7adb19f7b7ff6fd8dd76e313200acf000e96784b920658a62e1a11fc04f",
+   "LICENSE": "5474d910fc756107f149fb5ea08e557364d1607acda4e79a03b8e8f7a6279593"
+  }
+ },
+ {
+  "id": "pytorch_gan_acgan",
+  "set": "measure",
+  "category": "generative",
+  "repo": "eriklindernoren/PyTorch-GAN",
+  "stars": 17455,
+  "path": "implementations/acgan/acgan.py",
+  "license": "MIT",
+  "entry": "Generator",
+  "commit": "36d3c77e5ff20ebe0aeefd322326a134a279b93e",
+  "root": "implementations/acgan",
+  "module": "acgan",
+  "package": "",
+  "files": [
+   "implementations/acgan/acgan.py"
+  ],
+  "licenseFile": "LICENSE",
+  "script": true,
+  "setup": "import argparse\nopt = argparse.Namespace(n_epochs=200, batch_size=64, lr=0.0002, b1=0.5, b2=0.999, n_cpu=8, latent_dim=100, n_classes=10, img_size=32, channels=1, sample_interval=400)\n",
+  "construct": "Generator()",
+  "example": "(torch.randn(2, 100), torch.randint(0, 10, (2,)))",
+  "inputs": {
+   "noise": "B,100",
+   "labels": "B:int64"
+  },
+  "sha256": {
+   "implementations/acgan/acgan.py": "a39fac7c384a577ceb9f9c0ce85f148e419e1146d335c94e97d117a43270c109",
+   "LICENSE": "9bea8a5139d7c11f540fbf382c67efc1411705bdd97f1225f903d09e215b5206"
+  }
+ },
+ {
+  "id": "pytorch_vae_vanilla",
+  "set": "measure",
+  "category": "generative",
+  "repo": "AntixK/PyTorch-VAE",
+  "stars": 7679,
+  "path": "models/vanilla_vae.py",
+  "license": "Apache-2.0",
+  "entry": "VanillaVAE",
+  "commit": "a6896b944c918dd7030e7d795a8c13e5c6345ec7",
+  "root": "",
+  "module": "models.vanilla_vae",
+  "package": "models",
+  "files": [
+   "models/__init__.py",
+   "models/base.py",
+   "models/beta_vae.py",
+   "models/betatc_vae.py",
+   "models/cat_vae.py",
+   "models/cvae.py",
+   "models/dfcvae.py",
+   "models/dip_vae.py",
+   "models/fvae.py",
+   "models/gamma_vae.py",
+   "models/hvae.py",
+   "models/info_vae.py",
+   "models/iwae.py",
+   "models/joint_vae.py",
+   "models/logcosh_vae.py",
+   "models/lvae.py",
+   "models/miwae.py",
+   "models/mssim_vae.py",
+   "models/swae.py",
+   "models/types_.py",
+   "models/vampvae.py",
+   "models/vanilla_vae.py",
+   "models/vq_vae.py",
+   "models/wae_mmd.py"
+  ],
+  "licenseFile": "LICENSE.md",
+  "construct": "VanillaVAE(in_channels=3, latent_dim=16)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "input": "B,3,64,64"
+  },
+  "sha256": {
+   "models/__init__.py": "1fd2f2e25f9298e3bce815c4bddf516a3e9ecdbd27923f675d863ed625c8ae73",
+   "models/base.py": "d0e590629a8002453413c47ae110979b8720a0ddc64a54185a223e5a742eb61a",
+   "models/beta_vae.py": "1516d675e9d47b154dcd2e5307448fcfddafcc7d7ac5fb7cd85042a4ceb45168",
+   "models/betatc_vae.py": "c008a5cacfedcf0e6562507069b7653861b1538d78714eeaf7014fe408e4e5ee",
+   "models/cat_vae.py": "eda0ec50c459370b33db79ed24e35c445131d781c48e81a158cee9802380f444",
+   "models/cvae.py": "1d5820f91dc7bd185756bd52868cce838c21018f1cc7811cb4b221f9788179da",
+   "models/dfcvae.py": "be46dfef090e8811501fac17de30654596b712df14a01eab61b28c17c01fc7d7",
+   "models/dip_vae.py": "499f2ec97964b1a9aae9bdf9be77888db8cd6900ee783a2d25ed95b9fddb6c70",
+   "models/fvae.py": "22fe89cc72d3e937f33c04ed8926165cd21c7e806486e5683ebaf27c820639ac",
+   "models/gamma_vae.py": "f087eab58645d5836f7f4fb89b979b30237a080f8d4f63a633e3c79ef026950c",
+   "models/hvae.py": "4601f4d3c3baa0c0568f6fa5b146a6ce4aa419b2b6602e9cc54d8dca9e36d99f",
+   "models/info_vae.py": "e6502661117db308d569073ebff0087fab20758757215960b6a3a5d2b96156dc",
+   "models/iwae.py": "e3724523cf9f98e7add6faf737abba20a3928acabe84ac4bf8ddac68d6b16bc3",
+   "models/joint_vae.py": "56d37cfcb3363a53660f8658e2ff1d22b9e85446cfc6063d4c53e4c560f76733",
+   "models/logcosh_vae.py": "d9eb3a56f037f09c0f708be6817ec2b87491c5c29e73f36be94b74b1e79d4955",
+   "models/lvae.py": "3ec64db7b7e83872c8c78c79853c3264622313077935c30590ee02d32a2c0b91",
+   "models/miwae.py": "562908799a2c6d27c5a929de7d262514e864ff057fd86f639c3a2ff2bc64551d",
+   "models/mssim_vae.py": "b6316b3c9ead13d799f05ea09cb956ee027131711c9d24db542ba84c8f7cb614",
+   "models/swae.py": "6e409247f135b3f1375376afb9048e67ac885f277897a8122107ee3e87f5f0c6",
+   "models/types_.py": "88eabf6baeed1194882b4877746ecb90d48f83b411409a5638f52ff1b3385d46",
+   "models/vampvae.py": "8d56b8a8ad6efe4c31f4b5d7ccd4a61434921142a879b601ae5cf9c182eb2685",
+   "models/vanilla_vae.py": "e72539ccab1d3a0ba912c7ff40e99dd0f4fd09bae54f263735ea1e7f620d90dd",
+   "models/vq_vae.py": "a2a4d3ed9bf7f8094ec35c0f8c5c4c1ba5690937d4000a769711f874d78f1d56",
+   "models/wae_mmd.py": "987b26b728fa7cbdaa881d068ee6a7d91773903c09f8564d62a5c48cf55ecb95",
+   "LICENSE.md": "df2efd09b3e90cc2880cfb444af6c786c863967fd09bdc12137e0f2e016f78f1"
+  }
+ },
+ {
+  "id": "singan",
+  "set": "measure",
+  "category": "generative",
+  "repo": "tamarott/SinGAN",
+  "stars": 3342,
+  "path": "SinGAN/models.py",
+  "license": "MIT",
+  "entry": "GeneratorConcatSkip2CleanAdd",
+  "commit": "df38a4214af95462fa97a613d6ba53eb441509dd",
+  "root": "SinGAN",
+  "module": "models",
+  "package": "",
+  "files": [
+   "SinGAN/models.py"
+  ],
+  "licenseFile": "LICENSE.txt",
+  "setup": "import argparse\n",
+  "construct": "GeneratorConcatSkip2CleanAdd(argparse.Namespace(nfc=32, min_nfc=32, nc_im=3, ker_size=3, padd_size=0, num_layer=5))",
+  "example": "(torch.randn(2, 3, 42, 42), torch.randn(2, 3, 42, 42))",
+  "inputs": {
+   "x": "B,3,42,42",
+   "y": "B,3,42,42"
+  },
+  "sha256": {
+   "SinGAN/models.py": "cab207e3678f863902d633a49475ffeb96f544a8fbad69616e015326e1c04597",
+   "LICENSE.txt": "e072755c11431709cd6fec1d52798d5260ba66850713eeb92d79abe4b45e68e6"
+  }
+ },
+ {
+  "id": "biggan",
+  "set": "measure",
+  "category": "generative",
+  "repo": "ajbrock/BigGAN-PyTorch",
+  "stars": 2928,
+  "path": "BigGAN.py",
+  "license": "MIT",
+  "entry": "Generator",
+  "commit": "98459431a5d618d644d54cd1e9fceb1e5045648d",
+  "root": "",
+  "module": "BigGAN",
+  "package": "",
+  "files": [
+   "BigGAN.py",
+   "layers.py",
+   "sync_batchnorm/__init__.py",
+   "sync_batchnorm/batchnorm.py",
+   "sync_batchnorm/comm.py",
+   "sync_batchnorm/replicate.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "Generator(G_ch=8, dim_z=32, resolution=32, G_attn='0', n_classes=10, G_shared=True, no_optim=True)",
+  "example": "(torch.randn(2, 32), model.shared(torch.randint(0, 10, (2,))))",
+  "inputs": {
+   "z": "B,32",
+   "y": "B,32"
+  },
+  "sha256": {
+   "BigGAN.py": "5b2651561205bec0b9548a88be1d61243873567eebad848e16825d877a974147",
+   "layers.py": "aaf26237cb86c7b0e8bdabc24e13d83e5253c0f969f16183155668e1b144f0e5",
+   "sync_batchnorm/__init__.py": "0701e2062245ab6c90b3df6934a21be5c942b44b13c2ebb70695433599af7a15",
+   "sync_batchnorm/batchnorm.py": "508690ea7b9e2b4c249b9efa56ec669b110298ce814d1c3ebdaa6e580f2d9741",
+   "sync_batchnorm/comm.py": "9d2e776a0398e5ac29ce13d43b7475300f70f409e56f3c38428029000557a57a",
+   "sync_batchnorm/replicate.py": "4498b873404fce05202d4f891262e249a95733816d3877e3aee3d2401138a6af",
+   "LICENSE": "f1280fb72c21d398df9f738d279cda47ff1a1a7d0e6e60fec4b6d988caf26cb9"
+  }
+ },
+ {
+  "id": "rae",
+  "set": "measure",
+  "category": "generative",
+  "repo": "bytetriper/RAE",
+  "stars": 2088,
+  "path": "src/stage1/rae.py",
+  "license": "MIT",
+  "entry": "RAE",
+  "commit": "a4d18c4db766419cbe7cb8c02cd9f7ceb0ec9041",
+  "root": "src",
+  "module": "stage1.rae",
+  "package": "stage1",
+  "files": [
+   "src/stage1/__init__.py",
+   "src/stage1/decoders/__init__.py",
+   "src/stage1/decoders/decoder.py",
+   "src/stage1/decoders/utils.py",
+   "src/stage1/encoders/__init__.py",
+   "src/stage1/encoders/dinov2.py",
+   "src/stage1/encoders/mae.py",
+   "src/stage1/encoders/siglip2.py",
+   "src/stage1/rae.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import tempfile as _tempfile\nimport transformers as _transformers\n_encoder = _tempfile.mkdtemp()\n_transformers.Dinov2WithRegistersModel(_transformers.Dinov2WithRegistersConfig(hidden_size=32, num_hidden_layers=1, num_attention_heads=2, intermediate_size=64, patch_size=8, image_size=32, num_register_tokens=4)).save_pretrained(_encoder)\n_transformers.BitImageProcessor().save_pretrained(_encoder)\n_decoder = _tempfile.mkdtemp()\n_transformers.ViTMAEConfig(decoder_hidden_size=32, decoder_num_hidden_layers=1, decoder_num_attention_heads=2, decoder_intermediate_size=64).save_pretrained(_decoder)\n",
+  "construct": "RAE(encoder_config_path=_encoder, encoder_input_size=32, encoder_params={'dinov2_path': _encoder}, decoder_config_path=_decoder, decoder_patch_size=8)",
+  "example": "(torch.rand(2, 3, 32, 32),)",
+  "inputs": {
+   "x": "B,3,32,32"
+  },
+  "sha256": {
+   "src/stage1/__init__.py": "664dd40291acdd8af4fd2251ce1e33db01df18842d5e3b5a01e8d62c1649cecf",
+   "src/stage1/decoders/__init__.py": "48880ce08b5372dcb0e232b39e5506710e889337aafffa0d35a5be97e9880f02",
+   "src/stage1/decoders/decoder.py": "44ac509202ce4f48ae4cb59fda54aa87d7b5be36f16164a73c7221aabe5f9428",
+   "src/stage1/decoders/utils.py": "c0c88c0d536600662b6f888b8966a14955d2139009d0e2aadfd22e4e10753985",
+   "src/stage1/encoders/__init__.py": "8cc7024a5054b6306698ab1f862fdf3af5d97f4f701ff945d36a90f512ee9da7",
+   "src/stage1/encoders/dinov2.py": "7bb854b243126dedc1d0988c8341b9ed69e4f20472d207d8e76f2ede7a90fbad",
+   "src/stage1/encoders/mae.py": "df562abe7162fad5fce7df7a3b910d6da2f814a4d8b009f98178d5ce80d013b7",
+   "src/stage1/encoders/siglip2.py": "8c485279d35beda3ec0d867afa050264683ccc844abb90f402a9521dbddc92e7",
+   "src/stage1/rae.py": "6564d285518c8a80cac7cf54fb4eb116181c298fea349d48ad0fb14ffc0239d9",
+   "LICENSE": "b4aa3aee240f076034c7a27fcf204a68d0977c4bbece1ec79f83179003c3b214"
+  }
+ },
+ {
+  "id": "detr",
+  "set": "measure",
+  "category": "segdet",
+  "repo": "facebookresearch/detr",
+  "stars": 15351,
+  "path": "models/detr.py",
+  "license": "Apache-2.0",
+  "entry": "DETR",
+  "commit": "29901c51d7fe8712168b8d0d64351170bc0f83e0",
+  "root": "",
+  "module": "models.detr",
+  "package": "models",
+  "files": [
+   "models/__init__.py",
+   "models/backbone.py",
+   "models/detr.py",
+   "models/matcher.py",
+   "models/position_encoding.py",
+   "models/segmentation.py",
+   "models/transformer.py",
+   "util/__init__.py",
+   "util/box_ops.py",
+   "util/misc.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import argparse as _argparse\n_args = _argparse.Namespace(dataset_file='coco', device='cpu', num_queries=5, aux_loss=False, masks=False, frozen_weights=None, backbone='resnet18', lr_backbone=1e-5, dilation=False, position_embedding='sine', hidden_dim=32, dropout=0.1, nheads=2, dim_feedforward=64, enc_layers=1, dec_layers=1, pre_norm=False, set_cost_class=1, set_cost_bbox=5, set_cost_giou=2, bbox_loss_coef=5, giou_loss_coef=2, mask_loss_coef=1, dice_loss_coef=1, eos_coef=0.1)\n",
+  "construct": "build(_args)[0]",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "samples": "B,3,64,64"
+  },
+  "sha256": {
+   "models/__init__.py": "5ad1d97529bc1b52a24a8ed7ee5ac19e5ba2742a8385e2dcbff7e86415f85c35",
+   "models/backbone.py": "6ee87cdb91ca3df38550336c4f5d5b297a5db8e4be8f6c2c0e96e0d88c96d918",
+   "models/detr.py": "b5a584ada4d074d16852f9ad87ebc75bbdc91386b630755f993cb3fbf2290d42",
+   "models/matcher.py": "5dc956c06849722bd754806e559e420c13364e286546a5c9c04f8820e9c99b20",
+   "models/position_encoding.py": "c50834d862a3f7970a3dee3f71ca70f0455bb7e7e627aa2587d2dc8e8b6bd1c8",
+   "models/segmentation.py": "bb9c8094f2c747b15c1c077a2c40f93b07f2fd48f0820f7611dcaadf5d966957",
+   "models/transformer.py": "730677b5e9b6127d502e39cf42b0292856e6432815491050dcbaf84b4a6b4f6e",
+   "util/__init__.py": "9e535c45af09ac24ef8d5631a151f77febafe72a92ad6bfeb2d941f0c4a54e35",
+   "util/box_ops.py": "f0c1c3e27b0f69955e74b09b4ae1898e41e409d1af292c478ba8be71856112fc",
+   "util/misc.py": "b56dfabebf8eded2e7dbf359e167bd308d9c75ee0394f63a751cad9eee597f00",
+   "LICENSE": "b208c52b00a2df2c8f4c3298c34407bf2bfe409968213372251c91fcc737a1a5"
+  }
+ },
+ {
+  "id": "smp_unet",
+  "set": "measure",
+  "category": "segdet",
+  "repo": "qubvel-org/segmentation_models.pytorch",
+  "stars": 11779,
+  "path": "segmentation_models_pytorch/decoders/unet/model.py",
+  "license": "MIT",
+  "entry": "Unet",
+  "commit": "089c6fcb54454da418a9134117f4c2ffdf9d3a9a",
+  "root": "",
+  "module": "segmentation_models_pytorch.decoders.unet.model",
+  "package": "segmentation_models_pytorch.decoders.unet",
+  "files": [
+   "segmentation_models_pytorch/__init__.py",
+   "segmentation_models_pytorch/__version__.py",
+   "segmentation_models_pytorch/base/__init__.py",
+   "segmentation_models_pytorch/base/heads.py",
+   "segmentation_models_pytorch/base/hub_mixin.py",
+   "segmentation_models_pytorch/base/initialization.py",
+   "segmentation_models_pytorch/base/model.py",
+   "segmentation_models_pytorch/base/modules.py",
+   "segmentation_models_pytorch/base/utils.py",
+   "segmentation_models_pytorch/datasets/__init__.py",
+   "segmentation_models_pytorch/datasets/oxford_pet.py",
+   "segmentation_models_pytorch/decoders/__init__.py",
+   "segmentation_models_pytorch/decoders/deeplabv3/__init__.py",
+   "segmentation_models_pytorch/decoders/deeplabv3/decoder.py",
+   "segmentation_models_pytorch/decoders/deeplabv3/model.py",
+   "segmentation_models_pytorch/decoders/dpt/__init__.py",
+   "segmentation_models_pytorch/decoders/dpt/decoder.py",
+   "segmentation_models_pytorch/decoders/dpt/model.py",
+   "segmentation_models_pytorch/decoders/fpn/__init__.py",
+   "segmentation_models_pytorch/decoders/fpn/decoder.py",
+   "segmentation_models_pytorch/decoders/fpn/model.py",
+   "segmentation_models_pytorch/decoders/linknet/__init__.py",
+   "segmentation_models_pytorch/decoders/linknet/decoder.py",
+   "segmentation_models_pytorch/decoders/linknet/model.py",
+   "segmentation_models_pytorch/decoders/manet/__init__.py",
+   "segmentation_models_pytorch/decoders/manet/decoder.py",
+   "segmentation_models_pytorch/decoders/manet/model.py",
+   "segmentation_models_pytorch/decoders/pan/__init__.py",
+   "segmentation_models_pytorch/decoders/pan/decoder.py",
+   "segmentation_models_pytorch/decoders/pan/model.py",
+   "segmentation_models_pytorch/decoders/pspnet/__init__.py",
+   "segmentation_models_pytorch/decoders/pspnet/decoder.py",
+   "segmentation_models_pytorch/decoders/pspnet/model.py",
+   "segmentation_models_pytorch/decoders/segformer/__init__.py",
+   "segmentation_models_pytorch/decoders/segformer/decoder.py",
+   "segmentation_models_pytorch/decoders/segformer/model.py",
+   "segmentation_models_pytorch/decoders/unet/__init__.py",
+   "segmentation_models_pytorch/decoders/unet/decoder.py",
+   "segmentation_models_pytorch/decoders/unet/model.py",
+   "segmentation_models_pytorch/decoders/unetplusplus/__init__.py",
+   "segmentation_models_pytorch/decoders/unetplusplus/decoder.py",
+   "segmentation_models_pytorch/decoders/unetplusplus/model.py",
+   "segmentation_models_pytorch/decoders/upernet/__init__.py",
+   "segmentation_models_pytorch/decoders/upernet/decoder.py",
+   "segmentation_models_pytorch/decoders/upernet/model.py",
+   "segmentation_models_pytorch/encoders/__init__.py",
+   "segmentation_models_pytorch/encoders/_base.py",
+   "segmentation_models_pytorch/encoders/_dpn.py",
+   "segmentation_models_pytorch/encoders/_efficientnet.py",
+   "segmentation_models_pytorch/encoders/_inceptionresnetv2.py",
+   "segmentation_models_pytorch/encoders/_inceptionv4.py",
+   "segmentation_models_pytorch/encoders/_preprocessing.py",
+   "segmentation_models_pytorch/encoders/_senet.py",
+   "segmentation_models_pytorch/encoders/_utils.py",
+   "segmentation_models_pytorch/encoders/_xception.py",
+   "segmentation_models_pytorch/encoders/densenet.py",
+   "segmentation_models_pytorch/encoders/dpn.py",
+   "segmentation_models_pytorch/encoders/efficientnet.py",
+   "segmentation_models_pytorch/encoders/inceptionresnetv2.py",
+   "segmentation_models_pytorch/encoders/inceptionv4.py",
+   "segmentation_models_pytorch/encoders/mix_transformer.py",
+   "segmentation_models_pytorch/encoders/mobilenet.py",
+   "segmentation_models_pytorch/encoders/mobileone.py",
+   "segmentation_models_pytorch/encoders/resnet.py",
+   "segmentation_models_pytorch/encoders/senet.py",
+   "segmentation_models_pytorch/encoders/timm_efficientnet.py",
+   "segmentation_models_pytorch/encoders/timm_sknet.py",
+   "segmentation_models_pytorch/encoders/timm_universal.py",
+   "segmentation_models_pytorch/encoders/timm_vit.py",
+   "segmentation_models_pytorch/encoders/vgg.py",
+   "segmentation_models_pytorch/encoders/xception.py",
+   "segmentation_models_pytorch/losses/__init__.py",
+   "segmentation_models_pytorch/losses/_functional.py",
+   "segmentation_models_pytorch/losses/constants.py",
+   "segmentation_models_pytorch/losses/dice.py",
+   "segmentation_models_pytorch/losses/focal.py",
+   "segmentation_models_pytorch/losses/jaccard.py",
+   "segmentation_models_pytorch/losses/lovasz.py",
+   "segmentation_models_pytorch/losses/mcc.py",
+   "segmentation_models_pytorch/losses/soft_bce.py",
+   "segmentation_models_pytorch/losses/soft_ce.py",
+   "segmentation_models_pytorch/losses/tversky.py",
+   "segmentation_models_pytorch/metrics/__init__.py",
+   "segmentation_models_pytorch/metrics/functional.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "Unet(encoder_name='resnet18', encoder_weights=None, decoder_channels=(32, 16, 8, 8, 8), classes=2)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "segmentation_models_pytorch/__init__.py": "622b944ad2fab4f89e53fb84458eaa68327b41caa6140f906b19258a86f4da92",
+   "segmentation_models_pytorch/__version__.py": "410cf08558f52f33ec02d9f85099bf283ccbd334d4005df8e5715251e3cd6c2c",
+   "segmentation_models_pytorch/base/__init__.py": "d389af39cc1e82258889c2eff1dec1237d9dfeeacbf68b98cb9075cf14775165",
+   "segmentation_models_pytorch/base/heads.py": "f39ecd51959bb93e46a8b90cd9734e961ca7cb859d943690f2ee4bc68e8574a8",
+   "segmentation_models_pytorch/base/hub_mixin.py": "dad10cb5e999e42334d1c3efb7e02c11044836b201c950a1121fee8711e188f2",
+   "segmentation_models_pytorch/base/initialization.py": "02276b436676b13b57b69c0cea63b9f005bd904c32877855825f0082cc74e8e6",
+   "segmentation_models_pytorch/base/model.py": "40bfb1c5c606a7c5c41e51cbb391bbf8daf626c5553d407b10abacb56733fcb1",
+   "segmentation_models_pytorch/base/modules.py": "2bb4ab52ba162bf96b6c07e50e0d86c9e3c7b0eea585cc444c77dd243cecea11",
+   "segmentation_models_pytorch/base/utils.py": "308d76faa16daecdecd80af2abdbfa1b4f954aa8303f0e74b58fde9e1b9c4028",
+   "segmentation_models_pytorch/datasets/__init__.py": "93435a0ffc72ad53d5c0ee2b992ba87f896c4a5ccb574f49554674b6a0bbd7ca",
+   "segmentation_models_pytorch/datasets/oxford_pet.py": "2e20543482a3d74585ab5ff97d866b0e6aa27346f89461a852089da3fc1e1f2b",
+   "segmentation_models_pytorch/decoders/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "segmentation_models_pytorch/decoders/deeplabv3/__init__.py": "4e38a209a542efc79a558c7d7d21f624abb970c19f46ee262f58fbb8ba45e1e0",
+   "segmentation_models_pytorch/decoders/deeplabv3/decoder.py": "3af7d05b6f99d2f9dd4805caabd2cd903985bc7456d20d3c8c0c71fb227b0559",
+   "segmentation_models_pytorch/decoders/deeplabv3/model.py": "c4d97bfd5e5b3b0ea88c5369849f9feb099e252484c3a25ae998c08ab72d3b51",
+   "segmentation_models_pytorch/decoders/dpt/__init__.py": "8f530e2dd9cda723e807ae5af7d3482ee0b2f8b8d1b8b4790eb2bab323a259af",
+   "segmentation_models_pytorch/decoders/dpt/decoder.py": "03f77a613fa83a7b0e93e47cc069f65a5cea0911fd83862faf31c65d675fdafb",
+   "segmentation_models_pytorch/decoders/dpt/model.py": "b7fc3d8b1316aab2d93bd6bc67e5dc7cb1ad7b28dbec25e9052dd3915749ac39",
+   "segmentation_models_pytorch/decoders/fpn/__init__.py": "d18fcb8bb2f8426d6f61a15d0d63a5cd62cb90a957ff6068b76432b55bbc348b",
+   "segmentation_models_pytorch/decoders/fpn/decoder.py": "bee62a8d2e23644eb6ddfe0d0bf2c0b013a5c1db65ef65916b2a9bc190155ea7",
+   "segmentation_models_pytorch/decoders/fpn/model.py": "9beedda44e26fd6f940f64fd97f39d5279ec986b946de5b889a9ae492393381b",
+   "segmentation_models_pytorch/decoders/linknet/__init__.py": "af72608f15fd65915e8834d437edbff7c00742c87255bddb289c9a4af5ba9a25",
+   "segmentation_models_pytorch/decoders/linknet/decoder.py": "a0d31c91a984d12601eb7df8a11659c192f321a77ea8c2739e492065a4527ff0",
+   "segmentation_models_pytorch/decoders/linknet/model.py": "0a4093883c6aff77056d0f8b43aad37ded6b56db08bfe48daa8976eb57b0ad65",
+   "segmentation_models_pytorch/decoders/manet/__init__.py": "c848a5a6f3da77c56abb1807977acc4a6b642f35579386e7eb07404a4ef853e3",
+   "segmentation_models_pytorch/decoders/manet/decoder.py": "14b60fd12d5ba114a18d5c223e590f96b3847fc8076b3559631d1d98f188b4cf",
+   "segmentation_models_pytorch/decoders/manet/model.py": "0da4b7817fdf6b36fe209cb6d0f72dc3498519fee8bd67c509c75b1d08a94d11",
+   "segmentation_models_pytorch/decoders/pan/__init__.py": "1819b5003f8066002b1f63a551006a75de61fc99cd3924d97de25e21a3c8dde9",
+   "segmentation_models_pytorch/decoders/pan/decoder.py": "cd49dd56a169b8f0201b964363ff756fe564694781a4dddc372950e120494ec5",
+   "segmentation_models_pytorch/decoders/pan/model.py": "f19fb6ecee1be512c67170d5732596ab901c3ee340b5a5e779c9a6b2c3c86fd0",
+   "segmentation_models_pytorch/decoders/pspnet/__init__.py": "35b0cc0574ebf5468840fe6f3a784733dabb187d3d6a449d4ef9e15614eb58e2",
+   "segmentation_models_pytorch/decoders/pspnet/decoder.py": "48cd7555d73b78f8fc1406d1db3b25449e7392ea2f7e05b3ebdb8470b18de133",
+   "segmentation_models_pytorch/decoders/pspnet/model.py": "16809839bc8b96ab243e66b49e1a63decca31fd1ca957df3aa9781ac8a67a0f9",
+   "segmentation_models_pytorch/decoders/segformer/__init__.py": "940cd4222dd734cafcb7c18a8a0d0b76b361c01f07eb1689e4aedd44049f8f8d",
+   "segmentation_models_pytorch/decoders/segformer/decoder.py": "9e8c564578067f4b30d9d2422a31697119563f8f90fb524faa8c820d66caeeec",
+   "segmentation_models_pytorch/decoders/segformer/model.py": "25edcc925e519f305f4bb11fd6c6d6702f7e90fefebb42f16abb21d0cf40d1f6",
+   "segmentation_models_pytorch/decoders/unet/__init__.py": "878db8dd3203b05e6b16317a6c44faed071a129d0b0d1ee0828baff71321cd9f",
+   "segmentation_models_pytorch/decoders/unet/decoder.py": "02d75d28d371e8cf471b37826808e36fe09c4c78f4174c6a987946b4a49663c7",
+   "segmentation_models_pytorch/decoders/unet/model.py": "0ffb26ba52b6815693da81ca10f202c0a86b6d5d6ec0d5825cab450b994c8b6b",
+   "segmentation_models_pytorch/decoders/unetplusplus/__init__.py": "55f15f80c07812b3a0f8f4a16933d0451c746f40a81c99e0f4d1cbe98fea23e5",
+   "segmentation_models_pytorch/decoders/unetplusplus/decoder.py": "ec095b0e4c8d336421070b796da5fc292167e2c0a649835a4695859a3075f3ea",
+   "segmentation_models_pytorch/decoders/unetplusplus/model.py": "3fb866e4acef07f009fca05acc9c7f49ccd0a5b49a47a823c30a22715531921e",
+   "segmentation_models_pytorch/decoders/upernet/__init__.py": "6208c78aa93a247b354b5d6a83443c59be7b987b5e97959ae508ac350d1e7a4f",
+   "segmentation_models_pytorch/decoders/upernet/decoder.py": "d42d1440307a583321e6a5aed86dbcfcbe10303f8cf761119e40ac17e7b908da",
+   "segmentation_models_pytorch/decoders/upernet/model.py": "95154f6dd20bde9473be730fd6a8592c12ca8398da875fece2cec7eab2dc96e2",
+   "segmentation_models_pytorch/encoders/__init__.py": "e72d596880375e32f5af5f14e878116dbe522eaa4ccbf313c4ad693ea1c606d2",
+   "segmentation_models_pytorch/encoders/_base.py": "be035ccbeb2559b580de37aaa0ac4be99973142ecd59acf00c25cc9a557dbed0",
+   "segmentation_models_pytorch/encoders/_dpn.py": "c5a69b230b47c3ee6c8d30f63058708d797e4022c009a676097e5077d3247583",
+   "segmentation_models_pytorch/encoders/_efficientnet.py": "048de3cd18f7cef849e2e6770af5dd34378db0c3b09ffb6a61411330ee36cae6",
+   "segmentation_models_pytorch/encoders/_inceptionresnetv2.py": "67601a4ca5b884a0460298925079af6e2ba83eba2068e5f335e853f41260b4fd",
+   "segmentation_models_pytorch/encoders/_inceptionv4.py": "33b3fcec145cb1454e43412dc1c473d26d169292d1aed99300ece1f42bb62c9d",
+   "segmentation_models_pytorch/encoders/_preprocessing.py": "6417d9fb742d8edb1f88021268d49676a827548363208e51bb974020c4af8feb",
+   "segmentation_models_pytorch/encoders/_senet.py": "3b876545e5c7110254f20d34e08a87d60b9a7c102d6c63d6a8d1c8960493df28",
+   "segmentation_models_pytorch/encoders/_utils.py": "e1b6d30321dfbe5ad2eb03667186fa30f0e6393b1b33cbe823caab9aaf94ee9b",
+   "segmentation_models_pytorch/encoders/_xception.py": "efaf78ecbc0fb3f84e7248430056817d346ccd47b5173e28abe50cca579a3463",
+   "segmentation_models_pytorch/encoders/densenet.py": "28e52a842b9275eedfcb2234ed0b865fe903b10d42fb050338aa2595e10c3cc7",
+   "segmentation_models_pytorch/encoders/dpn.py": "06ff7dcd728107c42bf63a811df1be6f3fcf8ad5a3e582e9d712727d7087bf07",
+   "segmentation_models_pytorch/encoders/efficientnet.py": "9479047a1530114b575d34035a9c8f68ebafef33347124cd01e26e2cfa74bd5f",
+   "segmentation_models_pytorch/encoders/inceptionresnetv2.py": "5606749d77c448d02f7833c46e65861aa700f0cf5855b49f8b6c1f33fbfbf41d",
+   "segmentation_models_pytorch/encoders/inceptionv4.py": "efd4e9d45e85d7745d5dc7627a838a3a89317a5c3c4887c134d25f1e92411ec3",
+   "segmentation_models_pytorch/encoders/mix_transformer.py": "55148d8adecd4243b651b0e797e43499c06f3b1457374c116c1049d6c4220c5b",
+   "segmentation_models_pytorch/encoders/mobilenet.py": "601a3f2cb8cdc6bfaa99cbb1f94e1e2656a5d74580086b9e56a3cdec0d031e29",
+   "segmentation_models_pytorch/encoders/mobileone.py": "bf2512111e13c08fe251764b3c041f810d3a066923b6243525c4237fc343febe",
+   "segmentation_models_pytorch/encoders/resnet.py": "a70cfc5a8840656aef485b557adc2eb23905cbc16ebafe8e16d967fb6fcbadc0",
+   "segmentation_models_pytorch/encoders/senet.py": "455e2b0976056271890f940a663aa166b48084330577959c373d8fb3612ff6e2",
+   "segmentation_models_pytorch/encoders/timm_efficientnet.py": "0836213c5a8b01f2fc9c5b4647188d44f1c3f7e9c907efba4e0f24568b7c75b7",
+   "segmentation_models_pytorch/encoders/timm_sknet.py": "b1a4d86d3be6a2211440be3bf6422080eb694580bcfa6de616afdf62604571f7",
+   "segmentation_models_pytorch/encoders/timm_universal.py": "09948b8c6b3f412783c76b49aadd46a73d3c1c723185645e07274816b8b61075",
+   "segmentation_models_pytorch/encoders/timm_vit.py": "02c290baa32902e1c8bf0ac80185c2574d255b17fd1556027494553cab7a7a88",
+   "segmentation_models_pytorch/encoders/vgg.py": "2ea0004b1db95f72445d473375139cf3bc6b3db708fa80bab5539c9d6151803f",
+   "segmentation_models_pytorch/encoders/xception.py": "e431ebbb1462041717cdd653aee0af2f713451cd45deb2c6ab4d8c49c05bbe22",
+   "segmentation_models_pytorch/losses/__init__.py": "ac0662df3bafb6980b21abd775d566f934a3ea2294bbfe172393e2e4f08e3cfb",
+   "segmentation_models_pytorch/losses/_functional.py": "4e1b081c1e35d2f9e2399fe76d29398890630fefa0abc6f07a34c79c24a08bdb",
+   "segmentation_models_pytorch/losses/constants.py": "c29f510cf95410da6ea7779a5a3e513ba1cffb837cfb46944f6ab13b6896c0bb",
+   "segmentation_models_pytorch/losses/dice.py": "6797cd271a3af83013502f58fd066220cf2afcba09af920cd207865f4a22cdd6",
+   "segmentation_models_pytorch/losses/focal.py": "17fc74a6e6cfc6250935e54e36c33d193b50e95a6ae963c1bd8732c46832cdeb",
+   "segmentation_models_pytorch/losses/jaccard.py": "ba661f850a084cab6d8c6904316ecf1daba601af833b9c3e0ae4cc224e9daa27",
+   "segmentation_models_pytorch/losses/lovasz.py": "a013cdb6d1f3ba5ce2ab76f7ee288fb29bb8059189717cc3c3641bc08b85decf",
+   "segmentation_models_pytorch/losses/mcc.py": "ebbb75a397c36fcce9db3dc5ced686a5f9b6c87a122ad05205881e5ebab2c025",
+   "segmentation_models_pytorch/losses/soft_bce.py": "68d393d7b638425164e8ac23476bc785a43a3b76e0f675bf8ce89f6dcee44089",
+   "segmentation_models_pytorch/losses/soft_ce.py": "01f4a167434999854a4019d03ff76ff38f6421200c4752d4a67dfc65fc48e2e7",
+   "segmentation_models_pytorch/losses/tversky.py": "27d522351215eade9fb48cdfdd185650a46e25db4b08fb4cf571233bc1562a7f",
+   "segmentation_models_pytorch/metrics/__init__.py": "f2b8878a4689c2eb49ac83d538de4ea2848b8063908ae1e89b092d137d18abc5",
+   "segmentation_models_pytorch/metrics/functional.py": "d4deca0da8d78efe0f22feb951c9727fb9ad62e28024e6d2f671b6cb5af252f2",
+   "LICENSE": "a9acb108113b9d7582a69a7cbeadef1ff6042bb93cd4890eae2c970727be538c"
+  }
+ },
+ {
+  "id": "csail_semseg",
+  "set": "measure",
+  "category": "segdet",
+  "repo": "CSAILVision/semantic-segmentation-pytorch",
+  "stars": 5082,
+  "path": "mit_semseg/models/models.py",
+  "license": "BSD-3-Clause",
+  "entry": "SegmentationModule",
+  "commit": "8f27c9b97d2ca7c6e05333d5766d144bf7d8c31b",
+  "root": "",
+  "module": "mit_semseg.models.models",
+  "package": "mit_semseg.models",
+  "files": [
+   "mit_semseg/__init__.py",
+   "mit_semseg/lib/__init__.py",
+   "mit_semseg/lib/nn/__init__.py",
+   "mit_semseg/lib/nn/modules/__init__.py",
+   "mit_semseg/lib/nn/modules/batchnorm.py",
+   "mit_semseg/lib/nn/modules/comm.py",
+   "mit_semseg/lib/nn/modules/replicate.py",
+   "mit_semseg/lib/nn/parallel/__init__.py",
+   "mit_semseg/lib/nn/parallel/data_parallel.py",
+   "mit_semseg/models/__init__.py",
+   "mit_semseg/models/hrnet.py",
+   "mit_semseg/models/mobilenet.py",
+   "mit_semseg/models/models.py",
+   "mit_semseg/models/resnet.py",
+   "mit_semseg/models/resnext.py",
+   "mit_semseg/models/utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "SegmentationModule(Resnet(resnet.resnet18()), C1(num_class=10, fc_dim=512), nn.NLLLoss(ignore_index=-1))",
+  "example": "dict(feed_dict=dict(img_data=torch.randn(2, 3, 64, 64)), segSize=(64, 64))",
+  "inputs": {
+   "feed_dict": "B,3,64,64"
+  },
+  "sha256": {
+   "mit_semseg/__init__.py": "7e58a465dbf83903f13d94ffce5b3353bcc8eb2154cd568bb405341f8a02ce5e",
+   "mit_semseg/lib/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "mit_semseg/lib/nn/__init__.py": "2600acab3ede0102ff0bd8e8f8d62b21e4fff97f99a95996aa14679b6ec30d01",
+   "mit_semseg/lib/nn/modules/__init__.py": "0701e2062245ab6c90b3df6934a21be5c942b44b13c2ebb70695433599af7a15",
+   "mit_semseg/lib/nn/modules/batchnorm.py": "42258e18cef5fb033e63f6e1a06c2897432c095a7177606ac6bb1119f5f2c856",
+   "mit_semseg/lib/nn/modules/comm.py": "a480d504d651eef51b8419254f00d97d5f0b2d9a4af590713605c0148725b234",
+   "mit_semseg/lib/nn/modules/replicate.py": "4498b873404fce05202d4f891262e249a95733816d3877e3aee3d2401138a6af",
+   "mit_semseg/lib/nn/parallel/__init__.py": "fa04ce76f0e4d7a130a7cefca60690b53238010bb11d65b1c305221c36d1aaa1",
+   "mit_semseg/lib/nn/parallel/data_parallel.py": "3e4075dc485b063be061c308d88134a644d0b3bc1507f42f40abd3fc69977ee4",
+   "mit_semseg/models/__init__.py": "9117afeac26d724bdba6f9f35d54b7ddab81e33847e717071c6ed789a458d84b",
+   "mit_semseg/models/hrnet.py": "f6e07d7448746b101a30f7b250896a9651b99fa6e02820afcfa69b93a8dd9a1d",
+   "mit_semseg/models/mobilenet.py": "2462300b9863d40da75d2cbcf785015e53930c3ce37219cb9d4c24b468b63a34",
+   "mit_semseg/models/models.py": "fea2849abca35a260a64e852397bcccad64e2fd495fad668ad1622b5080033eb",
+   "mit_semseg/models/resnet.py": "685bb02446ce28eb1b110f3dfa9f6534a2ea34f50f09be0d7c165bd2c5c6c899",
+   "mit_semseg/models/resnext.py": "271a95bdabb9e2c00ecc2e6765b7521f708cda5312b4d78bfb895374f3509044",
+   "mit_semseg/models/utils.py": "55a8f41269be28c17e456e5ae1f246bf71354765739dceca1e45becd58cba5e2",
+   "LICENSE": "c745c9e08731a11492360b4c7a9f6737f570c55167a6af3cd5978da4acc480f0"
+  }
+ },
+ {
+  "id": "ssd300_tutorial",
+  "set": "measure",
+  "category": "segdet",
+  "repo": "sgrvinod/a-PyTorch-Tutorial-to-Object-Detection",
+  "stars": 3118,
+  "path": "model.py",
+  "license": "MIT",
+  "entry": "SSD300",
+  "commit": "5d5b75968c3cf1ffd2718bf828a7560b7ee8e8b5",
+  "root": "",
+  "module": "model",
+  "package": "",
+  "files": [
+   "model.py",
+   "utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "SSD300(n_classes=21)",
+  "example": "(torch.randn(2, 3, 300, 300),)",
+  "inputs": {
+   "image": "B,3,300,300"
+  },
+  "sha256": {
+   "model.py": "e7cd64891547adf83815460334f3fac2f49b97e2e968b7c8119117e58f71356c",
+   "utils.py": "b0079a9b1d05b509b0840346a40292645897e094f1fce9f09307198858a73f1c",
+   "LICENSE": "49124bdec6dfdb262106985005054b19726ac73fe210000f019b35a245a541d0"
+  }
+ },
+ {
+  "id": "tramac_fcn",
+  "set": "measure",
+  "category": "segdet",
+  "repo": "Tramac/awesome-semantic-segmentation-pytorch",
+  "stars": 3070,
+  "path": "core/models/fcn.py",
+  "license": "Apache-2.0",
+  "entry": "FCN32s",
+  "commit": "d37d2a17221d2681ad454958cf06a1065e9b1f7f",
+  "root": "",
+  "module": "core.models.fcn",
+  "package": "core.models",
+  "files": [
+   "core/__init__.py",
+   "core/data/__init__.py",
+   "core/models/__init__.py",
+   "core/models/base_models/__init__.py",
+   "core/models/base_models/densenet.py",
+   "core/models/base_models/eespnet.py",
+   "core/models/base_models/resnet.py",
+   "core/models/base_models/resnetv1b.py",
+   "core/models/base_models/vgg.py",
+   "core/models/base_models/xception.py",
+   "core/models/bisenet.py",
+   "core/models/cgnet.py",
+   "core/models/danet.py",
+   "core/models/deeplabv3.py",
+   "core/models/deeplabv3_plus.py",
+   "core/models/denseaspp.py",
+   "core/models/dfanet.py",
+   "core/models/dunet.py",
+   "core/models/encnet.py",
+   "core/models/enet.py",
+   "core/models/espnet.py",
+   "core/models/fcn.py",
+   "core/models/fcnv2.py",
+   "core/models/icnet.py",
+   "core/models/lednet.py",
+   "core/models/model_zoo.py",
+   "core/models/ocnet.py",
+   "core/models/psanet.py",
+   "core/models/pspnet.py",
+   "core/models/segbase.py",
+   "core/nn/__init__.py",
+   "core/nn/basic.py",
+   "core/nn/jpu.py",
+   "core/utils/__init__.py",
+   "core/utils/download.py",
+   "core/utils/filesystem.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "FCN32s(nclass=5, pretrained_base=False)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "core/__init__.py": "d4a91af469f79339028536b0946b4849d192c4c9f4a48452198112027898ce2a",
+   "core/data/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "core/models/__init__.py": "cd8fed57f0c378ecfeb6f8ad913d5af6c6f4d77b96b6da451a411220cda9d379",
+   "core/models/base_models/__init__.py": "1306fe6f356f19d34a8f27900d9f9535414e1fbd1031269788863996f2bac00c",
+   "core/models/base_models/densenet.py": "0ff285fa0f406b38709bfb95cb4c6f3a34477efd04a158b8d00aea817477e3b4",
+   "core/models/base_models/eespnet.py": "98923ef746ffeccb20d62b5f5261cfa39370d88f26c4b4f93ba72dfcab523144",
+   "core/models/base_models/resnet.py": "0cdd0d3031a3008da7fd704dac904f8d70b347ed40fbafa2f18dba56b66b2de2",
+   "core/models/base_models/resnetv1b.py": "6eedec0569cb51e56450f3cda8cff3e7b562ba85417a6673ac856dae84f2107b",
+   "core/models/base_models/vgg.py": "268035b642f55ec5b2fda6080db194b1fdaf34bfbf2ce189bdbff8ca26b0aa22",
+   "core/models/base_models/xception.py": "b65504a5ef1ac0f987ef33512c29e265fcc8cdff8acf321157fe8b070febdee6",
+   "core/models/bisenet.py": "02100fb0754b175e5b42d24799ad7a0cb5735d54a69f3c9d69885f5d590ca7a4",
+   "core/models/cgnet.py": "8aa7d7e6aaec92bf93d56d29cf5f1406b908d21d974fc86a37221aaa252d7010",
+   "core/models/danet.py": "f5702499fcc1a6a3935dd486216b73a461cc481868eeeea8cb6d0dcb0b9b99c6",
+   "core/models/deeplabv3.py": "d8a2d06f8952bcb667a39d6de280d99dfddd05965d66462a91de45a618649c0d",
+   "core/models/deeplabv3_plus.py": "0d912129265b258b180ac6a68fbd9d062bfc0ec9d075bfa9badef3c8d7befd23",
+   "core/models/denseaspp.py": "b8510cebf93fe5fd7cdce1455d404c6b9c2ca48108e97e1f74a61bb693307293",
+   "core/models/dfanet.py": "d3dae47c8b47625ed9bdc0facb0ef206be4960f8768f6c0009a5da6070109085",
+   "core/models/dunet.py": "36b4d34af70a2d68c38d43cf7a779f8d23476964a17f86d1d9b6ab82eb1158f8",
+   "core/models/encnet.py": "de86078e63b2301fd223d4d066eb6f40bda905693067c46a7bab009e34c8a0bd",
+   "core/models/enet.py": "10332d5f972ed2c515a162690c665da5c1dcff586b327999641c769b2cfc86ac",
+   "core/models/espnet.py": "b1a0d829002e6659dd3a7913c41e33352f331d292aafebf5a10690b19f83693f",
+   "core/models/fcn.py": "bc976be5ebffa058348d6e8f3b1dfc39b6ee20e05f74999b14deac02f12a6073",
+   "core/models/fcnv2.py": "a33f0d8fb7cc11e538d9c411c5992475d871ddccfcb2535799cc63b123422232",
+   "core/models/icnet.py": "2dc3c431a66cdc74549d9a38ce37a4c6047f4cc27d248b60e140527dc228906b",
+   "core/models/lednet.py": "723a84ff170eb70d98a18594dd91755511da7a9cc10bc23387c13640a20aa4eb",
+   "core/models/model_zoo.py": "f33dadfdbf6961051f220664f52f1facad9d5ee72f57ab31d7107ce0be047ad9",
+   "core/models/ocnet.py": "832eda63fae51a640dd9e9ffd8cdc757059b0bfdb374924998ce1d8e18a365fb",
+   "core/models/psanet.py": "332b2cf56b4cda9d4a8b39cbdb6d20d1de0d27a9d1d54e87f757dda9e5bdb931",
+   "core/models/pspnet.py": "c14cfd9f5b84545598a7533ddfb2d31c7412a98cc0cbb74cf174add94d2158fb",
+   "core/models/segbase.py": "3cb5aa1e1f8a5b00290ee95b017383c256737e35c2161edaec0bd1f673ed58b4",
+   "core/nn/__init__.py": "69fcc204e8545a7d4ca871877ec78ffc8eeeb982f1b7a92384e9c7d3d6e59072",
+   "core/nn/basic.py": "f7291dfd1b9884be82a16442544175375b624c8433aae192426f508430c1d444",
+   "core/nn/jpu.py": "747a0e5c3d3e0f440b64af95a68e42f7e876fa19c9c202448afce31afb9e28e9",
+   "core/utils/__init__.py": "48f774dfd7acccd5153458a132690f24009b214e543a05b04f4db1a28878ce5a",
+   "core/utils/download.py": "ce756baa81a6654b415ed470e96a9fcdb3f015fea983ecd1ba21a27e51ddad71",
+   "core/utils/filesystem.py": "99b0858394101fb807ced2fc1aa352eaa2fe65f0af9f8541d0fc5a3902db90d4",
+   "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+ },
+ {
+  "id": "deeplab_xception",
+  "set": "measure",
+  "category": "segdet",
+  "repo": "jfzhang95/pytorch-deeplab-xception",
+  "stars": 2998,
+  "path": "modeling/deeplab.py",
+  "license": "MIT",
+  "entry": "DeepLab",
+  "commit": "9135e104a7a51ea9effa9c6676a2fcffe6a6a2e6",
+  "root": "",
+  "module": "modeling.deeplab",
+  "package": "modeling",
+  "files": [
+   "modeling/__init__.py",
+   "modeling/aspp.py",
+   "modeling/backbone/__init__.py",
+   "modeling/backbone/drn.py",
+   "modeling/backbone/mobilenet.py",
+   "modeling/backbone/resnet.py",
+   "modeling/backbone/xception.py",
+   "modeling/decoder.py",
+   "modeling/deeplab.py",
+   "modeling/sync_batchnorm/__init__.py",
+   "modeling/sync_batchnorm/batchnorm.py",
+   "modeling/sync_batchnorm/comm.py",
+   "modeling/sync_batchnorm/replicate.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "DeepLab(backbone='mobilenet', output_stride=16, num_classes=21, sync_bn=False)",
+  "example": "(torch.randn(2, 3, 128, 128),)",
+  "inputs": {
+   "input": "B,3,128,128"
+  },
+  "sha256": {
+   "modeling/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "modeling/aspp.py": "60a0602142d641396ba6e088ee706fe8d021c86152a70e75a585681234879bd0",
+   "modeling/backbone/__init__.py": "aa8085572584d6ac2de97a9ff1efa6711aaa2ad6364599ada1e7297d4ea0b164",
+   "modeling/backbone/drn.py": "79f68e67b91214601e1b4a30824ba580d7c0d28af6eb4538aac803ca2e41e159",
+   "modeling/backbone/mobilenet.py": "72470e371d64204c80814adff4eb3c7697a3d4f297663419858b5ba01c13f582",
+   "modeling/backbone/resnet.py": "ff5dfff066e9d9e6d5a89a2703cae57e7b51389fd4830ab57afde8e33c43c334",
+   "modeling/backbone/xception.py": "bf5452c29ccc5617cd2372ffb424efcf19e68f9fcea09ccad30c428012332aff",
+   "modeling/decoder.py": "892c9ad349b1859e3032e0609f6fe42cedb8eee65c315602ee0fc3c556802077",
+   "modeling/deeplab.py": "8db4e42b7e45824b844f5958e756ace5e006256fecff4731819e7ed4e7b681f0",
+   "modeling/sync_batchnorm/__init__.py": "302e1c1df4ad71871e109cb1e053c601bf78299054ab38d53f757afade6744ce",
+   "modeling/sync_batchnorm/batchnorm.py": "938743d77c735bee3b4820a5e28883dad3252dadcf71e8b4e89610827e5e7243",
+   "modeling/sync_batchnorm/comm.py": "fad714b9c85de1431453b3d26f52f4f517bf84018cfe80743d24bac17504387d",
+   "modeling/sync_batchnorm/replicate.py": "b0ef534c558612943a5891b2ef0987267036a1b19dc72ab0018691dc409a90d2",
+   "LICENSE": "2c836875aa879adb0dacf37c30faf375deb458ba79dbd179aee4cc032a8010c9"
+  }
+ },
+ {
+  "id": "wavenet_vocoder",
+  "set": "measure",
+  "category": "sequence",
+  "repo": "r9y9/wavenet_vocoder",
+  "stars": 2374,
+  "path": "wavenet_vocoder/wavenet.py",
+  "license": "MIT",
+  "entry": "WaveNet",
+  "commit": "a35fff76ea3687b05e1a10023cad3f7f64fa25a3",
+  "root": "",
+  "module": "wavenet_vocoder.wavenet",
+  "package": "wavenet_vocoder",
+  "files": [
+   "wavenet_vocoder/__init__.py",
+   "wavenet_vocoder/conv.py",
+   "wavenet_vocoder/mixture.py",
+   "wavenet_vocoder/modules.py",
+   "wavenet_vocoder/upsample.py",
+   "wavenet_vocoder/version.py",
+   "wavenet_vocoder/wavenet.py"
+  ],
+  "licenseFile": "LICENSE.md",
+  "construct": "WaveNet(out_channels=256, layers=4, stacks=2, residual_channels=16, gate_channels=16, skip_out_channels=16)",
+  "example": "(torch.randn(2, 256, 100),)",
+  "inputs": {
+   "x": "B,256,T"
+  },
+  "sha256": {
+   "wavenet_vocoder/__init__.py": "79be4e95ed71109611d9e193f3e64677a0a18326b737b8bae8f057ae251cd339",
+   "wavenet_vocoder/conv.py": "27fb4158b04a3ef59049ddeb8c7428de94f6d7ed33732c3f752faf49885d9c51",
+   "wavenet_vocoder/mixture.py": "704cafc2e3176870a21e29d923abae984d61fe1f73fd5a32662c49eb8e4b7520",
+   "wavenet_vocoder/modules.py": "8bd2da75d16952910cbc5eb75d2f673171185d0f76b3ecaec0d91515d9e95e3d",
+   "wavenet_vocoder/upsample.py": "a761140847372046df3059e2e491a0ef19b6acf97a44756802e055b4842a56c6",
+   "wavenet_vocoder/version.py": "6046f13b20383671c2a8e91b01e549d08a50231f58709324883ef083da0bb08e",
+   "wavenet_vocoder/wavenet.py": "7bd0c267220cf45a2de77868bdc467c52ce3bd4e6725929ce3aff4304ba4a43c",
+   "LICENSE.md": "e0a99d7b943af1196ed38af24ca9d1c0c65e0c6c54ce7f5061423a5ce38601f6"
+  }
+ },
+ {
+  "id": "convlstm",
+  "set": "measure",
+  "category": "sequence",
+  "repo": "ndrplz/ConvLSTM_pytorch",
+  "stars": 2270,
+  "path": "convlstm.py",
+  "license": "MIT",
+  "entry": "ConvLSTM",
+  "commit": "9f662ba24b0a38e82cf0f5208c7f4859deb85ffe",
+  "root": "",
+  "module": "convlstm",
+  "package": "",
+  "files": [
+   "convlstm.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "ConvLSTM(input_dim=3, hidden_dim=[8, 8], kernel_size=(3, 3), num_layers=2, batch_first=True)",
+  "example": "(torch.randn(2, 4, 3, 16, 16),)",
+  "inputs": {
+   "input_tensor": "B,4,3,16,16"
+  },
+  "sha256": {
+   "convlstm.py": "1e02fa8af9b6243a644d42e396b5c27f662581866aac96d2ad1742dd3fb39b9e",
+   "LICENSE": "0a9d173ff2c71cef0de1d4163a0688f21cb426b7ca3c44165852f95cdd1d4c23"
+  }
+ },
+ {
+  "id": "awd_lstm_lm",
+  "set": "measure",
+  "category": "sequence",
+  "repo": "salesforce/awd-lstm-lm",
+  "stars": 1990,
+  "path": "model.py",
+  "license": "BSD-3-Clause",
+  "entry": "RNNModel",
+  "commit": "1d466ec5875675ca6b6f0caacbb741240a29da9e",
+  "root": "",
+  "module": "model",
+  "package": "",
+  "files": [
+   "embed_regularize.py",
+   "locked_dropout.py",
+   "model.py",
+   "weight_drop.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "RNNModel('LSTM', ntoken=100, ninp=16, nhid=32, nlayers=2)",
+  "example": "(torch.randint(0, 100, (10, 2)), model.init_hidden(2))",
+  "inputs": {
+   "input": "T,B:int64"
+  },
+  "sha256": {
+   "embed_regularize.py": "3f8a2233e0342837fc2cda914687cfd214333eae39e9a68b2628e356a661178d",
+   "locked_dropout.py": "986edc2c95992dc8891c74837cf57409f78e1c83e1262dbbe5a00d160b503164",
+   "model.py": "9906a6a70cf4cb25ab164bff203642854096db2d677aa7df590acc112940a1d3",
+   "weight_drop.py": "14adb074db60a551f20b24326eaa9e1fd2160bcef2e5f858ebb98b798a9d34af",
+   "LICENSE": "3a9b5b0d46996cdfd82b65429e189904e4ab1908014ce408cbecde9f591f37b4"
+  }
+ },
+ {
+  "id": "deepvoice3",
+  "set": "measure",
+  "category": "sequence",
+  "repo": "r9y9/deepvoice3_pytorch",
+  "stars": 1977,
+  "path": "deepvoice3_pytorch/__init__.py",
+  "license": "MIT",
+  "entry": "MultiSpeakerTTSModel",
+  "commit": "f90255c96177c344cd18b5a52651b420a4d8062d",
+  "root": "",
+  "module": "deepvoice3_pytorch",
+  "package": "deepvoice3_pytorch",
+  "files": [
+   "deepvoice3_pytorch/__init__.py",
+   "deepvoice3_pytorch/builder.py",
+   "deepvoice3_pytorch/conv.py",
+   "deepvoice3_pytorch/deepvoice3.py",
+   "deepvoice3_pytorch/modules.py"
+  ],
+  "licenseFile": "LICENSE.md",
+  "stubs": {
+   "deepvoice3_pytorch.version": "__version__ = '0.1.1'\n"
+  },
+  "setup": "from deepvoice3_pytorch import builder as _builder\n\ndef _build():\n    # The repository's builder makes the encoder, decoder and converter; the classes\n    # of this file (MultiSpeakerTTSModel, AttentionSeq2Seq) put them together.\n    parts = _builder.deepvoice3(n_vocab=50, embed_dim=16, encoder_channels=16, decoder_channels=16, converter_channels=16)\n    model = MultiSpeakerTTSModel(AttentionSeq2Seq(parts.seq2seq.encoder, parts.seq2seq.decoder), parts.postnet, padding_idx=0, mel_dim=80, linear_dim=513, n_speakers=1, speaker_embed_dim=16, use_decoder_state_for_postnet_input=True)\n    # Inference (no mel targets): teacher forcing views a non-contiguous tensor on current PyTorch.\n    model.seq2seq.decoder.max_decoder_steps = 8\n    return model\n",
+  "construct": "_build()",
+  "example": "(torch.randint(1, 50, (2, 10)), None, None, torch.arange(1, 11).repeat(2, 1))",
+  "inputs": {
+   "text_sequences": "B,10:int64"
+  },
+  "sha256": {
+   "deepvoice3_pytorch/__init__.py": "decdb3bece824fe73fd1d5954b6091231b312e3988fd30b1ca9199a1704c78c3",
+   "deepvoice3_pytorch/builder.py": "b931753e5e2e8b7a2548dad2d848528895cfb39dcb434b79b234ba4c1c2a411c",
+   "deepvoice3_pytorch/conv.py": "27fb4158b04a3ef59049ddeb8c7428de94f6d7ed33732c3f752faf49885d9c51",
+   "deepvoice3_pytorch/deepvoice3.py": "87a11db95ee9b25b5dfe87c3ea41a1bb82bc0e2eb72201f236fdc58d44472acd",
+   "deepvoice3_pytorch/modules.py": "3e524186434e81c4a46a6aaae7941a5410deb79535a54760a0040b9867a43619",
+   "LICENSE.md": "7f8bc2c935cc02944daaae77f5d881659a93806b013220c1fb4e574ee0ca2a99"
+  }
+ },
+ {
+  "id": "dalinvip_bigru",
+  "set": "measure",
+  "category": "sequence",
+  "repo": "dalinvip/cnn-lstm-bilstm-deepcnn-clstm-in-pytorch",
+  "stars": 1450,
+  "path": "models/model_BiGRU.py",
+  "license": "Apache-2.0",
+  "entry": "BiGRU",
+  "commit": "afbbc4dd354cbfcfbd2a8e5e7a607765e17b7902",
+  "root": "",
+  "module": "models.model_BiGRU",
+  "package": "models",
+  "files": [
+   "DataUtils/Common.py",
+   "DataUtils/__init__.py",
+   "models/__init__.py",
+   "models/model_BiGRU.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import types as _types\n",
+  "construct": "BiGRU(_types.SimpleNamespace(lstm_hidden_dim=16, lstm_num_layers=1, embed_num=100, embed_dim=16, class_num=2, paddingId=0, word_Embedding=False, pretrained_weight=None, dropout=0.5))",
+  "example": "(torch.randint(0, 100, (2, 10)),)",
+  "inputs": {
+   "input": "B,T:int64"
+  },
+  "sha256": {
+   "DataUtils/Common.py": "3b7ef15fe967e3a3d9699e94e9e7cf3630a4dd2cbd5bd27f3a146c06c2a8fb5b",
+   "DataUtils/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "models/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "models/model_BiGRU.py": "e29bc5593633dcde5c7a4caf468e2b460b2c6e872704d2e283275625310401e8",
+   "LICENSE": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+  }
+ },
+ {
+  "id": "rnn_ts_anomaly",
+  "set": "measure",
+  "category": "sequence",
+  "repo": "chickenbestlover/RNN-Time-series-Anomaly-Detection",
+  "stars": 1303,
+  "path": "model/model.py",
+  "license": "Apache-2.0",
+  "entry": "RNNPredictor",
+  "commit": "21ddb78f9128cc5a96dfaf4b27ee4db76a1a68ee",
+  "root": "",
+  "module": "model.model",
+  "package": "model",
+  "files": [
+   "model/__init__.py",
+   "model/model.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "RNNPredictor('LSTM', enc_inp_size=2, rnn_inp_size=16, rnn_hid_size=16, dec_out_size=2, nlayers=2)",
+  "example": "(torch.randn(10, 2, 2), model.init_hidden(2))",
+  "inputs": {
+   "input": "T,B,2"
+  },
+  "sha256": {
+   "model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "model/model.py": "36aefc4f953b9a2aea293602eff3ce32f6ce2b570db9c82a8c6d0fdc1503ae7e",
+   "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+ },
+ {
+  "id": "yunjey_feedforward",
+  "set": "measure",
+  "category": "tutorial",
+  "repo": "yunjey/pytorch-tutorial",
+  "stars": 32515,
+  "path": "tutorials/01-basics/feedforward_neural_network/main.py",
+  "license": "MIT",
+  "entry": "NeuralNet",
+  "commit": "0500d3df5a2a8080ccfccbc00aca0eacc21818db",
+  "root": "tutorials/01-basics/feedforward_neural_network",
+  "module": "main",
+  "package": "",
+  "files": [
+   "tutorials/01-basics/feedforward_neural_network/main.py"
+  ],
+  "licenseFile": "LICENSE",
+  "script": true,
+  "construct": "NeuralNet(784, 32, 10)",
+  "example": "(torch.randn(2, 784),)",
+  "inputs": {
+   "x": "B,784"
+  },
+  "sha256": {
+   "tutorials/01-basics/feedforward_neural_network/main.py": "d7eaa8ea62b3063c31ad662b73d2d9c8c32ac09c80f7485fc47534687b9c7a14",
+   "LICENSE": "afb11426e09da40a1ae4f8fa17ddcc6b6a52d14df04c29bc5bcd06eb8730624d"
+  }
+ },
+ {
+  "id": "examples_mnist",
+  "set": "measure",
+  "category": "tutorial",
+  "repo": "pytorch/examples",
+  "stars": 24075,
+  "path": "mnist/main.py",
+  "license": "BSD-3-Clause",
+  "entry": "Net",
+  "commit": "acc295dc7b90714f1bf47f06004fc19a7fe235c4",
+  "root": "mnist",
+  "module": "main",
+  "package": "",
+  "files": [
+   "mnist/main.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "Net()",
+  "example": "(torch.randn(2, 1, 28, 28),)",
+  "inputs": {
+   "x": "B,1,28,28"
+  },
+  "sha256": {
+   "mnist/main.py": "30a3359d1911d2d859dd090ce20be7ed132a33f508dc389f40366010b3e9ecc8",
+   "LICENSE": "7e5dc9b5cf276166c4a0678d33e53b14e3d7ef47eee9356ab786c4ba45414efd"
+  }
+ },
+ {
+  "id": "examples_word_lm",
+  "set": "measure",
+  "category": "tutorial",
+  "repo": "pytorch/examples",
+  "stars": 24075,
+  "path": "word_language_model/model.py",
+  "license": "BSD-3-Clause",
+  "entry": "RNNModel",
+  "commit": "acc295dc7b90714f1bf47f06004fc19a7fe235c4",
+  "root": "word_language_model",
+  "module": "model",
+  "package": "",
+  "files": [
+   "word_language_model/model.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "RNNModel('LSTM', 100, 16, 16, 2, dropout=0.2)",
+  "example": "(torch.randint(0, 100, (10, 2)), model.init_hidden(2))",
+  "inputs": {
+   "input": "T,B:int64"
+  },
+  "sha256": {
+   "word_language_model/model.py": "e4451a33e9b16953004bc639d736d14f42a2b21f2939ccabe4cff10d3c40b74c",
+   "LICENSE": "7e5dc9b5cf276166c4a0678d33e53b14e3d7ef47eee9356ab786c4ba45414efd"
+  }
+ },
+ {
+  "id": "tutorials_quickstart",
+  "set": "measure",
+  "category": "tutorial",
+  "repo": "pytorch/tutorials",
+  "stars": 9383,
+  "path": "beginner_source/basics/quickstart_tutorial.py",
+  "license": "BSD-3-Clause",
+  "entry": "NeuralNetwork",
+  "commit": "c8ccbbf7fcb8cb71adda1b957bd6bab50e29c2e6",
+  "root": "beginner_source/basics",
+  "module": "quickstart_tutorial",
+  "package": "",
+  "files": [
+   "beginner_source/basics/quickstart_tutorial.py"
+  ],
+  "licenseFile": "LICENSE",
+  "script": true,
+  "construct": "NeuralNetwork()",
+  "example": "(torch.randn(2, 1, 28, 28),)",
+  "inputs": {
+   "x": "B,1,28,28"
+  },
+  "sha256": {
+   "beginner_source/basics/quickstart_tutorial.py": "e4b0008511ad33277892c5831284b6c8808199345f79716439436158701cb163",
+   "LICENSE": "5703fcbe2d5dfcc48d486d26e4b9d2e48255c24602e1bd0270b60b8978116f86"
+  }
+ },
+ {
+  "id": "tutorials_blitz_lenet",
+  "set": "measure",
+  "category": "tutorial",
+  "repo": "pytorch/tutorials",
+  "stars": 9383,
+  "path": "beginner_source/blitz/neural_networks_tutorial.py",
+  "license": "BSD-3-Clause",
+  "entry": "Net",
+  "commit": "c8ccbbf7fcb8cb71adda1b957bd6bab50e29c2e6",
+  "root": "beginner_source/blitz",
+  "module": "neural_networks_tutorial",
+  "package": "",
+  "files": [
+   "beginner_source/blitz/neural_networks_tutorial.py"
+  ],
+  "licenseFile": "LICENSE",
+  "script": true,
+  "construct": "Net()",
+  "example": "(torch.randn(2, 1, 32, 32),)",
+  "inputs": {
+   "input": "B,1,32,32"
+  },
+  "sha256": {
+   "beginner_source/blitz/neural_networks_tutorial.py": "4c7ceb23fc8c696f77ffac6c5cb9326a70d791ee1bb32c45c78fc73b59890965",
+   "LICENSE": "5703fcbe2d5dfcc48d486d26e4b9d2e48255c24602e1bd0270b60b8978116f86"
+  }
+ },
+ {
+  "id": "jcjohnson_two_layer_net",
+  "set": "measure",
+  "category": "tutorial",
+  "repo": "jcjohnson/pytorch-examples",
+  "stars": 4917,
+  "path": "nn/two_layer_net_module.py",
+  "license": "MIT",
+  "entry": "TwoLayerNet",
+  "commit": "0003fcdc606a79951e53bf8f46f8574fa4739f23",
+  "root": "nn",
+  "module": "two_layer_net_module",
+  "package": "",
+  "files": [
+   "nn/two_layer_net_module.py"
+  ],
+  "licenseFile": "LICENSE",
+  "script": true,
+  "construct": "TwoLayerNet(16, 8, 4)",
+  "example": "(torch.randn(2, 16),)",
+  "inputs": {
+   "x": "B,16"
+  },
+  "sha256": {
+   "nn/two_layer_net_module.py": "d7634b2c14b71ac722b7ac9e125af9c69ce69c5385674f91bdbe2b81a9494dfc",
+   "LICENSE": "f621efded6c900b7effd15996878cdca923a0f0b3222ab383817dca375f95581"
+  }
+ },
+ {
+  "id": "cnnimageretrieval",
+  "set": "heldout",
+  "category": "cnn",
+  "repo": "filipradenovic/cnnimageretrieval-pytorch",
+  "stars": 1501,
+  "path": "cirtorch/networks/imageretrievalnet.py",
+  "license": "MIT",
+  "entry": "ImageRetrievalNet",
+  "commit": "1e66a417afa2247edde6d35f3a9a2a465778a3a8",
+  "root": "",
+  "module": "cirtorch.networks.imageretrievalnet",
+  "package": "cirtorch.networks",
+  "files": [
+   "cirtorch/__init__.py",
+   "cirtorch/datasets/__init__.py",
+   "cirtorch/datasets/datahelpers.py",
+   "cirtorch/datasets/genericdataset.py",
+   "cirtorch/datasets/testdataset.py",
+   "cirtorch/datasets/traindataset.py",
+   "cirtorch/examples/__init__.py",
+   "cirtorch/layers/__init__.py",
+   "cirtorch/layers/functional.py",
+   "cirtorch/layers/loss.py",
+   "cirtorch/layers/normalization.py",
+   "cirtorch/layers/pooling.py",
+   "cirtorch/networks/__init__.py",
+   "cirtorch/networks/imageretrievalnet.py",
+   "cirtorch/utils/__init__.py",
+   "cirtorch/utils/download.py",
+   "cirtorch/utils/evaluate.py",
+   "cirtorch/utils/general.py",
+   "cirtorch/utils/whiten.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "init_network({'architecture': 'resnet18', 'pretrained': False})",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "cirtorch/__init__.py": "ef6a810989ab31e2d49446d7faaa9c735f85d2fccfdedafb531f41a85b5841b5",
+   "cirtorch/datasets/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "cirtorch/datasets/datahelpers.py": "ef630f9454e62a809379adc272e27d9137e97b5d937c0b58c8f7942cf3092260",
+   "cirtorch/datasets/genericdataset.py": "76bb2bab4493f5cfcda0691006442178727c7625abcc2e4e8ab40d6561d332d3",
+   "cirtorch/datasets/testdataset.py": "13c305c090657ca5624615c72ae2e8eaea26995632da9169d0b379728de117f3",
+   "cirtorch/datasets/traindataset.py": "2e79fa6a05ac4ee153fab383af438f6d092585205ba6ed8b1a86ab20266da702",
+   "cirtorch/examples/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "cirtorch/layers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "cirtorch/layers/functional.py": "c016ffb064d458c920c61add3f6d03f1f11ae2e89d1e06facf5854636e41019c",
+   "cirtorch/layers/loss.py": "fbaa3d82e297cb77481f93fe49de10af30158a0f94f487dc80bca5888f82715d",
+   "cirtorch/layers/normalization.py": "9ae607b73af5b0112c83a38db26586447e95f92359a3ca7eb7c5fefa3340f076",
+   "cirtorch/layers/pooling.py": "c22d6d6b72e45d7f2454e6ea1b263b7ad45f548b8e50b1914fcce92bd74f8c64",
+   "cirtorch/networks/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "cirtorch/networks/imageretrievalnet.py": "ffc64fca4c1077987f40640eec90500f7f26b80f3a37703432572f21e8288a60",
+   "cirtorch/utils/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "cirtorch/utils/download.py": "d5bf645ec5417457b4062dbf010cc8388d3310d779cbe70beffd3e8000e2b195",
+   "cirtorch/utils/evaluate.py": "e8b266fdfcd598b5edfbfc6cd587ceb4e2538ae333c7a5ce80871437c39aaf5c",
+   "cirtorch/utils/general.py": "626e9f916199f7906926485c60b0a197e2ab112ab74cc66393ed5e54a295ea21",
+   "cirtorch/utils/whiten.py": "05162c86e6d8deea75d0d814d5469fa660e3006d2c98f6193a441dd08fb50dc1",
+   "LICENSE": "c31c66c3945689e8876c9bbdb360228d13e4a15d84a77452dbe2db0ab67558e7"
+  }
+ },
+ {
+  "id": "tonylins_mobilenetv2",
+  "set": "heldout",
+  "category": "cnn",
+  "repo": "tonylins/pytorch-mobilenet-v2",
+  "stars": 1405,
+  "path": "MobileNetV2.py",
+  "license": "Apache-2.0",
+  "entry": "MobileNetV2",
+  "commit": "99f213657e97de463c11c9e0eaca3bda598e8b3f",
+  "root": "",
+  "module": "MobileNetV2",
+  "package": "",
+  "files": [
+   "MobileNetV2.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "MobileNetV2(n_class=10, input_size=64, width_mult=0.5)",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "MobileNetV2.py": "b1711c7ea92a73a58e9658c1e5a23c2a192511a9c9d3e9bfe5e3f9371e1c5f4e",
+   "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+ },
+ {
+  "id": "internvideo1_videomae",
+  "set": "heldout",
+  "category": "vit",
+  "repo": "OpenGVLab/InternVideo",
+  "stars": 2412,
+  "path": "InternVideo1/Pretrain/VideoMAE/modeling_pretrain.py",
+  "license": "Apache-2.0",
+  "entry": "PretrainVisionTransformer",
+  "commit": "3965eef16e2dadd0ea6c8d0cc29c8a3039df52e3",
+  "root": "InternVideo1/Pretrain/VideoMAE",
+  "module": "modeling_pretrain",
+  "package": "",
+  "files": [
+   "InternVideo1/Pretrain/VideoMAE/modeling_finetune.py",
+   "InternVideo1/Pretrain/VideoMAE/modeling_pretrain.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "from functools import partial\n",
+  "construct": "PretrainVisionTransformer(img_size=32, patch_size=8, encoder_embed_dim=64, encoder_depth=2, encoder_num_heads=2, encoder_num_classes=0, decoder_num_classes=384, decoder_embed_dim=32, decoder_depth=1, decoder_num_heads=2, norm_layer=partial(nn.LayerNorm, eps=1e-6))",
+  "example": "(torch.randn(2, 3, 16, 32, 32), torch.stack([torch.randperm(128) < 96 for _ in range(2)]))",
+  "inputs": {
+   "x": "B,3,16,32,32",
+   "mask": "B,128:bool"
+  },
+  "sha256": {
+   "InternVideo1/Pretrain/VideoMAE/modeling_finetune.py": "4deb008ae2869004b47e65e925f4efcd0d206812c33d8ad6913c7252673d6d62",
+   "InternVideo1/Pretrain/VideoMAE/modeling_pretrain.py": "bf0fb1b439fbc3c68e49eb6fc0741118adb8379d8599038e046befa3122e77a8",
+   "LICENSE": "42182091dd722231018a04a0b950fcd068cbf18a535b64e06eb8b080499cb34c"
+  }
+ },
+ {
+  "id": "openai_transformer_lm",
+  "set": "heldout",
+  "category": "lm",
+  "repo": "huggingface/pytorch-openai-transformer-lm",
+  "stars": 1526,
+  "path": "model_pytorch.py",
+  "license": "MIT",
+  "entry": "TransformerModel",
+  "commit": "bfd8e0989c684b79b800a49f8d9b74e559298ec2",
+  "root": "",
+  "module": "model_pytorch",
+  "package": "",
+  "files": [
+   "model_pytorch.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import types as _types\n",
+  "construct": "TransformerModel(_types.SimpleNamespace(n_embd=64, n_head=2, n_layer=2, embd_pdrop=0.1, attn_pdrop=0.1, resid_pdrop=0.1, afn='gelu', clf_pdrop=0.1), vocab=100, n_ctx=32)",
+  "example": "(torch.randint(0, 100, (2, 8, 2)),)",
+  "inputs": {
+   "x": "B,8,2:int64"
+  },
+  "sha256": {
+   "model_pytorch.py": "e4a34867e1481d155da48ed1c6187d9f604139b6ee8c35ead527513309204031",
+   "LICENSE": "58783dd9ea99732c766a17ed595ee9ac4dba2d439bb940e80e19196e091eb504"
+  }
+ },
+ {
+  "id": "graykode_gpt2",
+  "set": "heldout",
+  "category": "lm",
+  "repo": "graykode/gpt-2-Pytorch",
+  "stars": 1012,
+  "path": "GPT2/model.py",
+  "license": "MIT",
+  "entry": "GPT2LMHeadModel",
+  "commit": "401078fde5e85475590dc04c9ed11b79332b8717",
+  "root": "GPT2",
+  "module": "model",
+  "package": "",
+  "files": [
+   "GPT2/config.py",
+   "GPT2/model.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "from GPT2.config import GPT2Config as _GPT2Config\n",
+  "construct": "GPT2LMHeadModel(_GPT2Config(vocab_size_or_config_json_file=100, n_positions=32, n_ctx=32, n_embd=64, n_layer=2, n_head=2))",
+  "example": "(torch.randint(0, 100, (2, 12)),)",
+  "inputs": {
+   "input_ids": "B,T:int64"
+  },
+  "sha256": {
+   "GPT2/config.py": "8453d3c0fc3201f462cf4fe3deb0e5c553a6bc1ee56e495c1519d96ac84f3657",
+   "GPT2/model.py": "1681ec1718daf5ff613ad923be7f30cf36f349ed5f458f05d936d61b97b6b3c5",
+   "LICENSE": "373012ce2e12b683242c68a8ac12de60e52786d6f56377fce0a5f16cda45f901"
+  }
+ },
+ {
+  "id": "palette",
+  "set": "heldout",
+  "category": "generative",
+  "repo": "Janspiry/Palette-Image-to-Image-Diffusion-Models",
+  "stars": 1832,
+  "path": "models/network.py",
+  "license": "MIT",
+  "entry": "Network",
+  "commit": "136b29f58d0af6e5db9f3655d2891f5a855fcdaa",
+  "root": "",
+  "module": "models.network",
+  "package": "models",
+  "files": [
+   "core/base_network.py",
+   "core/praser.py",
+   "models/__init__.py",
+   "models/network.py",
+   "models/sr3_modules/unet.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import torch.nn.functional as _F\n\ndef _build():\n    model = Network(unet=dict(in_channel=6, out_channel=3, inner_channel=16, norm_groups=8, channel_mults=(1, 2), attn_res=(8,), res_blocks=1, dropout=0, image_size=16), beta_schedule=dict(train=dict(schedule='linear', n_timestep=100, linear_start=1e-6, linear_end=0.01)), module_name='sr3')\n    model.set_loss(_F.mse_loss)\n    model.set_new_noise_schedule(device=torch.device('cpu'), phase='train')\n    return model\n",
+  "construct": "_build()",
+  "example": "(torch.randn(2, 3, 16, 16), torch.randn(2, 3, 16, 16))",
+  "inputs": {
+   "y_0": "B,3,16,16",
+   "y_cond": "B,3,16,16"
+  },
+  "sha256": {
+   "core/base_network.py": "5e042f6d44233a8277be60c602e7187138856da9ea3432425c14125d2a5c7157",
+   "core/praser.py": "7450b8bdd8a9b6e405db6a49e4c81b8b97489b6904f8d2da474bc837916222b2",
+   "models/__init__.py": "308153342b1068f99ca7d91eb9cdef641f9271951501f45a25914b9304d5e7a2",
+   "models/network.py": "c508203f3564a1ba9d0cc703df8bab0b226a8cb1770c1455843a3228818c18fb",
+   "models/sr3_modules/unet.py": "fe0b89209274a22969ec3c652b1efad0cb11be9ca0b5f26d6d9d85840da1d449",
+   "LICENSE": "05f9aab21a2816f1f63e6dfe2732004ad947e5a9418c3d39907124ee004c6f58"
+  }
+ },
+ {
+  "id": "vqvae2",
+  "set": "heldout",
+  "category": "generative",
+  "repo": "rosinality/vq-vae-2-pytorch",
+  "stars": 1805,
+  "path": "vqvae.py",
+  "license": "MIT (+ MIT / Apache-2.0 notices for borrowed code)",
+  "entry": "VQVAE",
+  "commit": "ef5f67c46f93624163776caec9e0d95063910eca",
+  "root": "",
+  "module": "vqvae",
+  "package": "",
+  "files": [
+   "distributed/__init__.py",
+   "distributed/distributed.py",
+   "distributed/launch.py",
+   "vqvae.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "VQVAE(in_channel=3, channel=32, n_res_block=1, n_res_channel=8, embed_dim=16, n_embed=64)",
+  "example": "(torch.randn(2, 3, 32, 32),)",
+  "inputs": {
+   "input": "B,3,32,32"
+  },
+  "sha256": {
+   "distributed/__init__.py": "2f4541598b2a2fb41681db38bd8230f8a7fbcc9ea16e7abb97fe7c9bacad30d1",
+   "distributed/distributed.py": "bc3263fb5ce314ce484d13e8fb2094da6f640f11d79617c8dd9d73a7ed8341be",
+   "distributed/launch.py": "447264032be8666487123dcf28424c23980a170939b8b95542c0677270ad3ee7",
+   "vqvae.py": "92c24aca73606dc215e4d5a2f940011ebed2759d54404f4c5451ce46affd1a95",
+   "LICENSE": "5e2b5484ff19a60b117009d581c35fec893f41da2e435b64b93e9884fec715c9"
+  }
+ },
+ {
+  "id": "vainf_deeplabv3plus",
+  "set": "heldout",
+  "category": "segdet",
+  "repo": "VainF/DeepLabV3Plus-Pytorch",
+  "stars": 2708,
+  "path": "network/_deeplab.py",
+  "license": "MIT",
+  "entry": "DeepLabV3",
+  "commit": "4e1087de98bc49d55b9239ae92810ef7368660db",
+  "root": "",
+  "module": "network._deeplab",
+  "package": "network",
+  "files": [
+   "network/__init__.py",
+   "network/_deeplab.py",
+   "network/backbone/__init__.py",
+   "network/backbone/hrnetv2.py",
+   "network/backbone/mobilenetv2.py",
+   "network/backbone/resnet.py",
+   "network/backbone/xception.py",
+   "network/modeling.py",
+   "network/utils.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "from network.utils import IntermediateLayerGetter as _Getter\nfrom network.backbone import resnet as _resnet\n",
+  "construct": "DeepLabV3(_Getter(_resnet.resnet18(pretrained=False), return_layers={'layer4': 'out', 'layer1': 'low_level'}), DeepLabHeadV3Plus(512, 64, 10, [6, 12, 18]))",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "x": "B,3,64,64"
+  },
+  "sha256": {
+   "network/__init__.py": "69c0d14c6f35b10f9d8f662e4ded47595f5b7d2c578cf023ffcdebdcb6d4549c",
+   "network/_deeplab.py": "51de94d07ed81a7c3280dc33e822e5b5ae5d804d9b3e689cdb41a55f92946116",
+   "network/backbone/__init__.py": "f6a1b4bf50ba44fff39f300751096ce064091fc17f9413047ef4959a100363da",
+   "network/backbone/hrnetv2.py": "dab7733d1fa948a0d163bfaee376f8c47f3c6771b8617625b28237390b0cd589",
+   "network/backbone/mobilenetv2.py": "0498b001aba1abcd9520ded4a85502b73d3016700979a597572bdef841a1157c",
+   "network/backbone/resnet.py": "b81ef133fe645f1d9d59ba716bb41c1b20e4672f9f5f8eec10c8a2c5bbb06d72",
+   "network/backbone/xception.py": "eeca74593efbf62b04eb17728122f43a888be5fe3594b93cd1b57088db6fcb2b",
+   "network/modeling.py": "280bce795134329112657ded6eef9aa765d54ee0ebbc123161deb1e1c15f7d21",
+   "network/utils.py": "bab7ecf223ea20b21c5a5d3ed447b30466d586a126ffc623633a18e8eed90175",
+   "LICENSE": "06935287e047ea0e80c3fa9e663ca5dbe3306a0a736338b96afb5e7e082e96cc"
+  }
+ },
+ {
+  "id": "pointnet_seg",
+  "set": "heldout",
+  "category": "segdet",
+  "repo": "fxia22/pointnet.pytorch",
+  "stars": 2364,
+  "path": "pointnet/model.py",
+  "license": "MIT",
+  "entry": "PointNetDenseCls",
+  "commit": "bafbf401e0af19be3262e448c59313fd2be0e421",
+  "root": "",
+  "module": "pointnet.model",
+  "package": "pointnet",
+  "files": [
+   "pointnet/__init__.py",
+   "pointnet/model.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "PointNetDenseCls(k=4, feature_transform=True)",
+  "example": "(torch.randn(2, 3, 128),)",
+  "inputs": {
+   "x": "B,3,128"
+  },
+  "sha256": {
+   "pointnet/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "pointnet/model.py": "ee528653427328933f5f29b8050c33b2df8ed0f46c9bd24ca5c8f1c71d83fd5c",
+   "LICENSE": "31b59e2919bc0d6dd91a258f94552067e8d374ccbd655556160ccb4cbd7fd506"
+  }
+ },
+ {
+  "id": "conformer",
+  "set": "heldout",
+  "category": "sequence",
+  "repo": "sooftware/conformer",
+  "stars": 1133,
+  "path": "conformer/model.py",
+  "license": "Apache-2.0",
+  "entry": "Conformer",
+  "commit": "47863edd137eb770d24b0513ae7e5171598b082f",
+  "root": "",
+  "module": "conformer.model",
+  "package": "conformer",
+  "files": [
+   "conformer/__init__.py",
+   "conformer/activation.py",
+   "conformer/attention.py",
+   "conformer/convolution.py",
+   "conformer/embedding.py",
+   "conformer/encoder.py",
+   "conformer/feed_forward.py",
+   "conformer/model.py",
+   "conformer/modules.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "Conformer(num_classes=10, input_dim=80, encoder_dim=32, num_encoder_layers=2, num_attention_heads=4)",
+  "example": "(torch.randn(2, 50, 80), torch.tensor([50, 40]))",
+  "inputs": {
+   "inputs": "B,50,80",
+   "input_lengths": "B:int64"
+  },
+  "sha256": {
+   "conformer/__init__.py": "a2d5521774b98fd3c317a5ed7861c658d199b1647c2f0da7c6764f2fd72dbc2e",
+   "conformer/activation.py": "d0aff852e9574e4707684e3ee244ffcd26c44398c79b2e4f1d65e98bcb9286c9",
+   "conformer/attention.py": "c9eaf0a625aa99c4c6e4b5c7f8c7984cbe2b77a0b0cebfab9d9d491d5c45f9ac",
+   "conformer/convolution.py": "1e1673b7603b8dadfa11e11b4b4a95720cd10b496a0a94146cff1387dba8fe5c",
+   "conformer/embedding.py": "33e203367164c73c0bbb545928a03bee4044720a6a6d5f48e71f8138cac58fc3",
+   "conformer/encoder.py": "3d2cf145dd9058f3791d437d34a76d62ddca7048c26876956047bb73600cbd43",
+   "conformer/feed_forward.py": "63394748f72139fe79fc5946bf1ee3665bdd78b44c3fb30ee0876e532e20e43c",
+   "conformer/model.py": "4d7d01b5e0b89b33f5c5b02daa6c3f3e1f9facc682b46dd5cce82043b4760303",
+   "conformer/modules.py": "b5743d155d48991a64517612556c15bb7f024f3af5c6c814f58e8cccd483b152",
+   "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  }
+ },
+ {
+  "id": "cs230_vision_net",
+  "set": "heldout",
+  "category": "tutorial",
+  "repo": "cs230-stanford/cs230-code-examples",
+  "stars": 4232,
+  "path": "pytorch/vision/model/net.py",
+  "license": "MIT",
+  "entry": "Net",
+  "commit": "478e747b1c8bf57c6e2ce6b7ffd8068fe0287056",
+  "root": "pytorch/vision",
+  "module": "model.net",
+  "package": "model",
+  "files": [
+   "pytorch/vision/model/__init__.py",
+   "pytorch/vision/model/net.py"
+  ],
+  "licenseFile": "LICENSE",
+  "setup": "import types as _types\n",
+  "construct": "Net(_types.SimpleNamespace(num_channels=8, dropout_rate=0.5))",
+  "example": "(torch.randn(2, 3, 64, 64),)",
+  "inputs": {
+   "s": "B,3,64,64"
+  },
+  "sha256": {
+   "pytorch/vision/model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "pytorch/vision/model/net.py": "f8bbee17c447a1bc8f9c18996e423588d7695d147f095cde67a6b8b77558ba21",
+   "LICENSE": "784db70d5bfa071d322ceb6ad360fdfb0e7b7bc350057caf6aee2224b4d77419"
+  }
+ },
+ {
+  "id": "sgrvinod_show_attend_tell",
+  "set": "heldout",
+  "category": "tutorial",
+  "repo": "sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning",
+  "stars": 2892,
+  "path": "models.py",
+  "license": "MIT",
+  "entry": "DecoderWithAttention",
+  "commit": "cc9c7e2f4017938d414178d3781fed8dbe442852",
+  "root": "",
+  "module": "models",
+  "package": "",
+  "files": [
+   "models.py"
+  ],
+  "licenseFile": "LICENSE",
+  "construct": "DecoderWithAttention(attention_dim=32, embed_dim=32, decoder_dim=32, vocab_size=100, encoder_dim=64)",
+  "example": "(torch.randn(2, 4, 4, 64), torch.randint(0, 100, (2, 10)), torch.tensor([[10], [8]]))",
+  "inputs": {
+   "encoder_out": "B,4,4,64",
+   "encoded_captions": "B,10:int64",
+   "caption_lengths": "B,1:int64"
+  },
+  "sha256": {
+   "models.py": "1f4e922dd70490a164e822fcaa9c2a0982e7581631f6e9e577d080ecd020f3af",
+   "LICENSE": "c1624e1ef76ef5c1eaeabdd94e16cadc6e110f74d56368dd70f98ecaa2b8455b"
+  }
+ }
+]

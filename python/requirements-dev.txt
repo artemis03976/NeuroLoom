@@ -6,4 +6,10 @@ torch>=2.4
 # The torchvision import test (PRD success metric); skipped when it is missing.
 torchvision
 numpy
+# The third-party import corpus (tests/corpus): its library files are pinned to these versions.
+timm==1.0.30
+transformers==5.20.2
+diffusers==0.42.0
+einops
+scipy
 pytest>=8

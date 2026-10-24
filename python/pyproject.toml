@@ -23,3 +23,5 @@ include = ["neuroloom*"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+# tests/corpus holds model files from other repositories, not tests.
+norecursedirs = [".*", "build", "dist", "*.egg", "venv", "corpus"]

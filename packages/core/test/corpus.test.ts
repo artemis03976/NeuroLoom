@@ -1,5 +1,6 @@
-// The import corpus (python/tests/corpus): model files in the styles of real
-// repositories. Each one is imported statically and dynamically; the code
+// The handwritten import corpus (python/tests/corpus/handwritten): model files
+// written in the styles of real repositories (the files taken from repositories
+// are in realworld.test.ts). Each one is imported statically and dynamically; the code
 // NeuroLoom generates must behave exactly like the original, and generating it
 // again from its own import must give the same code. The levels reached are
 // printed, so coverage can be followed as the importers improve.
@@ -12,7 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { analyzeProject, entryModule, generateCode, parseProject, type LoomProject, type ProjectAnalysis } from '../src';
 import { hasTorch, importMany, inputShapesOf, pythonDir, runPython, type ImportMode, type ImportResult } from './python';
 
-const corpusDir = join(pythonDir, 'tests/corpus');
+const corpusDir = join(pythonDir, 'tests/corpus/handwritten');
 const files = readdirSync(corpusDir).filter((f) => f.endsWith('.py')).sort();
 const modes: ImportMode[] = ['static', 'dynamic'];
 

@@ -1,0 +1,1914 @@
+{
+ "searched": "2026-10-24",
+ "rules": "docs/import-corpus-report.md, section 2",
+ "categories": {
+  "cnn": {
+   "quota": 8,
+   "queries": [
+    "topic:image-classification topic:pytorch language:Python stars:>1000",
+    "cnn pytorch in:name,description language:Python stars:>1000",
+    "resnet pytorch in:name,description language:Python stars:>1000",
+    "efficientnet pytorch in:name,description language:Python stars:>1000",
+    "cifar pytorch in:name,description language:Python stars:>1000",
+    "imagenet pytorch in:name,description language:Python stars:>1000",
+    "mobilenet pytorch in:name,description language:Python stars:>1000"
+   ],
+   "poolExhausted": false,
+   "walked": [
+    {
+     "repo": "ultralytics/ultralytics",
+     "stars": 62790,
+     "decision": "LICENSE",
+     "detail": "LICENSE file is GNU AGPL-3.0 (also a detection-first framework)"
+    },
+    {
+     "repo": "huggingface/pytorch-image-models",
+     "stars": 37236,
+     "decision": "measure",
+     "id": "timm_resnet"
+    },
+    {
+     "repo": "Cadene/pretrained-models.pytorch",
+     "stars": 9099,
+     "decision": "DEPS",
+     "detail": "the pretrainedmodels package __init__ imports datasets/utils.py, which needs six"
+    },
+    {
+     "repo": "utkuozbulak/pytorch-cnn-visualizations",
+     "stars": 8239,
+     "decision": "NOT_MODEL",
+     "detail": "CNN visualization / explainability techniques"
+    },
+    {
+     "repo": "lukemelas/EfficientNet-PyTorch",
+     "stars": 8219,
+     "decision": "measure",
+     "id": "efficientnet_pytorch"
+    },
+    {
+     "repo": "jwyang/faster-rcnn.pytorch",
+     "stars": 7858,
+     "decision": "CATEGORY",
+     "detail": "Faster R-CNN object detector (segdet)"
+    },
+    {
+     "repo": "kuangliu/pytorch-cifar",
+     "stars": 6447,
+     "decision": "measure",
+     "id": "kuangliu_vgg"
+    },
+    {
+     "repo": "weiaicunzai/pytorch-cifar100",
+     "stars": 4779,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file anywhere in the repo at HEAD"
+    },
+    {
+     "repo": "kenshohara/3D-ResNets-PyTorch",
+     "stars": 4037,
+     "decision": "measure",
+     "id": "resnet3d"
+    },
+    {
+     "repo": "quark0/darts",
+     "stars": 3997,
+     "decision": "measure",
+     "id": "darts_cifar"
+    },
+    {
+     "repo": "catalyst-team/catalyst",
+     "stars": 3389,
+     "decision": "NOT_MODEL",
+     "detail": "training framework"
+    },
+    {
+     "repo": "osmr/imgclsmob",
+     "stars": 3012,
+     "decision": "UNAVAILABLE",
+     "detail": "no PyTorch model code at HEAD: the PyTorch models live in git submodule pytorchcv (osmr/pytorchcv); in-repo model files are Gluon/Chainer/Keras/TF"
+    },
+    {
+     "repo": "autodistill/autodistill",
+     "stars": 2794,
+     "decision": "NOT_MODEL",
+     "detail": "auto-labeling / distillation framework around foundation models"
+    },
+    {
+     "repo": "aaron-xichen/pytorch-playground",
+     "stars": 2723,
+     "decision": "DEPS",
+     "detail": "README-first model mnist/model.py imports sibling utee/misc.py, which imports cv2 and IPython at module level"
+    },
+    {
+     "repo": "ufoym/imbalanced-dataset-sampler",
+     "stars": 2324,
+     "decision": "NOT_MODEL",
+     "detail": "dataset sampler"
+    },
+    {
+     "repo": "neuralmagic/sparseml",
+     "stars": 2145,
+     "decision": "NOT_MODEL",
+     "detail": "sparsification recipe library (archived)"
+    },
+    {
+     "repo": "shanglianlm0525/PyTorch-Networks",
+     "stars": 2056,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file anywhere in the repo at HEAD"
+    },
+    {
+     "repo": "WuJie1010/Facial-Expression-Recognition.Pytorch",
+     "stars": 1979,
+     "decision": "DUPLICATE",
+     "detail": "headline models/vgg.py (VGG19) is a lightly edited copy of kuangliu/pytorch-cifar models/vgg.py (same docstring, cfg and _make_layers; adds dropout, 7 classes)"
+    },
+    {
+     "repo": "Fafa-DL/Awesome-Backbones",
+     "stars": 1952,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file anywhere in the repo at HEAD"
+    },
+    {
+     "repo": "xiaolai-sqlai/mobilenetv3",
+     "stars": 1870,
+     "decision": "measure",
+     "id": "mobilenetv3_xiaolai"
+    },
+    {
+     "repo": "ranahanocka/MeshCNN",
+     "stars": 1738,
+     "decision": "INPUT",
+     "detail": "MeshConvNet.forward(x, mesh) takes Mesh objects"
+    },
+    {
+     "repo": "argusswift/YOLOv4-pytorch",
+     "stars": 1673,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file anywhere in the repo at HEAD (also a YOLOv4 detector)"
+    },
+    {
+     "repo": "yoshitomo-matsubara/torchdistill",
+     "stars": 1634,
+     "decision": "NOT_MODEL",
+     "detail": "knowledge-distillation framework"
+    },
+    {
+     "repo": "kakaobrain/fast-autoaugment",
+     "stars": 1604,
+     "decision": "NOT_MODEL",
+     "detail": "augmentation-policy search (training utility); networks are stock targets"
+    },
+    {
+     "repo": "rwightman/gen-efficientnet-pytorch",
+     "stars": 1577,
+     "decision": "measure",
+     "id": "geffnet"
+    },
+    {
+     "repo": "BloodAxe/pytorch-toolbelt",
+     "stars": 1575,
+     "decision": "NOT_MODEL",
+     "detail": "toolkit of PyTorch extensions for prototyping"
+    },
+    {
+     "repo": "kumar-shridhar/PyTorch-BayesianCNN",
+     "stars": 1574,
+     "decision": "measure",
+     "id": "bayesian_alexnet"
+    },
+    {
+     "repo": "filipradenovic/cnnimageretrieval-pytorch",
+     "stars": 1501,
+     "decision": "heldout",
+     "id": "cnnimageretrieval"
+    },
+    {
+     "repo": "hysts/pytorch_image_classification",
+     "stars": 1451,
+     "decision": "DEPS",
+     "detail": "models/cifar/resnet.py's relative import loads the package __init__ chain, which imports yacs (plus PIL, termcolor, thop); Network(config) expects a yacs CfgNode"
+    },
+    {
+     "repo": "tonylins/pytorch-mobilenet-v2",
+     "stars": 1405,
+     "decision": "heldout",
+     "id": "tonylins_mobilenetv2"
+    }
+   ]
+  },
+  "vit": {
+   "quota": 7,
+   "queries": [
+    "vision transformer pytorch in:name,description language:Python stars:>1000",
+    "topic:vision-transformer language:Python stars:>1000",
+    "swin transformer in:name,description language:Python stars:>1000",
+    "vit in:name language:Python stars:>1000"
+   ],
+   "poolExhausted": true,
+   "walked": [
+    {
+     "repo": "RVC-Boss/GPT-SoVITS",
+     "stars": 63641,
+     "decision": "CATEGORY",
+     "detail": "sequence: few-shot TTS / voice cloning"
+    },
+    {
+     "repo": "huggingface/pytorch-image-models",
+     "stars": 37236,
+     "decision": "measure",
+     "id": "timm_vit"
+    },
+    {
+     "repo": "huggingface/pytorch-image-models",
+     "stars": 37236,
+     "decision": "measure",
+     "id": "timm_swin"
+    },
+    {
+     "repo": "open-mmlab/mmdetection",
+     "stars": 33003,
+     "decision": "NOT_MODEL",
+     "detail": "detection toolbox / framework (mmcv, mmengine); its models are segdet anyway"
+    },
+    {
+     "repo": "svc-develop-team/so-vits-svc",
+     "stars": 28067,
+     "decision": "CATEGORY",
+     "detail": "sequence: VITS singing voice conversion (also AGPL-3.0)"
+    },
+    {
+     "repo": "lucidrains/vit-pytorch",
+     "stars": 25550,
+     "decision": "measure",
+     "id": "vit_pytorch"
+    },
+    {
+     "repo": "lukas-blecher/LaTeX-OCR",
+     "stars": 16600,
+     "decision": "DEPS",
+     "detail": "top-level Model in pix2tex/models/utils.py imports siblings vit.py and transformer.py, both of which import x_transformers"
+    },
+    {
+     "repo": "microsoft/Swin-Transformer",
+     "stars": 16094,
+     "decision": "measure",
+     "id": "swin_transformer"
+    },
+    {
+     "repo": "voicepaw/so-vits-svc-fork",
+     "stars": 9329,
+     "decision": "CATEGORY",
+     "detail": "sequence: so-vits-svc singing voice conversion fork"
+    },
+    {
+     "repo": "fishaudio/Bert-VITS2",
+     "stars": 8806,
+     "decision": "CATEGORY",
+     "detail": "sequence: VITS2 TTS (also AGPL-3.0)"
+    },
+    {
+     "repo": "adithya-s-k/omniparse",
+     "stars": 7931,
+     "decision": "NOT_MODEL",
+     "detail": "document / media ingestion app for GenAI pipelines (also GPL-3.0)"
+    },
+    {
+     "repo": "jaywalnut310/vits",
+     "stars": 7899,
+     "decision": "CATEGORY",
+     "detail": "sequence: VITS text-to-speech"
+    },
+    {
+     "repo": "facebookresearch/dino",
+     "stars": 7608,
+     "decision": "measure",
+     "id": "dino_vit"
+    },
+    {
+     "repo": "Blaizzy/mlx-vlm",
+     "stars": 5652,
+     "decision": "NOT_TORCH",
+     "detail": "MLX (Apple) VLM inference / fine-tuning package"
+    },
+    {
+     "repo": "JingyunLiang/SwinIR",
+     "stars": 5617,
+     "decision": "measure",
+     "id": "swinir"
+    },
+    {
+     "repo": "Plachtaa/VITS-fast-fine-tuning",
+     "stars": 5000,
+     "decision": "CATEGORY",
+     "detail": "sequence: VITS TTS fine-tuning pipeline"
+    },
+    {
+     "repo": "huawei-noah/Efficient-AI-Backbones",
+     "stars": 4425,
+     "decision": "CATEGORY",
+     "detail": "cnn: collection whose README model zoo lists GhostNet first (ghostnet_pytorch/ghostnet.py); no root LICENSE, per-folder License.txt files are Apache-2.0"
+    },
+    {
+     "repo": "open-mmlab/mmpretrain",
+     "stars": 3861,
+     "decision": "NOT_MODEL",
+     "detail": "OpenMMLab pre-training toolbox / framework (mmengine, mmcv)"
+    },
+    {
+     "repo": "google-research/scenic",
+     "stars": 3847,
+     "decision": "NOT_TORCH",
+     "detail": "JAX / Flax library"
+    },
+    {
+     "repo": "innnky/so-vits-svc",
+     "stars": 3769,
+     "decision": "CATEGORY",
+     "detail": "sequence: VITS + SoftVC singing voice conversion (also AGPL-3.0)"
+    },
+    {
+     "repo": "towhee-io/towhee",
+     "stars": 3449,
+     "decision": "NOT_MODEL",
+     "detail": "neural data-processing pipeline framework"
+    },
+    {
+     "repo": "mit-han-lab/efficientvit",
+     "stars": 3372,
+     "decision": "CATEGORY",
+     "detail": "generative: README lists DC-AE (deep compression autoencoder) first; also every model imports efficientvit.models.nn, which imports triton (triton_rms_norm.py), and DC-AE needs omegaconf"
+    },
+    {
+     "repo": "InternLM/InternLM-XComposer",
+     "stars": 2927,
+     "decision": "CATEGORY",
+     "detail": "lm: InternLM-based multimodal LLM system"
+    },
+    {
+     "repo": "PlayVoice/whisper-vits-svc",
+     "stars": 2867,
+     "decision": "CATEGORY",
+     "detail": "sequence: singing voice conversion / clone"
+    },
+    {
+     "repo": "baaivision/EVA",
+     "stars": 2697,
+     "decision": "measure",
+     "id": "eva01_mim"
+    },
+    {
+     "repo": "VITA-MLLM/VITA",
+     "stars": 2538,
+     "decision": "CATEGORY",
+     "detail": "lm: multimodal LLM for real-time vision and speech interaction"
+    },
+    {
+     "repo": "HuCaoFighting/Swin-Unet",
+     "stars": 2421,
+     "decision": "CATEGORY",
+     "detail": "segdet: U-Net-like transformer for medical image segmentation"
+    },
+    {
+     "repo": "OpenGVLab/InternVideo",
+     "stars": 2412,
+     "decision": "heldout",
+     "id": "internvideo1_videomae"
+    },
+    {
+     "repo": "NVlabs/MambaVision",
+     "stars": 2244,
+     "decision": "LICENSE",
+     "detail": "LICENSE is the NVIDIA Source Code License-NC (non-commercial); the model also imports mamba_ssm selective_scan_fn (CUDA)"
+    },
+    {
+     "repo": "ViTAE-Transformer/ViTPose",
+     "stars": 2199,
+     "decision": "DEPS",
+     "detail": "mmpose fork: top-level TopDown (mmpose/models/detectors/top_down.py) imports mmcv; the ViT backbone uses the mmpose builder registry"
+    },
+    {
+     "repo": "alibaba/EasyCV",
+     "stars": 1954,
+     "decision": "NOT_MODEL",
+     "detail": "all-in-one computer vision toolkit"
+    },
+    {
+     "repo": "microsoft/Cream",
+     "stars": 1844,
+     "decision": "DEPS",
+     "detail": "TinyCLIP's open_clip package __init__ imports its tokenizer, which needs ftfy"
+    },
+    {
+     "repo": "Xilinx/Vitis-AI",
+     "stars": 1812,
+     "decision": "NOT_MODEL",
+     "detail": "inference toolkit for Xilinx hardware"
+    },
+    {
+     "repo": "MCG-NJU/VideoMAE",
+     "stars": 1807,
+     "decision": "DUPLICATE",
+     "detail": "original of the modeling_pretrain.py that InternVideo copies (held out)"
+    },
+    {
+     "repo": "lightly-ai/lightly-train",
+     "stars": 1717,
+     "decision": "LICENSE",
+     "detail": "AGPL-3.0"
+    },
+    {
+     "repo": "JingyunLiang/VRT",
+     "stars": 1552,
+     "decision": "LICENSE",
+     "detail": "CC BY-NC 4.0 (also imports distutils, gone in Python 3.12)"
+    },
+    {
+     "repo": "czczup/ViT-Adapter",
+     "stars": 1506,
+     "decision": "DEPS",
+     "detail": "mmcv, mmdet and compiled ops (MSDeformAttn)"
+    },
+    {
+     "repo": "pprp/awesome-attention-mechanism-in-cv",
+     "stars": 1281,
+     "decision": "NOT_MODEL",
+     "detail": "awesome list"
+    },
+    {
+     "repo": "PlayVoice/vits_chinese",
+     "stars": 1231,
+     "decision": "CATEGORY",
+     "detail": "TTS (sequence)"
+    },
+    {
+     "repo": "NVlabs/VoxFormer",
+     "stars": 1212,
+     "decision": "LICENSE",
+     "detail": "NVIDIA Source Code License-NC"
+    },
+    {
+     "repo": "shadow2496/VITON-HD",
+     "stars": 1171,
+     "decision": "LICENSE",
+     "detail": "non-commercial terms (NeStyle)"
+    },
+    {
+     "repo": "WangLibo1995/GeoSeg",
+     "stars": 1115,
+     "decision": "LICENSE",
+     "detail": "GPL-3.0"
+    },
+    {
+     "repo": "jacobgil/vit-explain",
+     "stars": 1099,
+     "decision": "NOT_MODEL",
+     "detail": "explainability"
+    },
+    {
+     "repo": "OFA-Sys/ONE-PEACE",
+     "stars": 1060,
+     "decision": "DEPS",
+     "detail": "built on (vendored) fairseq"
+    },
+    {
+     "repo": "Artrajz/vits-simple-api",
+     "stars": 1050,
+     "decision": "LICENSE",
+     "detail": "AGPL-3.0; also a TTS API"
+    }
+   ]
+  },
+  "lm": {
+   "quota": 9,
+   "queries": [
+    "gpt pytorch in:name,description language:Python stars:>1000",
+    "topic:language-model topic:pytorch language:Python stars:>1000",
+    "bert pytorch in:name,description language:Python stars:>1000",
+    "gpt in:name language:Python stars:>1000",
+    "llama in:name,description pytorch language:Python stars:>1000",
+    "transformer pytorch in:name,description language:Python stars:>1000",
+    "llm from scratch in:name,description language:Python stars:>1000",
+    "library source: huggingface/transformers"
+   ],
+   "poolExhausted": false,
+   "walked": [
+    {
+     "repo": "Significant-Gravitas/AutoGPT",
+     "stars": 187724,
+     "decision": "NOT_MODEL",
+     "detail": "autonomous-agent platform (app), no model definition"
+    },
+    {
+     "repo": "huggingface/transformers",
+     "stars": 168052,
+     "decision": "measure",
+     "id": "transformers_bert"
+    },
+    {
+     "repo": "huggingface/transformers",
+     "stars": 168052,
+     "decision": "measure",
+     "id": "transformers_llama"
+    },
+    {
+     "repo": "binary-husky/gpt_academic",
+     "stars": 71531,
+     "decision": "NOT_MODEL",
+     "detail": "UI / interaction layer over hosted and local LLMs (also GPL-3.0)"
+    },
+    {
+     "repo": "FoundationAgents/MetaGPT",
+     "stars": 71002,
+     "decision": "NOT_MODEL",
+     "detail": "multi-agent framework"
+    },
+    {
+     "repo": "xtekky/gpt4free",
+     "stars": 66917,
+     "decision": "NOT_MODEL",
+     "detail": "client collection for hosted LLM APIs (also GPL-3.0)"
+    },
+    {
+     "repo": "jingyaogong/minimind",
+     "stars": 64324,
+     "decision": "measure",
+     "id": "minimind"
+    },
+    {
+     "repo": "karpathy/nanoGPT",
+     "stars": 64039,
+     "decision": "measure",
+     "id": "nanogpt"
+    },
+    {
+     "repo": "zylon-ai/private-gpt",
+     "stars": 57610,
+     "decision": "NOT_MODEL",
+     "detail": "RAG / API application layer"
+    },
+    {
+     "repo": "AntonOsika/gpt-engineer",
+     "stars": 55008,
+     "decision": "NOT_MODEL",
+     "detail": "codegen CLI (archived)"
+    },
+    {
+     "repo": "Pythagora-io/gpt-pilot",
+     "stars": 33645,
+     "decision": "NOT_MODEL",
+     "detail": "AI developer agent app"
+    },
+    {
+     "repo": "assafelovic/gpt-researcher",
+     "stars": 30269,
+     "decision": "NOT_MODEL",
+     "detail": "research agent"
+    },
+    {
+     "repo": "acheong08/ChatGPT",
+     "stars": 27965,
+     "decision": "NOT_MODEL",
+     "detail": "reverse-engineered ChatGPT API client (archived, GPL-2.0)"
+    },
+    {
+     "repo": "Vision-CAIR/MiniGPT-4",
+     "stars": 25575,
+     "decision": "DEPS",
+     "detail": "minigpt4/models/minigpt4.py -> base_model.py imports omegaconf, peft and transformers (LlamaTokenizer); LLaMA backbone from transformers"
+    },
+    {
+     "repo": "openai/gpt-2",
+     "stars": 25008,
+     "decision": "NOT_TORCH",
+     "detail": "src/model.py is TensorFlow 1.x (tf.contrib HParams)"
+    },
+    {
+     "repo": "karpathy/minGPT",
+     "stars": 24965,
+     "decision": "measure",
+     "id": "mingpt"
+    },
+    {
+     "repo": "PromtEngineer/localGPT",
+     "stars": 22191,
+     "decision": "NOT_MODEL",
+     "detail": "document-chat application"
+    },
+    {
+     "repo": "openai/gpt-oss",
+     "stars": 20490,
+     "decision": "measure",
+     "id": "gpt_oss"
+    },
+    {
+     "repo": "eosphoros-ai/DB-GPT",
+     "stars": 20186,
+     "decision": "NOT_MODEL",
+     "detail": "agentic data-assistant framework"
+    },
+    {
+     "repo": "arc53/DocsGPT",
+     "stars": 18335,
+     "decision": "NOT_MODEL",
+     "detail": "agent / enterprise-search platform"
+    },
+    {
+     "repo": "Evolink-AI/awesome-gpt-image-2-API-Prompts",
+     "stars": 17342,
+     "decision": "NOT_MODEL",
+     "detail": "prompt collection (awesome list)"
+    },
+    {
+     "repo": "GreyDGL/PentestGPT",
+     "stars": 16095,
+     "decision": "NOT_MODEL",
+     "detail": "penetration-testing agent framework"
+    },
+    {
+     "repo": "GaiZhenbiao/ChuanhuChatGPT",
+     "stars": 15261,
+     "decision": "NOT_MODEL",
+     "detail": "GUI for LLM APIs (also GPL-3.0)"
+    },
+    {
+     "repo": "BlinkDL/RWKV-LM",
+     "stars": 14759,
+     "decision": "NATIVE",
+     "detail": "headline RWKV-7 (RWKV-v7/train_temp/src/model.py) builds CUDA kernels with torch.utils.cpp_extension.load at import (also pytorch_lightning/deepspeed); demo files load CUDA wkv kernels too"
+    },
+    {
+     "repo": "mlfoundations/open_clip",
+     "stars": 14215,
+     "decision": "DEPS",
+     "detail": "the open_clip package __init__ imports factory and tokenizer, which needs ftfy"
+    },
+    {
+     "repo": "microsoft/LoRA",
+     "stars": 13874,
+     "decision": "NOT_MODEL",
+     "detail": "loralib: adapter-layer library / training utility, not a model definition"
+    },
+    {
+     "repo": "FareedKhan-dev/train-llm-from-scratch",
+     "stars": 12482,
+     "decision": "DEPS",
+     "detail": "src/models/transformer.py imports src/inference/sampling.py, which imports jaxtyping"
+    },
+    {
+     "repo": "TheR1D/shell_gpt",
+     "stars": 12299,
+     "decision": "NOT_MODEL",
+     "detail": "CLI productivity tool over LLM APIs"
+    },
+    {
+     "repo": "MDX-Tom/gpt-instruct",
+     "stars": 10644,
+     "decision": "NOT_MODEL",
+     "detail": "jailbreak prompt / test pack"
+    },
+    {
+     "repo": "AIGC-Audio/AudioGPT",
+     "stars": 10167,
+     "decision": "NOT_MODEL",
+     "detail": "ChatGPT-orchestrated system calling many audio foundation models"
+    },
+    {
+     "repo": "jadore801120/attention-is-all-you-need-pytorch",
+     "stars": 9820,
+     "decision": "measure",
+     "id": "aiayn_transformer"
+    },
+    {
+     "repo": "BlinkDL/ChatRWKV",
+     "stars": 9497,
+     "decision": "NOT_MODEL",
+     "detail": "chat app / inference runtime for RWKV (rwkv pip package: RWKV(model_path, strategy) loads a checkpoint in __init__, forward takes token lists, optional CUDA kernels); training code lives in RWKV-LM"
+    },
+    {
+     "repo": "OptimalScale/LMFlow",
+     "stars": 8483,
+     "decision": "NOT_MODEL",
+     "detail": "fine-tuning / inference toolkit"
+    },
+    {
+     "repo": "EleutherAI/gpt-neo",
+     "stars": 8252,
+     "decision": "NOT_TORCH",
+     "detail": "mesh-tensorflow implementation (archived)"
+    },
+    {
+     "repo": "zilliztech/GPTCache",
+     "stars": 8214,
+     "decision": "NOT_MODEL",
+     "detail": "semantic cache for LLM apps"
+    },
+    {
+     "repo": "RayVentura/ShortGPT",
+     "stars": 8065,
+     "decision": "NOT_MODEL",
+     "detail": "video-automation framework"
+    },
+    {
+     "repo": "acheong08/EdgeGPT",
+     "stars": 7829,
+     "decision": "NOT_MODEL",
+     "detail": "reverse-engineered Bing Chat API client (archived)"
+    },
+    {
+     "repo": "Morizeyao/GPT2-Chinese",
+     "stars": 7601,
+     "decision": "NOT_MODEL",
+     "detail": "training scripts around transformers.GPT2LMHeadModel; no model definition of its own"
+    },
+    {
+     "repo": "EleutherAI/gpt-neox",
+     "stars": 7471,
+     "decision": "DEPS",
+     "detail": "megatron/model/gpt2_model.py imports deepspeed.pipe (Megatron/DeepSpeed stack)"
+    },
+    {
+     "repo": "bhaskatripathi/pdfGPT",
+     "stars": 7165,
+     "decision": "NOT_MODEL",
+     "detail": "PDF chat application"
+    },
+    {
+     "repo": "OpenNMT/OpenNMT-py",
+     "stars": 7022,
+     "decision": "NOT_MODEL",
+     "detail": "NMT/LLM framework (toolkit, models assembled by model_builder from options); unmaintained, superseded by Eole"
+    },
+    {
+     "repo": "joshpxyne/gpt-migrate",
+     "stars": 6969,
+     "decision": "NOT_MODEL",
+     "detail": "codebase-migration tool"
+    },
+    {
+     "repo": "codertimo/BERT-pytorch",
+     "stars": 6531,
+     "decision": "measure",
+     "id": "bert_pytorch"
+    },
+    {
+     "repo": "meta-pytorch/gpt-fast",
+     "stars": 6260,
+     "decision": "INPUT",
+     "detail": "Transformer.forward(mask: BlockMask, idx, input_pos) takes a flex_attention BlockMask object (and mutates mask.mask_mod); also needs setup_caches before forward"
+    },
+    {
+     "repo": "EwingYangs/awesome-open-gpt",
+     "stars": 6058,
+     "decision": "NOT_MODEL",
+     "detail": "awesome list"
+    },
+    {
+     "repo": "shibing624/MedicalGPT",
+     "stars": 5866,
+     "decision": "NOT_MODEL",
+     "detail": "PT/SFT/RLHF/DPO training pipeline over transformers models"
+    },
+    {
+     "repo": "wuyoscar/GPT-Image2-Skill",
+     "stars": 5864,
+     "decision": "NOT_MODEL",
+     "detail": "prompt gallery / agent skill / CLI"
+    },
+    {
+     "repo": "649453932/Chinese-Text-Classification-Pytorch",
+     "stars": 5731,
+     "decision": "measure",
+     "id": "textcnn"
+    },
+    {
+     "repo": "lucidrains/DALLE-pytorch",
+     "stars": 5628,
+     "decision": "CATEGORY",
+     "detail": "generative: text-to-image DALL-E (dalle_pytorch.py also needs axial_positional_embedding)"
+    },
+    {
+     "repo": "Turing-Project/WriteGPT",
+     "stars": 5273,
+     "decision": "NOT_TORCH",
+     "detail": "headline GPT-2 (LanguageNetwork/GPT2/train/modeling.py) is TensorFlow 1.15; repo is an OCR+BERT+GPT-2 essay app"
+    },
+    {
+     "repo": "AutoGPTQ/AutoGPTQ",
+     "stars": 5065,
+     "decision": "NOT_MODEL",
+     "detail": "quantization package (archived)"
+    },
+    {
+     "repo": "gd3kr/BlenderGPT",
+     "stars": 4994,
+     "decision": "NOT_MODEL",
+     "detail": "Blender add-on calling GPT-4"
+    },
+    {
+     "repo": "hyunwoongko/transformer",
+     "stars": 4673,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "microsoft/BioGPT",
+     "stars": 4483,
+     "decision": "DEPS",
+     "detail": "src/transformer_lm_prompt.py is a fairseq model (imports fairseq); archived"
+    },
+    {
+     "repo": "gptme/gptme",
+     "stars": 4461,
+     "decision": "NOT_MODEL",
+     "detail": "terminal agent"
+    },
+    {
+     "repo": "649453932/Bert-Chinese-Text-Classification-Pytorch",
+     "stars": 4440,
+     "decision": "DEPS",
+     "detail": "models/bert.py imports vendored pytorch_pretrained, whose file_utils.py imports boto3, botocore, requests, tqdm"
+    },
+    {
+     "repo": "myreader-io/myGPTReader",
+     "stars": 4401,
+     "decision": "NOT_MODEL",
+     "detail": "chat-bot reader app (archived)"
+    },
+    {
+     "repo": "SwanHubX/SwanLab",
+     "stars": 4319,
+     "decision": "NOT_MODEL",
+     "detail": "experiment tracking / visualization tool"
+    },
+    {
+     "repo": "CLUEbenchmark/CLUE",
+     "stars": 4288,
+     "decision": "NOT_MODEL",
+     "detail": "benchmark: datasets, baselines, leaderboard"
+    },
+    {
+     "repo": "rawandahmad698/PyChatGPT",
+     "stars": 4185,
+     "decision": "NOT_MODEL",
+     "detail": "ChatGPT API client"
+    },
+    {
+     "repo": "mlfoundations/open_flamingo",
+     "stars": 4119,
+     "decision": "DEPS",
+     "detail": "open_flamingo/src/flamingo.py imports transformers; helpers.py imports einops_exts; package __init__ imports factory (open_clip)"
+    },
+    {
+     "repo": "Significant-Gravitas/Auto-GPT-Plugins",
+     "stars": 3823,
+     "decision": "NOT_MODEL",
+     "detail": "plugins for AutoGPT (archived)"
+    },
+    {
+     "repo": "hiyouga/ChatGLM-Efficient-Tuning",
+     "stars": 3710,
+     "decision": "NOT_MODEL",
+     "detail": "PEFT fine-tuning toolkit for ChatGLM (archived)"
+    },
+    {
+     "repo": "NExT-GPT/NExT-GPT",
+     "stars": 3634,
+     "decision": "DEPS",
+     "detail": "nextgpt/model/language_model/nextgpt_llama.py builds on transformers (AutoConfig, AutoModelForCausalLM, LlamaModel, LlamaForCausalLM)"
+    },
+    {
+     "repo": "gpt-omni/mini-omni",
+     "stars": 3585,
+     "decision": "DEPS",
+     "detail": "litgpt/model.py imports typing_extensions and litgpt/config.py, which imports yaml"
+    },
+    {
+     "repo": "CosmosShadow/gptpdf",
+     "stars": 3557,
+     "decision": "NOT_MODEL",
+     "detail": "PDF parsing via GPT API"
+    },
+    {
+     "repo": "ricklamers/gpt-code-ui",
+     "stars": 3531,
+     "decision": "NOT_MODEL",
+     "detail": "code-interpreter UI"
+    },
+    {
+     "repo": "jaymody/picoGPT",
+     "stars": 3479,
+     "decision": "NOT_TORCH",
+     "detail": "GPT-2 in NumPy"
+    },
+    {
+     "repo": "minimaxir/gpt-2-simple",
+     "stars": 3405,
+     "decision": "NOT_MODEL",
+     "detail": "fine-tuning / generation wrapper package around TensorFlow GPT-2"
+    },
+    {
+     "repo": "dvmazur/mixtral-offloading",
+     "stars": 2335,
+     "decision": "NOT_MODEL",
+     "detail": "inference setup for running Mixtral-8x7B with offloading, not a model definition"
+    },
+    {
+     "repo": "lonePatient/BERT-NER-Pytorch",
+     "stars": 2236,
+     "decision": "BROKEN",
+     "detail": "cannot be built with transformers 5: it sets up weights with init_weights() instead of post_init()"
+    },
+    {
+     "repo": "lucidrains/reformer-pytorch",
+     "stars": 2195,
+     "decision": "DEPS",
+     "detail": "reformer_pytorch/reformer_pytorch.py imports local_attention, axial_positional_embedding, product_key_memory"
+    },
+    {
+     "repo": "lucidrains/titans-pytorch",
+     "stars": 1995,
+     "decision": "DEPS",
+     "detail": "titans_pytorch/mac_transformer.py imports tqdm, axial_positional_embedding, rotary_embedding_torch, x_transformers, hyper_connections"
+    },
+    {
+     "repo": "kyegomez/BitNet",
+     "stars": 1947,
+     "decision": "DEPS",
+     "detail": "bitnet/bit_transformer.py and bitlinear.py import zeta (zeta-torch)"
+    },
+    {
+     "repo": "idiap/fast-transformers",
+     "stars": 1784,
+     "decision": "NATIVE",
+     "detail": "attention package imports compiled C++/CUDA extensions (fast_transformers/causal_product -> causal_product_cpu, built by CppExtension/CUDAExtension); also a library rather than one model"
+    },
+    {
+     "repo": "datawhalechina/zero-to-sglang",
+     "stars": 1582,
+     "decision": "NOT_MODEL",
+     "detail": "course on LLM inference engines (build a mini-sglang)"
+    },
+    {
+     "repo": "huggingface/pytorch-openai-transformer-lm",
+     "stars": 1526,
+     "decision": "heldout",
+     "id": "openai_transformer_lm"
+    },
+    {
+     "repo": "Walter0807/MotionBERT",
+     "stars": 1458,
+     "decision": "CATEGORY",
+     "detail": "sequence: human-motion / 3D pose model over 2D keypoint sequences (DSTformer), not NLP"
+    },
+    {
+     "repo": "ymcui/Chinese-ELECTRA",
+     "stars": 1433,
+     "decision": "NOT_TORCH",
+     "detail": "model/modeling.py is TensorFlow (tensorflow.compat.v1, tf.contrib); repo mainly releases weights"
+    },
+    {
+     "repo": "SKTBrain/KoBERT",
+     "stars": 1421,
+     "decision": "NOT_MODEL",
+     "detail": "pretrained-weights wrapper: kobert/pytorch_kobert.py loads transformers.BertModel (plus gluonnlp)"
+    },
+    {
+     "repo": "explosion/spacy-transformers",
+     "stars": 1412,
+     "decision": "NOT_MODEL",
+     "detail": "spaCy integration wrapper around transformers"
+    },
+    {
+     "repo": "keyu-tian/SparK",
+     "stars": 1384,
+     "decision": "CATEGORY",
+     "detail": "cnn: BERT/MAE-style self-supervised pretraining for convolutional networks"
+    },
+    {
+     "repo": "victordibia/designing-multiagent-systems",
+     "stars": 1370,
+     "decision": "NOT_MODEL",
+     "detail": "multi-agent application book code"
+    },
+    {
+     "repo": "Tongjilibo/bert4torch",
+     "stars": 1326,
+     "decision": "NOT_MODEL",
+     "detail": "transformers-style framework (not a library source); bert4torch/models/__init__.py also imports torch4keras"
+    },
+    {
+     "repo": "unitaryai/detoxify",
+     "stars": 1311,
+     "decision": "NOT_MODEL",
+     "detail": "wrapper: pretrained transformers classifiers trained with Lightning"
+    },
+    {
+     "repo": "NVIDIA-Merlin/Transformers4Rec",
+     "stars": 1284,
+     "decision": "NOT_MODEL",
+     "detail": "recommendation library / framework"
+    },
+    {
+     "repo": "kamalkraj/BERT-NER",
+     "stars": 1250,
+     "decision": "LICENSE",
+     "detail": "LICENSE.txt is AGPL-3.0"
+    },
+    {
+     "repo": "lucidrains/performer-pytorch",
+     "stars": 1184,
+     "decision": "DEPS",
+     "detail": "performer_pytorch/performer_pytorch.py imports local_attention, axial_positional_embedding"
+    },
+    {
+     "repo": "vivekkalyanarangan30/llm_from_scratch",
+     "stars": 1120,
+     "decision": "LICENSE",
+     "detail": "LICENSE is GPL-3.0"
+    },
+    {
+     "repo": "YeonwooSung/llm-architecture-from-scratch",
+     "stars": 1118,
+     "decision": "BROKEN",
+     "detail": "cannot be built: assigns self.mask, then register_buffer('mask')"
+    },
+    {
+     "repo": "pbloem/former",
+     "stars": 1101,
+     "decision": "DEPS",
+     "detail": "former/util/util.py (imported by transformers.py and modules.py) imports tqdm and torch.utils.tensorboard (tensorboard)"
+    },
+    {
+     "repo": "lucidrains/tab-transformer-pytorch",
+     "stars": 1099,
+     "decision": "DEPS",
+     "detail": "tab_transformer_pytorch.py imports x_mlps_pytorch, hyper_connections, discrete_continuous_embed_readout"
+    },
+    {
+     "repo": "drprojects/superpoint_transformer",
+     "stars": 1067,
+     "decision": "CATEGORY",
+     "detail": "segdet: 3D point-cloud semantic / panoptic segmentation"
+    },
+    {
+     "repo": "pguso/agents-from-scratch",
+     "stars": 1060,
+     "decision": "NOT_MODEL",
+     "detail": "agent tutorial using a local LLM"
+    },
+    {
+     "repo": "tonbistudio/turboquant-pytorch",
+     "stars": 1049,
+     "decision": "NOT_MODEL",
+     "detail": "KV-cache compression algorithm, not a model definition"
+    },
+    {
+     "repo": "graykode/gpt-2-Pytorch",
+     "stars": 1012,
+     "decision": "heldout",
+     "id": "graykode_gpt2"
+    }
+   ]
+  },
+  "generative": {
+   "quota": 8,
+   "queries": [
+    "gan pytorch in:name,description language:Python stars:>1000",
+    "diffusion pytorch in:name,description language:Python stars:>1000",
+    "vae pytorch in:name,description language:Python stars:>1000",
+    "stylegan in:name language:Python stars:>1000",
+    "stable diffusion in:name,description language:Python stars:>1000",
+    "flow matching in:name,description language:Python stars:>1000"
+   ],
+   "poolExhausted": false,
+   "walked": [
+    {
+     "repo": "AUTOMATIC1111/stable-diffusion-webui",
+     "stars": 165123,
+     "decision": "NOT_MODEL",
+     "detail": "Stable Diffusion web UI app (also AGPL-3.0)"
+    },
+    {
+     "repo": "huggingface/diffusers",
+     "stars": 34787,
+     "decision": "measure",
+     "id": "diffusers_unet2d_condition"
+    },
+    {
+     "repo": "huggingface/diffusers",
+     "stars": 34787,
+     "decision": "measure",
+     "id": "diffusers_autoencoder_kl"
+    },
+    {
+     "repo": "junyanz/pytorch-CycleGAN-and-pix2pix",
+     "stars": 25265,
+     "decision": "measure",
+     "id": "cyclegan_resnet_generator"
+    },
+    {
+     "repo": "Sanster/IOPaint",
+     "stars": 23297,
+     "decision": "NOT_MODEL",
+     "detail": "inpainting tool/app around third-party models (archived)"
+    },
+    {
+     "repo": "apple-aiml-research/ml-stable-diffusion",
+     "stars": 17968,
+     "decision": "NOT_MODEL",
+     "detail": "Core ML conversion/deployment toolkit for SD; its unet.py also imports diffusers and coremltools"
+    },
+    {
+     "repo": "eriklindernoren/PyTorch-GAN",
+     "stars": 17455,
+     "decision": "measure",
+     "id": "pytorch_gan_acgan"
+    },
+    {
+     "repo": "SWivid/F5-TTS",
+     "stars": 15443,
+     "decision": "DEPS",
+     "detail": "model/cfm.py needs torchdiffeq; backbones/dit.py and modules.py need x_transformers, librosa; model/utils.py needs rjieba, pypinyin"
+    },
+    {
+     "repo": "NVlabs/stylegan",
+     "stars": 14409,
+     "decision": "NOT_TORCH",
+     "detail": "official TensorFlow implementation"
+    },
+    {
+     "repo": "lllyasviel/stable-diffusion-webui-forge",
+     "stars": 13080,
+     "decision": "NOT_MODEL",
+     "detail": "Stable Diffusion web UI (AGPL-3.0)"
+    },
+    {
+     "repo": "NVlabs/stylegan2",
+     "stars": 11179,
+     "decision": "NOT_TORCH",
+     "detail": "official TensorFlow implementation"
+    },
+    {
+     "repo": "openai/DALL-E",
+     "stars": 10813,
+     "decision": "DEPS",
+     "detail": "dall_e/encoder.py, decoder.py, utils.py import attrs (attr); LICENSE is a 'Modified MIT License' with added wording"
+    },
+    {
+     "repo": "lucidrains/denoising-diffusion-pytorch",
+     "stars": 10713,
+     "decision": "DEPS",
+     "detail": "denoising_diffusion_pytorch.py imports accelerate, ema_pytorch, PIL, tqdm at top level; attend.py imports packaging"
+    },
+    {
+     "repo": "ashawkey/stable-dreamfusion",
+     "stars": 8870,
+     "decision": "NATIVE",
+     "detail": "NeRF backbones need CUDA extensions (gridencoder/raymarching via cpp_extension.load) and nvdiffrast; also cv2, trimesh, mcubes"
+    },
+    {
+     "repo": "facebookresearch/DiT",
+     "stars": 8676,
+     "decision": "LICENSE",
+     "detail": "LICENSE.txt is CC BY-NC 4.0"
+    },
+    {
+     "repo": "carson-katri/dream-textures",
+     "stars": 8228,
+     "decision": "NOT_MODEL",
+     "detail": "Blender add-on around Stable Diffusion (GPL-3.0)"
+    },
+    {
+     "repo": "TheLastBen/fast-stable-diffusion",
+     "stars": 7913,
+     "decision": "NOT_MODEL",
+     "detail": "Colab notebooks / DreamBooth training around SD"
+    },
+    {
+     "repo": "Sygil-Dev/sygil-webui",
+     "stars": 7859,
+     "decision": "NOT_MODEL",
+     "detail": "Stable Diffusion web UI (AGPL-3.0)"
+    },
+    {
+     "repo": "AntixK/PyTorch-VAE",
+     "stars": 7679,
+     "decision": "measure",
+     "id": "pytorch_vae_vanilla"
+    },
+    {
+     "repo": "wiseodd/generative-models",
+     "stars": 7490,
+     "decision": "DEPS",
+     "detail": "first-listed Vanilla GAN (GAN/vanilla_gan/gan_pytorch.py) imports tensorflow (MNIST loader) and matplotlib; it defines no nn.Module (raw tensors)"
+    },
+    {
+     "repo": "ddean2009/MoneyPrinterPlus",
+     "stars": 7244,
+     "decision": "NOT_MODEL",
+     "detail": "short-video automation app (GPL-3.0)"
+    },
+    {
+     "repo": "NVlabs/stylegan3",
+     "stars": 6947,
+     "decision": "LICENSE",
+     "detail": "LICENSE.txt is NVIDIA Source Code License (non-commercial)"
+    },
+    {
+     "repo": "bytedance/LatentSync",
+     "stars": 6185,
+     "decision": "DEPS",
+     "detail": "latentsync/models/unet.py imports diffusers (ConfigMixin, ModelMixin, embeddings)"
+    },
+    {
+     "repo": "facebookresearch/flow_matching",
+     "stars": 4816,
+     "decision": "LICENSE",
+     "detail": "LICENSE is CC BY-NC 4.0"
+    },
+    {
+     "repo": "nateraw/stable-diffusion-videos",
+     "stars": 4712,
+     "decision": "NOT_MODEL",
+     "detail": "video app wrapping diffusers SD pipelines"
+    },
+    {
+     "repo": "NVlabs/stylegan2-ada-pytorch",
+     "stars": 4495,
+     "decision": "LICENSE",
+     "detail": "LICENSE.txt is NVIDIA Source Code License (non-commercial)"
+    },
+    {
+     "repo": "GuyTevet/motion-diffusion-model",
+     "stars": 4123,
+     "decision": "DEPS",
+     "detail": "model/mdm.py imports clip (OpenAI CLIP package) and SMPL helpers; forward also takes a y dict with text"
+    },
+    {
+     "repo": "ML-GSAI/LLaDA",
+     "stars": 4003,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD (also a diffusion language model)"
+    },
+    {
+     "repo": "riffusion/riffusion-hobby",
+     "stars": 3899,
+     "decision": "NOT_MODEL",
+     "detail": "inference app/server; RiffusionPipeline subclasses diffusers DiffusionPipeline around an SD checkpoint"
+    },
+    {
+     "repo": "lkwq007/stablediffusion-infinity",
+     "stars": 3889,
+     "decision": "NOT_MODEL",
+     "detail": "outpainting app around SD"
+    },
+    {
+     "repo": "lucidrains/stylegan2-pytorch",
+     "stars": 3780,
+     "decision": "DEPS",
+     "detail": "stylegan2_pytorch.py imports fire, kornia, vector_quantize_pytorch, aim, tqdm, PIL"
+    },
+    {
+     "repo": "continue-revolution/sd-webui-segment-anything",
+     "stars": 3500,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "POSTECH-CVLab/PyTorch-StudioGAN",
+     "stars": 3484,
+     "decision": "DEPS",
+     "detail": "training/benchmark framework; src/models/*.py import utils.misc, which needs tqdm, seaborn, matplotlib"
+    },
+    {
+     "repo": "continue-revolution/sd-webui-animatediff",
+     "stars": 3424,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "tamarott/SinGAN",
+     "stars": 3342,
+     "decision": "measure",
+     "id": "singan"
+    },
+    {
+     "repo": "jy0205/Pyramid-Flow",
+     "stars": 3213,
+     "decision": "DEPS",
+     "detail": "pyramid_dit model files import diffusers, accelerate, tqdm, PIL"
+    },
+    {
+     "repo": "ajbrock/BigGAN-PyTorch",
+     "stars": 2928,
+     "decision": "measure",
+     "id": "biggan"
+    },
+    {
+     "repo": "deforum/sd-webui-deforum",
+     "stars": 2855,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "rosinality/stylegan2-pytorch",
+     "stars": 2834,
+     "decision": "NATIVE",
+     "detail": "model.py imports op/, which compiles CUDA kernels with torch.utils.cpp_extension.load at import"
+    },
+    {
+     "repo": "IceClear/StableSR",
+     "stars": 2672,
+     "decision": "LICENSE",
+     "detail": "LICENSE.txt is S-Lab License 1.0 (non-commercial)"
+    },
+    {
+     "repo": "atong01/conditional-flow-matching",
+     "stars": 2604,
+     "decision": "NOT_MODEL",
+     "detail": "library of flow-matching training objectives (ConditionalFlowMatcher); models are generic/borrowed; torchcfm/__init__ also pulls POT (ot)"
+    },
+    {
+     "repo": "crowsonkb/k-diffusion",
+     "stars": 2598,
+     "decision": "DEPS",
+     "detail": "models import k_diffusion.layers -> dctorch, sampling.py (torchdiffeq, torchsde, tqdm), utils.py (PIL, safetensors)"
+    },
+    {
+     "repo": "yifan123/flow_grpo",
+     "stars": 2563,
+     "decision": "NOT_MODEL",
+     "detail": "RL training method for existing flow-matching models"
+    },
+    {
+     "repo": "KohakuBlueleaf/LyCORIS",
+     "stars": 2535,
+     "decision": "NOT_MODEL",
+     "detail": "LoRA-style adapter/training library for SD"
+    },
+    {
+     "repo": "butaixianran/Stable-Diffusion-Webui-Civitai-Helper",
+     "stars": 2521,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "a312863063/generators-with-stylegan2",
+     "stars": 2491,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow StyleGAN2 (dnnlib/tflib)"
+    },
+    {
+     "repo": "GaParmar/img2img-turbo",
+     "stars": 2485,
+     "decision": "DEPS",
+     "detail": "src/pix2pix_turbo.py imports diffusers, transformers, peft, tqdm"
+    },
+    {
+     "repo": "civitai/sd_civitai_extension",
+     "stars": 2359,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "adieyal/sd-dynamic-prompts",
+     "stars": 2299,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 prompt-template script"
+    },
+    {
+     "repo": "deforum/deforum-stable-diffusion",
+     "stars": 2283,
+     "decision": "NOT_MODEL",
+     "detail": "animation notebook/tool around SD"
+    },
+    {
+     "repo": "andreas128/RePaint",
+     "stars": 2275,
+     "decision": "LICENSE",
+     "detail": "LICENSES/LICENSE is CC BY-NC-SA 4.0"
+    },
+    {
+     "repo": "ShoufaChen/DiffusionDet",
+     "stars": 2260,
+     "decision": "CATEGORY",
+     "detail": "segdet: diffusion-based object detector (detectron2)"
+    },
+    {
+     "repo": "rupeshs/fastsdcpu",
+     "stars": 2188,
+     "decision": "NOT_MODEL",
+     "detail": "SD-on-CPU app"
+    },
+    {
+     "repo": "Scholar01/sd-webui-mov2mov",
+     "stars": 2158,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "archinetai/audio-diffusion-pytorch",
+     "stars": 2099,
+     "decision": "DEPS",
+     "detail": "components.py imports a_unet; diffusion.py tqdm; utils.py typing_extensions"
+    },
+    {
+     "repo": "bytetriper/RAE",
+     "stars": 2088,
+     "decision": "measure",
+     "id": "rae"
+    },
+    {
+     "repo": "clementchadebec/benchmark_VAE",
+     "stars": 2001,
+     "decision": "DEPS",
+     "detail": "pythae models/base/base_model.py imports cloudpickle; forward also takes a BaseDataset object"
+    },
+    {
+     "repo": "albertpumarola/GANimation",
+     "stars": 1989,
+     "decision": "LICENSE",
+     "detail": "LICENSE is GPL-3.0"
+    },
+    {
+     "repo": "NVIDIA/Stable-Diffusion-WebUI-TensorRT",
+     "stars": 1978,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "CiaraStrawberry/TemporalKit",
+     "stars": 1955,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension (GPL-3.0)"
+    },
+    {
+     "repo": "lucidrains/gigagan-pytorch",
+     "stars": 1945,
+     "decision": "DEPS",
+     "detail": "gigagan_pytorch.py imports beartype, kornia, ema_pytorch, numerize, accelerate, tqdm"
+    },
+    {
+     "repo": "thygate/stable-diffusion-webui-depthmap-script",
+     "stars": 1855,
+     "decision": "NOT_MODEL",
+     "detail": "A1111 web UI extension"
+    },
+    {
+     "repo": "Janspiry/Palette-Image-to-Image-Diffusion-Models",
+     "stars": 1832,
+     "decision": "heldout",
+     "id": "palette"
+    },
+    {
+     "repo": "NVlabs/stylegan2-ada",
+     "stars": 1828,
+     "decision": "NOT_TORCH",
+     "detail": "official TensorFlow implementation"
+    },
+    {
+     "repo": "rosinality/vq-vae-2-pytorch",
+     "stars": 1805,
+     "decision": "heldout",
+     "id": "vqvae2"
+    }
+   ]
+  },
+  "segdet": {
+   "quota": 6,
+   "queries": [
+    "segmentation pytorch in:name,description language:Python stars:>1000",
+    "object detection pytorch in:name,description language:Python stars:>1000",
+    "unet pytorch in:name,description language:Python stars:>1000",
+    "detr in:name language:Python stars:>1000",
+    "deeplab pytorch in:name,description language:Python stars:>1000"
+   ],
+   "poolExhausted": false,
+   "walked": [
+    {
+     "repo": "fighting41love/funNLP",
+     "stars": 84116,
+     "decision": "NOT_MODEL",
+     "detail": "Chinese NLP word lists and resources (awesome-list style), no model definition"
+    },
+    {
+     "repo": "ultralytics/yolov5",
+     "stars": 58209,
+     "decision": "LICENSE",
+     "detail": "LICENSE is GNU AGPL-3.0"
+    },
+    {
+     "repo": "facebookresearch/detr",
+     "stars": 15351,
+     "decision": "measure",
+     "id": "detr"
+    },
+    {
+     "repo": "jacobgil/pytorch-grad-cam",
+     "stars": 12996,
+     "decision": "NOT_MODEL",
+     "detail": "explainability (CAM) library"
+    },
+    {
+     "repo": "qubvel-org/segmentation_models.pytorch",
+     "stars": 11779,
+     "decision": "measure",
+     "id": "smp_unet"
+    },
+    {
+     "repo": "milesial/Pytorch-UNet",
+     "stars": 11723,
+     "decision": "LICENSE",
+     "detail": "LICENSE is GNU GPL-3.0"
+    },
+    {
+     "repo": "ultralytics/yolov3",
+     "stars": 10622,
+     "decision": "LICENSE",
+     "detail": "LICENSE is GNU AGPL-3.0"
+    },
+    {
+     "repo": "roboflow/rf-detr",
+     "stars": 9883,
+     "decision": "DEPS",
+     "detail": "src/rfdetr/models/lwdetr.py -> backbone/dinov2.py and dinov2_with_windowed_attn.py import transformers (AutoBackbone, PreTrainedModel) in rfdetr's own files; backbone/__init__.py imports rfdetr.config (pydantic)"
+    },
+    {
+     "repo": "facebookresearch/maskrcnn-benchmark",
+     "stars": 9358,
+     "decision": "NATIVE",
+     "detail": "RPN/RoI heads inside GeneralizedRCNN.forward use maskrcnn_benchmark._C (nms, roi_align) compiled ops; layers/nms.py also imports apex"
+    },
+    {
+     "repo": "lyuwenyu/RT-DETR",
+     "stars": 5625,
+     "decision": "DEPS",
+     "detail": "rtdetr_pytorch/src/zoo/rtdetr/rtdetr.py imports src.core (PyYAML), and the src package __init__ pulls src.data (pycocotools) and src.nn.backbone.regnet (transformers); rtdetrv2_pytorch likewise needs PyYAML, tensorboard (core/_config.py) and faster_coco_eval"
+    },
+    {
+     "repo": "CSAILVision/semantic-segmentation-pytorch",
+     "stars": 5082,
+     "decision": "measure",
+     "id": "csail_semseg"
+    },
+    {
+     "repo": "fundamentalvision/Deformable-DETR",
+     "stars": 4027,
+     "decision": "NATIVE",
+     "detail": "models/ops MSDeformAttn forward calls the compiled MultiScaleDeformableAttention CUDA extension; the pure-PyTorch core is only a test helper, no fallback"
+    },
+    {
+     "repo": "meetps/pytorch-semseg",
+     "stars": 3403,
+     "decision": "DEPS",
+     "detail": "ptsemseg/models/pspnet.py (PSPNet, first in README) imports ptsemseg/caffe_pb2.py at top level, which needs protobuf (google.protobuf)"
+    },
+    {
+     "repo": "ayooshkathuria/pytorch-yolo-v3",
+     "stars": 3314,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "sgrvinod/a-PyTorch-Tutorial-to-Object-Detection",
+     "stars": 3118,
+     "decision": "measure",
+     "id": "ssd300_tutorial"
+    },
+    {
+     "repo": "LeeJunHyun/Image_Segmentation",
+     "stars": 3102,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "Tramac/awesome-semantic-segmentation-pytorch",
+     "stars": 3070,
+     "decision": "measure",
+     "id": "tramac_fcn"
+    },
+    {
+     "repo": "jfzhang95/pytorch-deeplab-xception",
+     "stars": 2998,
+     "decision": "measure",
+     "id": "deeplab_xception"
+    },
+    {
+     "repo": "VainF/DeepLabV3Plus-Pytorch",
+     "stars": 2708,
+     "decision": "heldout",
+     "id": "vainf_deeplabv3plus"
+    },
+    {
+     "repo": "fxia22/pointnet.pytorch",
+     "stars": 2364,
+     "decision": "heldout",
+     "id": "pointnet_seg"
+    }
+   ]
+  },
+  "sequence": {
+   "quota": 6,
+   "queries": [
+    "time series pytorch in:name,description language:Python stars:>1000",
+    "speech pytorch in:name,description language:Python stars:>1000",
+    "lstm pytorch in:name,description language:Python stars:>1000",
+    "tacotron in:name language:Python stars:>1000",
+    "wavenet in:name language:Python stars:>1000",
+    "seq2seq pytorch in:name,description language:Python stars:>1000",
+    "forecasting in:name,description deep learning language:Python stars:>1000"
+   ],
+   "poolExhausted": true,
+   "walked": [
+    {
+     "repo": "speechbrain/speechbrain",
+     "stars": 11899,
+     "decision": "NOT_MODEL",
+     "detail": "speech toolkit (framework of modules and recipes), not marked as a library source"
+    },
+    {
+     "repo": "remsky/Kokoro-FastAPI",
+     "stars": 5585,
+     "decision": "NOT_MODEL",
+     "detail": "Dockerized FastAPI wrapper serving Kokoro-82M; an app, not a model definition"
+    },
+    {
+     "repo": "ibab/tensorflow-wavenet",
+     "stars": 5423,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow WaveNet"
+    },
+    {
+     "repo": "sktime/pytorch-forecasting",
+     "stars": 5003,
+     "decision": "NOT_MODEL",
+     "detail": "forecasting package/framework (dataset classes, base model, tuning) built on PyTorch Lightning; models subclass a LightningModule base"
+    },
+    {
+     "repo": "buriburisuri/speech-to-text-wavenet",
+     "stars": 4006,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow (sugartensor) speech-to-text WaveNet"
+    },
+    {
+     "repo": "keithito/tacotron",
+     "stars": 2998,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow Tacotron"
+    },
+    {
+     "repo": "mravanelli/pytorch-kaldi",
+     "stars": 2410,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at 9773257; README says Creative Commons Attribution 4.0 (also a Kaldi-based toolkit)"
+    },
+    {
+     "repo": "r9y9/wavenet_vocoder",
+     "stars": 2374,
+     "decision": "measure",
+     "id": "wavenet_vocoder"
+    },
+    {
+     "repo": "Rayhane-mamah/Tacotron-2",
+     "stars": 2321,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow Tacotron-2"
+    },
+    {
+     "repo": "AIStream-Peelout/flow-forecast",
+     "stars": 2307,
+     "decision": "LICENSE",
+     "detail": "LICENSE file is GPL-3.0"
+    },
+    {
+     "repo": "ndrplz/ConvLSTM_pytorch",
+     "stars": 2270,
+     "decision": "measure",
+     "id": "convlstm"
+    },
+    {
+     "repo": "lifeiteng/vall-e",
+     "stars": 2221,
+     "decision": "DEPS",
+     "detail": "valle/models/valle.py imports icefall.utils and torchmetrics"
+    },
+    {
+     "repo": "SeanNaren/deepspeech.pytorch",
+     "stars": 2135,
+     "decision": "DEPS",
+     "detail": "deepspeech_pytorch/model.py: DeepSpeech is a pytorch_lightning.LightningModule and the file imports omegaconf"
+    },
+    {
+     "repo": "WenjieDu/PyPOTS",
+     "stars": 2083,
+     "decision": "NOT_MODEL",
+     "detail": "toolkit/library of 50+ models for partially-observed time series, not marked as a library source"
+    },
+    {
+     "repo": "salesforce/awd-lstm-lm",
+     "stars": 1990,
+     "decision": "measure",
+     "id": "awd_lstm_lm"
+    },
+    {
+     "repo": "r9y9/deepvoice3_pytorch",
+     "stars": 1977,
+     "decision": "measure",
+     "id": "deepvoice3"
+    },
+    {
+     "repo": "facebookresearch/denoiser",
+     "stars": 1898,
+     "decision": "LICENSE",
+     "detail": "LICENSE file is CC-BY-NC-4.0 (non-commercial)"
+    },
+    {
+     "repo": "Kyubyong/tacotron",
+     "stars": 1835,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow Tacotron"
+    },
+    {
+     "repo": "tomlepaine/fast-wavenet",
+     "stars": 1768,
+     "decision": "NOT_TORCH",
+     "detail": "TensorFlow (wavenet/*.py import tensorflow); LICENSE is also GPL-3.0"
+    },
+    {
+     "repo": "KEV0143/Comparative-analysis-of-hourly-load-forecasting-using-PatchTST-TFT-NHiTS-and-CatBoost",
+     "stars": 1765,
+     "decision": "NOT_MODEL",
+     "detail": "benchmark comparing PatchTST/TFT/N-HiTS against CatBoost"
+    },
+    {
+     "repo": "IBM/pytorch-seq2seq",
+     "stars": 1515,
+     "decision": "NOT_MODEL",
+     "detail": "README: a framework for seq2seq models with trainer, evaluator, loss, optim and checkpoint components"
+    },
+    {
+     "repo": "dalinvip/cnn-lstm-bilstm-deepcnn-clstm-in-pytorch",
+     "stars": 1450,
+     "decision": "measure",
+     "id": "dalinvip_bigru"
+    },
+    {
+     "repo": "zalandoresearch/pytorch-ts",
+     "stars": 1369,
+     "decision": "NOT_MODEL",
+     "detail": "probabilistic forecasting framework on the GluonTS backend"
+    },
+    {
+     "repo": "lucidrains/naturalspeech2-pytorch",
+     "stars": 1334,
+     "decision": "DEPS",
+     "detail": "naturalspeech2_pytorch.py imports audiolm_pytorch, beartype, accelerate, ema_pytorch, pyworld, tqdm"
+    },
+    {
+     "repo": "920232796/bert_seq2seq",
+     "stars": 1307,
+     "decision": "CATEGORY",
+     "detail": "lm: BERT/RoBERTa/GPT-2/T5/NEZHA/BART text models (README calls it a lightweight framework)"
+    },
+    {
+     "repo": "chickenbestlover/RNN-Time-series-Anomaly-Detection",
+     "stars": 1303,
+     "decision": "measure",
+     "id": "rnn_ts_anomaly"
+    },
+    {
+     "repo": "salesforce/pytorch-qrnn",
+     "stars": 1264,
+     "decision": "DEPS",
+     "detail": "torchqrnn/forget_mult.py (imported by qrnn.py) imports cupy and pynvrtc at module top for its CUDA kernel"
+    },
+    {
+     "repo": "ddlBoJack/emotion2vec",
+     "stars": 1207,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at a0e606c (only a README badge says MIT); the model is also fairseq-based"
+    },
+    {
+     "repo": "sooftware/conformer",
+     "stars": 1133,
+     "decision": "heldout",
+     "id": "conformer"
+    },
+    {
+     "repo": "basveeling/wavenet",
+     "stars": 1053,
+     "decision": "NOT_TORCH",
+     "detail": "Keras WaveNet"
+    },
+    {
+     "repo": "NATSpeech/NATSpeech",
+     "stars": 1005,
+     "decision": "DEPS",
+     "detail": "PortaSpeech (modules/tts/portaspeech/portaspeech.py) imports modules/tts/fs.py, which imports utils.audio.pitch.utils; that runs utils/audio/__init__.py, which imports librosa and pyloudnorm"
+    }
+   ]
+  },
+  "tutorial": {
+   "quota": 6,
+   "queries": [
+    "pytorch tutorial in:name,description language:Python stars:>1000",
+    "examples pytorch in:name,description language:Python stars:>1000",
+    "deep learning course pytorch in:name,description language:Python stars:>1000"
+   ],
+   "poolExhausted": false,
+   "walked": [
+    {
+     "repo": "yunjey/pytorch-tutorial",
+     "stars": 32515,
+     "decision": "measure",
+     "id": "yunjey_feedforward"
+    },
+    {
+     "repo": "pytorch/examples",
+     "stars": 24075,
+     "decision": "measure",
+     "id": "examples_mnist"
+    },
+    {
+     "repo": "pytorch/examples",
+     "stars": 24075,
+     "decision": "measure",
+     "id": "examples_word_lm"
+    },
+    {
+     "repo": "pytorch/tutorials",
+     "stars": 9383,
+     "decision": "measure",
+     "id": "tutorials_quickstart"
+    },
+    {
+     "repo": "pytorch/tutorials",
+     "stars": 9383,
+     "decision": "measure",
+     "id": "tutorials_blitz_lenet"
+    },
+    {
+     "repo": "TingsongYu/PyTorch_Tutorial",
+     "stars": 8026,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "jcjohnson/pytorch-examples",
+     "stars": 4917,
+     "decision": "measure",
+     "id": "jcjohnson_two_layer_net"
+    },
+    {
+     "repo": "layumi/Person_reID_baseline_pytorch",
+     "stars": 4453,
+     "decision": "DEPS",
+     "detail": "model.py imports pretrainedmodels at top level (plus efficientnet_pytorch inside ft_net_efficient); it is also a re-ID CNN baseline rather than tutorial code"
+    },
+    {
+     "repo": "xiaotudui/pytorch-tutorial",
+     "stars": 4378,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "cs230-stanford/cs230-code-examples",
+     "stars": 4232,
+     "decision": "heldout",
+     "id": "cs230_vision_net"
+    },
+    {
+     "repo": "hunkim/PyTorchZeroToAll",
+     "stars": 3985,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "dragen1860/Deep-Learning-with-PyTorch-Tutorials",
+     "stars": 3145,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "L1aoXingyu/pytorch-beginner",
+     "stars": 3043,
+     "decision": "LICENSE",
+     "detail": "no LICENSE file at HEAD"
+    },
+    {
+     "repo": "bethgelab/foolbox",
+     "stars": 2983,
+     "decision": "NOT_MODEL",
+     "detail": "adversarial-attack toolbox, not a model definition"
+    },
+    {
+     "repo": "sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning",
+     "stars": 2892,
+     "decision": "heldout",
+     "id": "sgrvinod_show_attend_tell"
+    }
+   ]
+  }
+ }
+}

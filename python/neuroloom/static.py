@@ -305,11 +305,13 @@ class _Module:
             "interface": {"inputs": [], "outputs": []},
         }
         self.count = 0
+        self.reached: list[str] = []  # node ids in the order they are added or first used
 
     def add(self, kind: str, type_: str, name: str, params: dict | None = None, **extra: Any) -> str:
         self.count += 1
         node_id = f"n{self.count}"
         self.mod["nodes"][node_id] = {"id": node_id, "kind": kind, "type": type_, "name": name, "params": params or {}, **extra}
+        self.reached.append(node_id)
         return node_id
 
     def link(self, source: _Value, node_id: str, port: str) -> None:
@@ -370,7 +372,13 @@ class _ClassConverter:
         if init:
             self._signature(init)
             self._init_body(init.body)
+        self.m.reached = []
         self._forward(forward)
+        # Nodes in the order forward() reaches them, then those it never uses: the
+        # order breaks ties between parallel branches, so it must follow the code.
+        nodes = self.m.mod["nodes"]
+        order = list(dict.fromkeys(n for n in self.m.reached if n in nodes))
+        self.m.mod["nodes"] = {n: nodes[n] for n in order + [n for n in nodes if n not in order]}
         if members:
             self.m.mod["members"] = self.file.statements(members)
         if self.constants:
@@ -792,10 +800,11 @@ class _ClassConverter:
         self._flush(body, pending, later)
 
     def _snapshot(self) -> tuple:
-        return (copy.deepcopy(self.m.mod), self.m.count, dict(self.values), set(self.used), self.code_blocks, self.imp.snapshot())
+        return (copy.deepcopy(self.m.mod), self.m.count, len(self.m.reached), dict(self.values), set(self.used), self.code_blocks, self.imp.snapshot())
 
     def _restore(self, s: tuple) -> None:
-        self.m.mod, self.m.count, self.values, self.used, self.code_blocks, imp = s
+        self.m.mod, self.m.count, reached, self.values, self.used, self.code_blocks, imp = s
+        del self.m.reached[reached:]
         self.imp.restore(imp)
 
     def _flush(self, body: list[ast.stmt], pending: list[int], later: list[set[str]]) -> None:
@@ -935,6 +944,7 @@ class _ClassConverter:
         if isinstance(node, ast.Name):
             return self._value(node)
         if _self_attr(node) in self.state_attrs:  # self.cls_token: a Parameter / Buffer node
+            self.m.reached.append(self.attrs[_self_attr(node)])
             return _Value(self.attrs[_self_attr(node)], "out")
         if isinstance(node, ast.Call):
             attr = _self_attr(node.func)
@@ -1008,6 +1018,7 @@ class _ClassConverter:
         for port, value in links:
             self.m.link(value, node_id, port)
         self.used.add(node_id)
+        self.m.reached.append(node_id)
         if len(outputs) == 1 and not outputs[0].get("path"):
             return _Value(node_id, outputs[0]["name"])
         return _Value(node_id, None, [], outputs)

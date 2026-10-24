@@ -397,7 +397,21 @@ class ClassWriter {
     gen.emit(`${I2}super().__init__()`);
     for (const name of this.storedHyperparams()) gen.emit(`${I2}self.${name} = ${name}`);
     for (const c of mod.constants ?? []) gen.emit(`${I2}self.${c.name} = ${this.expr(c.expr, 'init')}`);
-    for (const node of order) {
+    // __init__ order must survive a round trip, but the importers place nodes outside
+    // the data flow differently. Parameters and buffers (read wherever an expression
+    // happens to read them) come first, in the order forward() uses them; submodules
+    // without edges (unused, or called only from code kept as written) come last.
+    const position = new Map(order.map((n, i) => [n.id, i]));
+    const firstUse = (node: NodeInst) =>
+      Math.min(...mod.edges.filter((e) => e.source.node === node.id).map((e) => position.get(e.target.node) ?? Infinity));
+    const isolated = (node: NodeInst) => !mod.edges.some((e) => e.source.node === node.id || e.target.node === node.id);
+    const isState = (node: NodeInst) => node.kind === 'layer' && !node.repeat && !!getSpec(node.type)?.codegen.state;
+    const inits = [
+      ...order.filter((n) => isState(n) && !isolated(n)).sort((a, b) => firstUse(a) - firstUse(b)),
+      ...order.filter((n) => !isState(n) && !isolated(n)),
+      ...order.filter(isolated),
+    ];
+    for (const node of inits) {
       if (node.kind !== 'layer' && node.kind !== 'module') continue;
       const { line, problems } = this.initLine(node);
       gen.emit(problems.length > 0 ? `${line}  # TODO(neuroloom): ${problems.join('; ')}` : line, mod.id, node.id);

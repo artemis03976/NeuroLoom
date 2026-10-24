@@ -82,7 +82,7 @@ describe.skipIf(!hasTorch)('tracing agrees with shape inference', () => {
 });
 
 // Handwritten code in styles NeuroLoom does not emit itself.
-const HANDWRITTEN: Record<string, { source: string; inputs?: Record<string, string> }> = {
+const HANDWRITTEN: Record<string, { source: string; inputs?: Record<string, string>; warnings?: number }> = {
   nestedCalls: {
     source: `import torch.nn.functional as F
 from torch import nn
@@ -225,6 +225,27 @@ class Stack(nn.Module):
         return self.out(x)
 `,
   },
+  // A parameter read before a call, and a submodule forward() never uses: both keep
+  // their place in __init__ when the generated code is read back.
+  stateAndUnused: {
+    inputs: { x: 'B,8' },
+    warnings: 1, // self.spare: not used in forward()
+    source: `import torch
+from torch import nn
+
+
+class Block(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(8, 8)
+        self.spare = nn.Linear(8, 8)
+        self.scale = nn.Parameter(torch.ones(8))
+        self.register_buffer("offset", torch.zeros(8))
+
+    def forward(self, x):
+        return self.scale * self.fc(x) + self.offset
+`,
+  },
 };
 
 /** Places nodes in reverse creation order, so every layout-based tie-break flips. */
@@ -264,12 +285,14 @@ print(json.dumps({"ok": len(oa) == len(ob) and all(torch.allclose(x, y) for x, y
 `;
 
 describe.skipIf(!hasTorch)('code -> graph -> code', () => {
-  for (const [name, { source, inputs }] of Object.entries(HANDWRITTEN)) {
+  for (const [name, { source, inputs, warnings }] of Object.entries(HANDWRITTEN)) {
     it(name, { timeout: 60_000 }, () => {
       // A scrambled layout may reorder statements, but must not change behaviour.
       const first = scrambleLayout(parseProject(importCode(source, inputs).project));
       const generated = generateCode(first).code;
-      expect(analyzeModule(first).diagnostics, generated).toEqual([]);
+      const diagnostics = analyzeModule(first).diagnostics;
+      expect(diagnostics.filter((d) => d.severity === 'error'), generated).toEqual([]);
+      expect(diagnostics.filter((d) => d.severity === 'warning').length, generated).toBe(warnings ?? 0);
 
       // Semantically equivalent: same state_dict keys, same outputs for the same weights.
       const check = JSON.parse(

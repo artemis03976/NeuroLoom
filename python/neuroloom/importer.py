@@ -604,7 +604,9 @@ def import_many(requests: list[dict]) -> list[dict]:
     A request may carry a "locale" for its messages; otherwise the process's applies.
     """
     results = []
-    for request in requests:
+    for i, request in enumerate(requests):
+        # Progress on stderr: a caller that times out can tell where it stopped.
+        print(f"import {i + 1}/{len(requests)} {request.get('className') or ''} ({request.get('mode', 'static')})", file=sys.stderr, flush=True)
         with using_locale(request.get("locale")):
             try:
                 inputs = {k: parse_input(v) for k, v in (request.get("inputShapes") or {}).items()}

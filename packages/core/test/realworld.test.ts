@@ -12,11 +12,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { generateCode, parseProject, type LoomProject, type ModuleDef } from '../src';
-import { hasTorch, importMany, python, pythonDir, runPython, type ImportResult } from './python';
-import { spawnSync } from 'node:child_process';
+import { canImport, hasTorch, importMany, pythonDir, runPython, type ImportResult } from './python';
 
 const corpus = join(pythonDir, 'tests/corpus');
-const hasCorpus = hasTorch && spawnSync(python, ['-c', 'import timm, transformers, diffusers, einops, scipy'], { encoding: 'utf8' }).status === 0;
+const hasCorpus = hasTorch && canImport('timm, transformers, diffusers, einops, scipy');
 
 /** Measured files that pass today; the test fails if fewer do. */
 const FLOOR = 20;

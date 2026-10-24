@@ -51,6 +51,7 @@ def check(i, p):
     return {"ok": len(oa) == len(ob) and all(torch.allclose(x, y, atol=1e-6) for x, y in zip(oa, ob))}
 results = []
 for i, p in enumerate(json.load(sys.stdin)):
+    print(f"equivalence {i}", file=sys.stderr, flush=True)
     try:
         results.append(check(i, p))
     except Exception:

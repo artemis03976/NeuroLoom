@@ -292,6 +292,7 @@ def main() -> None:
         requests = json.load(sys.stdin)
         results = []
         for r in requests:
+            print(f"check {r['id']}", file=sys.stderr, flush=True)
             with contextlib.redirect_stdout(sys.stderr):
                 results.append(check(r["id"], r["generated"]))
         print(json.dumps(results, ensure_ascii=False))

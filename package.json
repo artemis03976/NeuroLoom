@@ -16,6 +16,7 @@
     "dist": "npm run dist -w @neuroloom/desktop --",
     "test": "npm run test --workspaces --if-present",
     "test:py": "node scripts/py.mjs -m pytest -q",
+    "coverage": "npm run coverage -w @neuroloom/core",
     "smoke": "npm run smoke -w @neuroloom/desktop",
     "perf": "npm run perf -w @neuroloom/desktop",
     "startup": "npm run startup -w @neuroloom/desktop",

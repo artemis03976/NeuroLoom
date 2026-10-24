@@ -83,6 +83,7 @@ npm run dev
 | `npm run dev` | 在浏览器中启动编辑器 |
 | `npm test` | TypeScript 单元测试 + 每个节点、每个模板、分层项目与手写代码的 PyTorch 往返测试（无 torch 时跳过往返部分） |
 | `npm run test:py` | Python 后端测试 |
+| `npm run coverage` | 核心包（`packages/core`）的测试覆盖率；行覆盖率低于 80% 时失败 |
 | `npm run typecheck` | 全部工作区类型检查 |
 | `npm run build:desktop` | 构建编辑器与 Electron 主进程 |
 | `npm run smoke` | 启动构建好的桌面版做端到端冒烟测试（先运行 `build:desktop`） |

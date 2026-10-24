@@ -21,6 +21,8 @@ export interface ManifestEntry {
   defaultName: string;
   /** Layers: the torch.nn class, e.g. "torch.nn.Conv2d". */
   layerClass?: string;
+  /** Layers without parameters (ReLU, Dropout): calling one twice is the same as two copies. */
+  stateless?: boolean;
   params: ManifestParam[];
   inputs: NodeSpec['inputs'];
   outputs: NodeSpec['outputs'];
@@ -51,6 +53,7 @@ export function exportManifest(): Manifest {
       outputs: s.outputs,
     };
     if (s.codegen.ctor) entry.layerClass = s.codegen.ctor.replace(/^nn\./, 'torch.nn.');
+    if (s.kind === 'layer' && !s.paramCount) entry.stateless = true;
     if (s.dynamicOutputs) entry.dynamicOutputs = s.dynamicOutputs;
     if (s.python) entry.python = s.python;
     return entry;

@@ -38,6 +38,10 @@ const upsample: NodeSpec = {
     }
     return ok([{ shape: [x!.shape[0]!, x!.shape[1]!, ...spatial], dtype: x!.dtype }], resolveParams(params));
   },
+  shapeDoc: L(
+    'H_out = size, or ⌊H · scale_factor⌋ (likewise for every spatial dimension); N and C are unchanged',
+    'H_out = size，或 ⌊H · scale_factor⌋（每个空间维同理）；N 与 C 不变',
+  ),
   describe: (r) => (r.scale_factor !== null ? `×${r.scale_factor} · ${r.mode}` : `→ ${r.size} · ${r.mode}`),
   codegen: { ctor: 'nn.Upsample' },
   example: { inputs: [{ shape: 'B, 3, 4, 4' }], params: { scale_factor: 2.0, mode: 'bilinear' } },
@@ -67,6 +71,7 @@ const pixelShuffle: NodeSpec = {
       resolveParams(params),
     );
   },
+  shapeDoc: L('[N, C·r², H, W] → [N, C, H·r, W·r], r = upscale_factor', '[N, C·r², H, W] → [N, C, H·r, W·r]，r = upscale_factor'),
   describe: (r) => `×${r.upscale_factor}`,
   codegen: { ctor: 'nn.PixelShuffle' },
   example: { inputs: [{ shape: 'B, 8, 3, 3' }], params: { upscale_factor: 2 } },

@@ -1,6 +1,6 @@
 import { msg } from '../i18n';
 import { dimDiv, UNKNOWN, type Dim } from '../shape';
-import { convLength } from './conv';
+import { convLength, windowDoc } from './conv';
 import { fail, flag, IN, L, lit, ok, OUT, P, rankError, resolveParams, showTuple, tuple } from './helpers';
 import type { Example, NodeSpec, ParamSpec } from './types';
 
@@ -64,6 +64,13 @@ function pool(n: 1 | 2 | 3, kind: 'Max' | 'Avg'): NodeSpec {
       }
       return ok([{ shape: [...x!.shape.slice(0, lead), ...spatial], dtype: x!.dtype }], resolveParams(params));
     },
+    shapeDoc: windowDoc(
+      n,
+      kind === 'Max'
+        ? (a) => `⌊(${a} + 2·padding − dilation·(kernel_size − 1) − 1) / stride⌋ + 1`
+        : (a) => `⌊(${a} + 2·padding − kernel_size) / stride⌋ + 1`,
+      L('stride defaults to kernel_size; ceil_mode rounds up', 'stride 默认等于 kernel_size；ceil_mode 时向上取整'),
+    ),
     describe: (r) => `k${showTuple(r.kernel_size)}${r.stride !== null && showTuple(r.stride) !== showTuple(r.kernel_size) ? ` · s${showTuple(r.stride)}` : ''}`,
     codegen: { ctor: `nn.${cls}` },
     example: EXAMPLES[cls],
@@ -90,6 +97,10 @@ function adaptive(n: 1 | 2 | 3, kind: 'Max' | 'Avg'): NodeSpec {
       const lead = x!.shape.length - n;
       return ok([{ shape: [...x!.shape.slice(0, lead), ...size], dtype: x!.dtype }], resolveParams(params));
     },
+    shapeDoc: L(
+      `The last ${n === 1 ? 'dimension becomes' : `${n} dimensions become`} output_size, whatever the input size`,
+      `${n === 1 ? '最后一维' : `最后 ${n} 维`}变为 output_size，与输入大小无关`,
+    ),
     describe: (r) => `→ ${showTuple(r.output_size)}`,
     codegen: { ctor: `nn.${cls}` },
     example: EXAMPLES[cls],

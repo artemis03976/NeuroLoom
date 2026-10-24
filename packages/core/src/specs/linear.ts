@@ -1,5 +1,5 @@
 import { msg } from '../i18n';
-import { fail, feature, IN, L, lit, num, ok, OUT, P, resolveParams } from './helpers';
+import { fail, feature, IN, L, lit, num, ok, OUT, P, prod, resolveParams, SAME_SHAPE } from './helpers';
 import type { NodeSpec } from './types';
 
 const doc = (name: string) => `https://docs.pytorch.org/docs/stable/generated/torch.nn.${name}.html`;
@@ -26,6 +26,9 @@ export const linear: NodeSpec = {
     return ok([{ shape: [...x!.shape.slice(0, -1), outFeatures], dtype: x!.dtype }], resolveParams(params, { in_features: inFeatures }));
   },
   paramCount: (r) => (r.in_features as number) * (r.out_features as number) + (r.bias ? (r.out_features as number) : 0),
+  // One (add)mm over the flattened leading dimensions; the bias add is not counted.
+  flops: (r, [x]) => 2 * prod(x!.slice(0, -1)) * (r.in_features as number) * (r.out_features as number),
+  shapeDoc: L('[*, in_features] → [*, out_features]', '[*, in_features] → [*, out_features]'),
   describe: (r) => `${r.in_features ?? '?'} → ${r.out_features ?? '?'}`,
   codegen: { ctor: 'nn.Linear' },
   example: { inputs: [{ shape: 'B, 16' }], params: { out_features: 8, bias: false } },
@@ -43,6 +46,7 @@ export const identity: NodeSpec = {
   outputs: OUT,
   defaultName: 'identity',
   infer: ([x]) => ok([x!], {}),
+  shapeDoc: SAME_SHAPE,
   codegen: { ctor: 'nn.Identity' },
   example: { inputs: [{ shape: 'B, 4' }] },
 };
@@ -75,6 +79,8 @@ export const embedding: NodeSpec = {
     return ok([{ shape: [...x!.shape, num(params, 'embedding_dim')], dtype: 'float32' }], resolveParams(params));
   },
   paramCount: (r) => (r.num_embeddings as number) * (r.embedding_dim as number),
+  // A table lookup: no FLOPs.
+  shapeDoc: L('[*] integer indices → [*, embedding_dim]', '[*] 整数索引 → [*, embedding_dim]'),
   describe: (r) => `${r.num_embeddings} × ${r.embedding_dim}`,
   codegen: { ctor: 'nn.Embedding' },
   example: { inputs: [{ shape: 'B, 12', dtype: 'int64' }], params: { num_embeddings: 100, embedding_dim: 16, padding_idx: 0 } },

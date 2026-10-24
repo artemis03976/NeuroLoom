@@ -1,7 +1,7 @@
 // Arithmetic and reductions (PRD appendix: 算术与归约).
 import { msg } from '../i18n';
 import { axis, broadcast, dimEq, type Dim, type TensorType } from '../shape';
-import { fail, L, lit, ok, OUT, P, resolveParams } from './helpers';
+import { fail, L, lit, ok, OUT, P, prod, resolveParams } from './helpers';
 import type { NodeSpec } from './types';
 
 const doc = (path: string) => `https://docs.pytorch.org/docs/stable/generated/${path}.html`;
@@ -30,6 +30,7 @@ function binary(name: 'add' | 'sub' | 'mul' | 'div', operator: string, zh: strin
       const shape = broadcast([a!.shape, b.shape]);
       return typeof shape === 'string' ? fail(shape) : ok([{ shape, dtype: a!.dtype }], resolveParams(params));
     },
+    shapeDoc: L('The broadcast shape of a and b (the shape of a with a constant)', 'a 与 b 广播后的形状（b 为常数时同 a）'),
     describe: (r) => (r.other === null || r.other === undefined ? `a ${operator} b` : `a ${operator} ${r.other}`),
     codegen: { operator },
     python: {
@@ -78,6 +79,15 @@ const matmul: NodeSpec = {
     const shape: Dim[] = [...batch, ...(x.length === 1 ? [] : [xs.at(-2)!]), ...(y.length === 1 ? [] : [ys.at(-1)!])];
     return ok([{ shape, dtype: a!.dtype }], {});
   },
+  // mm or bmm over the broadcast batch: 2 · output elements · contracted size. A 1-D b
+  // makes PyTorch call mv or dot, which FlopCounterMode has no formula for, so 0. (With
+  // a ≥3-D operand and a 1-D one the path also depends on strides and requires_grad,
+  // which shapes cannot tell.)
+  flops: (_r, [a, b], [out]) => (b!.length === 1 ? 0 : 2 * prod(out!) * a!.at(-1)!),
+  shapeDoc: L(
+    '[*, n, k] @ [*, k, m] → [*, n, m]; leading dimensions broadcast, a 1-D operand loses its dimension',
+    '[*, n, k] @ [*, k, m] → [*, n, m]；前导维度广播，1 维操作数的那一维被去掉',
+  ),
   codegen: { operator: '@' },
   python: {
     functions: ['operator.matmul', 'torch.matmul'],
@@ -118,6 +128,10 @@ function reduction(name: 'mean' | 'sum', zh: string): NodeSpec {
       }
       return ok([{ shape, dtype: (x as TensorType).dtype }], resolveParams(params));
     },
+    shapeDoc: L(
+      'Dimension dim is removed (kept as size 1 with keepdim); dim = None reduces every dimension',
+      '去掉第 dim 维（keepdim 时保留为 1）；dim 为空时归约所有维',
+    ),
     describe: (r) => (r.dim === null ? msg('全部', 'all') : `dim = ${r.dim}`),
     codegen: { method: name },
     python: {

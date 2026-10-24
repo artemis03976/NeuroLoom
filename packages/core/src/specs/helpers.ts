@@ -5,6 +5,12 @@ import type { Bilingual, InferResult, ParamSpec, ParamType, Params, Resolved } f
 
 export const L = (en: string, zh: string): Bilingual => ({ en, zh });
 
+/** shapeDoc of the many nodes that keep their input's shape. */
+export const SAME_SHAPE = L('Same shape as the input', '与输入形状相同');
+
+/** Product of concrete sizes (1 for none). */
+export const prod = (sizes: number[]): number => sizes.reduce((a, b) => a * b, 1);
+
 type Extra = Partial<Omit<ParamSpec, 'name' | 'type' | 'label'>>;
 const param =
   (type: ParamType) =>

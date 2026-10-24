@@ -1,8 +1,8 @@
 // Shape-changing tensor operations (PRD appendix: 张量形变).
 import { msg } from '../i18n';
 import { axis, dimAdd, dimDiv, dimEq, dimProduct, UNKNOWN, type Dim, type TensorType } from '../shape';
-import { fail, IN, L, lit, num, ok, OUT, P, resolveParams } from './helpers';
-import type { Inputs, NodeSpec, Params, PythonCall } from './types';
+import { fail, IN, L, lit, num, ok, OUT, P, resolveParams, SAME_SHAPE } from './helpers';
+import type { Bilingual, Inputs, NodeSpec, Params, PythonCall } from './types';
 
 const doc = (path: string) => `https://docs.pytorch.org/docs/stable/generated/${path}.html`;
 
@@ -43,7 +43,13 @@ function method(
   summary: [string, string],
   params: NodeSpec['params'],
   infer: (x: TensorType, params: Params) => Dim[] | string,
-  options: { methods?: string[]; functions?: string[]; example: NonNullable<NodeSpec['example']>; describe?: NodeSpec['describe'] },
+  options: {
+    methods?: string[];
+    functions?: string[];
+    example: NonNullable<NodeSpec['example']>;
+    describe?: NodeSpec['describe'];
+    shapeDoc: Bilingual;
+  },
 ): NodeSpec {
   const python: PythonCall = {
     methods: options.methods ?? [name],
@@ -65,12 +71,19 @@ function method(
       const shape = infer(x!, params);
       return typeof shape === 'string' ? fail(shape) : ok([{ shape, dtype: x!.dtype }], resolveParams(params));
     },
+    shapeDoc: options.shapeDoc,
     describe: options.describe,
     codegen: { method: name },
     python,
     example: options.example,
   };
 }
+
+const flattenDoc = (start: number) =>
+  L(
+    `Dimensions start_dim … end_dim merge into one of their product (start_dim = ${start}, end_dim = −1 by default)`,
+    `start_dim … end_dim 各维合并为一维，大小为它们的乘积（默认 start_dim = ${start}，end_dim = −1）`,
+  );
 
 const flattenModule: NodeSpec = {
   type: 'torch.nn.Flatten',
@@ -87,6 +100,7 @@ const flattenModule: NodeSpec = {
     const shape = flattenShape(x!.shape, num(params, 'start_dim'), num(params, 'end_dim'));
     return typeof shape === 'string' ? fail(shape) : ok([{ shape, dtype: x!.dtype }], resolveParams(params));
   },
+  shapeDoc: flattenDoc(1),
   codegen: { ctor: 'nn.Flatten' },
   example: { inputs: [{ shape: 'B, 2, 3, 4' }], params: { end_dim: 2 } },
 };
@@ -109,6 +123,10 @@ const unflattenModule: NodeSpec = {
     if (typeof sizes === 'string') return fail(sizes);
     return ok([{ shape: [...x!.shape.slice(0, d), ...sizes, ...x!.shape.slice(d + 1)], dtype: x!.dtype }], resolveParams(params));
   },
+  shapeDoc: L(
+    'Dimension dim splits into unflattened_size (one −1 is inferred)',
+    '第 dim 维拆成 unflattened_size（可含一个 −1，由其余维推断）',
+  ),
   codegen: { ctor: 'nn.Unflatten' },
   example: { inputs: [{ shape: 'B, 6, 4' }], params: { dim: 1, unflattened_size: [2, 3] } },
 };
@@ -125,6 +143,7 @@ const flattenOp: NodeSpec = {
   outputs: OUT,
   defaultName: 'flatten',
   infer: flattenModule.infer,
+  shapeDoc: flattenDoc(0),
   codegen: { fn: 'torch.flatten' },
   python: {
     functions: ['torch.flatten'],
@@ -145,7 +164,12 @@ const reshape = method(
   ['Changes the shape without changing the data; -1 is inferred.', '在不改变数据的前提下改变形状；-1 由其余维推断。'],
   [P.dims('shape', '目标形状', { initial: [-1], spread: true })],
   (x, params) => reshapeShape(x.shape, lit(params, 'shape') as number[]),
-  { methods: ['reshape', 'view'], functions: ['torch.reshape'], example: { inputs: [{ shape: 'B, 4, 6' }], params: { shape: [-1, 24] } } },
+  {
+    methods: ['reshape', 'view'],
+    functions: ['torch.reshape'],
+    example: { inputs: [{ shape: 'B, 4, 6' }], params: { shape: [-1, 24] } },
+    shapeDoc: L('Becomes shape, with the same element count; one −1 is inferred', '变为 shape，元素总数不变；可含一个 −1，由其余维推断'),
+  },
 );
 
 const permute = method(
@@ -165,7 +189,11 @@ const permute = method(
     }
     return order.map((d) => x.shape[d!]!);
   },
-  { functions: ['torch.permute'], example: { inputs: [{ shape: 'B, 3, 5' }], params: { dims: [0, 2, 1] } } },
+  {
+    functions: ['torch.permute'],
+    example: { inputs: [{ shape: 'B, 3, 5' }], params: { dims: [0, 2, 1] } },
+    shapeDoc: L('Output dimension i is input dimension dims[i]', '输出第 i 维 = 输入第 dims[i] 维'),
+  },
 );
 
 const transpose = method(
@@ -182,7 +210,11 @@ const transpose = method(
     [shape[a], shape[b]] = [shape[b]!, shape[a]!];
     return shape;
   },
-  { functions: ['torch.transpose'], example: { inputs: [{ shape: 'B, 3, 5' }], params: { dim0: 1, dim1: 2 } } },
+  {
+    functions: ['torch.transpose'],
+    example: { inputs: [{ shape: 'B, 3, 5' }], params: { dim0: 1, dim1: 2 } },
+    shapeDoc: L('Dimensions dim0 and dim1 swap places', '第 dim0 维与第 dim1 维互换'),
+  },
 );
 
 const unsqueeze = method(
@@ -195,7 +227,11 @@ const unsqueeze = method(
     const d = axis(num(params, 'dim'), x.shape.length + 1);
     return d === undefined ? msg('dim 超出范围', 'dim is out of range') : [...x.shape.slice(0, d), 1, ...x.shape.slice(d)];
   },
-  { functions: ['torch.unsqueeze'], example: { inputs: [{ shape: 'B, 5' }], params: { dim: 1 } } },
+  {
+    functions: ['torch.unsqueeze'],
+    example: { inputs: [{ shape: 'B, 5' }], params: { dim: 1 } },
+    shapeDoc: L('A dimension of size 1 is inserted at position dim', '在第 dim 个位置插入大小为 1 的维'),
+  },
 );
 
 const squeeze = method(
@@ -211,7 +247,14 @@ const squeeze = method(
     if (d === undefined) return msg('dim 超出范围', 'dim is out of range');
     return x.shape[d] === 1 ? [...x.shape.slice(0, d), ...x.shape.slice(d + 1)] : x.shape;
   },
-  { functions: ['torch.squeeze'], example: { inputs: [{ shape: 'B, 1, 5' }], params: { dim: 1 } } },
+  {
+    functions: ['torch.squeeze'],
+    example: { inputs: [{ shape: 'B, 1, 5' }], params: { dim: 1 } },
+    shapeDoc: L(
+      'Dimensions of size 1 are removed (only dim when given, and only if its size is 1)',
+      '去掉大小为 1 的维（给定 dim 时只处理该维，且仅当其大小为 1）',
+    ),
+  },
 );
 
 const contiguous = method(
@@ -221,7 +264,7 @@ const contiguous = method(
   ['Returns a tensor with contiguous memory; the shape is unchanged.', '返回内存连续的张量，形状不变。'],
   [],
   (x) => x.shape,
-  { example: { inputs: [{ shape: 'B, 4' }] } },
+  { example: { inputs: [{ shape: 'B, 4' }] }, shapeDoc: SAME_SHAPE },
 );
 
 function joinOp(name: 'cat' | 'stack'): NodeSpec {
@@ -267,6 +310,10 @@ function joinOp(name: 'cat' | 'stack'): NodeSpec {
       if (name === 'stack') shape.splice(d, 0, tensors.length);
       return ok([{ shape, dtype: first.dtype }], resolveParams(params));
     },
+    shapeDoc:
+      name === 'cat'
+        ? L('Sizes along dim add up; every other dimension must match', '沿 dim 的大小相加；其余各维必须相同')
+        : L('A new dimension of size N (the number of inputs) at dim; all inputs must have the same shape', '在 dim 处新增一维，大小为输入个数 N；所有输入形状必须相同'),
     describe: (r) => `dim = ${r.dim}`,
     codegen: { fn: `torch.${name}` },
     python: {
@@ -312,6 +359,7 @@ const chunk: NodeSpec = {
     const shape = x!.shape.map((s, i) => (i === d ? piece : s));
     return ok(Array.from({ length: n }, () => ({ shape, dtype: x!.dtype })), resolveParams(params));
   },
+  shapeDoc: L('chunks equal outputs: the size along dim is divided by chunks', 'chunks 个等大的输出：沿 dim 的大小除以 chunks'),
   describe: (r) => msg(`${r.chunks} 块 · dim = ${r.dim}`, `${r.chunks} chunks · dim = ${r.dim}`),
   codegen: { fn: 'torch.chunk' },
   python: {

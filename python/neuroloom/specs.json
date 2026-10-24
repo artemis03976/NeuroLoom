@@ -47,7 +47,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Identity"
+      "layerClass": "torch.nn.Identity",
+      "stateless": true
     },
     {
       "type": "torch.nn.Embedding",
@@ -501,7 +502,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Upsample"
+      "layerClass": "torch.nn.Upsample",
+      "stateless": true
     },
     {
       "type": "torch.nn.PixelShuffle",
@@ -523,7 +525,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.PixelShuffle"
+      "layerClass": "torch.nn.PixelShuffle",
+      "stateless": true
     },
     {
       "type": "torch.nn.MaxPool1d",
@@ -570,7 +573,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.MaxPool1d"
+      "layerClass": "torch.nn.MaxPool1d",
+      "stateless": true
     },
     {
       "type": "torch.nn.MaxPool2d",
@@ -617,7 +621,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.MaxPool2d"
+      "layerClass": "torch.nn.MaxPool2d",
+      "stateless": true
     },
     {
       "type": "torch.nn.MaxPool3d",
@@ -664,7 +669,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.MaxPool3d"
+      "layerClass": "torch.nn.MaxPool3d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AvgPool1d",
@@ -710,7 +716,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AvgPool1d"
+      "layerClass": "torch.nn.AvgPool1d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AvgPool2d",
@@ -756,7 +763,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AvgPool2d"
+      "layerClass": "torch.nn.AvgPool2d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AvgPool3d",
@@ -802,7 +810,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AvgPool3d"
+      "layerClass": "torch.nn.AvgPool3d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AdaptiveAvgPool1d",
@@ -825,7 +834,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AdaptiveAvgPool1d"
+      "layerClass": "torch.nn.AdaptiveAvgPool1d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AdaptiveAvgPool2d",
@@ -848,7 +858,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AdaptiveAvgPool2d"
+      "layerClass": "torch.nn.AdaptiveAvgPool2d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AdaptiveAvgPool3d",
@@ -871,7 +882,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AdaptiveAvgPool3d"
+      "layerClass": "torch.nn.AdaptiveAvgPool3d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AdaptiveMaxPool1d",
@@ -894,7 +906,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AdaptiveMaxPool1d"
+      "layerClass": "torch.nn.AdaptiveMaxPool1d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AdaptiveMaxPool2d",
@@ -917,7 +930,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AdaptiveMaxPool2d"
+      "layerClass": "torch.nn.AdaptiveMaxPool2d",
+      "stateless": true
     },
     {
       "type": "torch.nn.BatchNorm1d",
@@ -1261,7 +1275,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.ReLU"
+      "layerClass": "torch.nn.ReLU",
+      "stateless": true
     },
     {
       "type": "torch.nn.ReLU6",
@@ -1284,7 +1299,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.ReLU6"
+      "layerClass": "torch.nn.ReLU6",
+      "stateless": true
     },
     {
       "type": "torch.nn.LeakyReLU",
@@ -1312,7 +1328,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.LeakyReLU"
+      "layerClass": "torch.nn.LeakyReLU",
+      "stateless": true
     },
     {
       "type": "torch.nn.PReLU",
@@ -1363,7 +1380,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.ELU"
+      "layerClass": "torch.nn.ELU",
+      "stateless": true
     },
     {
       "type": "torch.nn.GELU",
@@ -1386,7 +1404,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.GELU"
+      "layerClass": "torch.nn.GELU",
+      "stateless": true
     },
     {
       "type": "torch.nn.SiLU",
@@ -1409,7 +1428,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.SiLU"
+      "layerClass": "torch.nn.SiLU",
+      "stateless": true
     },
     {
       "type": "torch.nn.Mish",
@@ -1432,7 +1452,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Mish"
+      "layerClass": "torch.nn.Mish",
+      "stateless": true
     },
     {
       "type": "torch.nn.Sigmoid",
@@ -1449,7 +1470,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Sigmoid"
+      "layerClass": "torch.nn.Sigmoid",
+      "stateless": true
     },
     {
       "type": "torch.nn.Tanh",
@@ -1466,7 +1488,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Tanh"
+      "layerClass": "torch.nn.Tanh",
+      "stateless": true
     },
     {
       "type": "torch.nn.Softmax",
@@ -1490,7 +1513,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Softmax"
+      "layerClass": "torch.nn.Softmax",
+      "stateless": true
     },
     {
       "type": "torch.nn.LogSoftmax",
@@ -1514,7 +1538,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.LogSoftmax"
+      "layerClass": "torch.nn.LogSoftmax",
+      "stateless": true
     },
     {
       "type": "torch.nn.Hardswish",
@@ -1537,7 +1562,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Hardswish"
+      "layerClass": "torch.nn.Hardswish",
+      "stateless": true
     },
     {
       "type": "torch.nn.Softplus",
@@ -1565,7 +1591,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Softplus"
+      "layerClass": "torch.nn.Softplus",
+      "stateless": true
     },
     {
       "type": "torch.nn.functional.relu",
@@ -1896,7 +1923,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Dropout"
+      "layerClass": "torch.nn.Dropout",
+      "stateless": true
     },
     {
       "type": "torch.nn.Dropout1d",
@@ -1924,7 +1952,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Dropout1d"
+      "layerClass": "torch.nn.Dropout1d",
+      "stateless": true
     },
     {
       "type": "torch.nn.Dropout2d",
@@ -1952,7 +1981,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Dropout2d"
+      "layerClass": "torch.nn.Dropout2d",
+      "stateless": true
     },
     {
       "type": "torch.nn.Dropout3d",
@@ -1980,7 +2010,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Dropout3d"
+      "layerClass": "torch.nn.Dropout3d",
+      "stateless": true
     },
     {
       "type": "torch.nn.AlphaDropout",
@@ -2008,7 +2039,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.AlphaDropout"
+      "layerClass": "torch.nn.AlphaDropout",
+      "stateless": true
     },
     {
       "type": "torch.nn.RNN",
@@ -2410,7 +2442,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Flatten"
+      "layerClass": "torch.nn.Flatten",
+      "stateless": true
     },
     {
       "type": "torch.nn.Unflatten",
@@ -2436,7 +2469,8 @@
           "name": "out"
         }
       ],
-      "layerClass": "torch.nn.Unflatten"
+      "layerClass": "torch.nn.Unflatten",
+      "stateless": true
     },
     {
       "type": "torch.flatten",

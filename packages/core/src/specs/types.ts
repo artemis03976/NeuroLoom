@@ -132,6 +132,15 @@ export interface NodeSpec {
   defaultName: string;
   infer(inputs: Inputs, params: Params): InferResult;
   paramCount?(resolved: Resolved): number;
+  /**
+   * Forward FLOPs of one call (PRD F8.2), counted the way
+   * torch.utils.flop_counter.FlopCounterMode counts them: a multiply-add is 2
+   * FLOPs, and element-wise ops, normalization and activations count 0.
+   * Shapes are concrete (symbolic dimensions already given values). Absent: 0.
+   */
+  flops?(resolved: Resolved, inputs: number[][], outputs: number[][]): number;
+  /** How the output shape follows from the input (PRD F2.4), e.g. "H_out = ⌊(H + 2p − d(k − 1) − 1) / s⌋ + 1". */
+  shapeDoc?: Bilingual;
   /** One-line summary shown on the node body. */
   describe?(resolved: Resolved): string;
   codegen: CodegenSpec;

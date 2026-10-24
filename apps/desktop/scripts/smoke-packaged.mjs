@@ -1,7 +1,11 @@
 // Smoke test of the packaged app (the unpacked build that `npm run dist` leaves in
-// release/): it starts, serves the editor from its own resources, runs the bundled
-// Python package with an interpreter found on this machine, and opens .loom files
-// passed on the command line, also when handed over by a second launch.
+// release/, or an installed app given on the command line): it starts, serves the
+// editor from its own resources, runs the bundled Python package with an interpreter
+// found on this machine, and opens .loom files passed on the command line, also when
+// handed over by a second launch.
+// Both launches keep Chromium's sandbox, as a user's do: on Linux that needs what the
+// .deb installs (an AppArmor profile on Ubuntu 24+, or a setuid chrome-sandbox), so CI
+// tests the installed .deb there.
 // Usage: node scripts/smoke-packaged.mjs [path/to/executable]
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -70,7 +74,8 @@ const project = (name, nodes) => {
 const first = project('first', ['fc']);
 const second = project('second', ['fc1', 'fc2']);
 
-const app = await _electron.launch({ executablePath, args: [first, '--lang=en-US'], env });
+// Playwright adds --no-sandbox on Linux unless told otherwise.
+const app = await _electron.launch({ executablePath, args: [first, '--lang=en-US'], env, chromiumSandbox: true });
 try {
   const win = await app.firstWindow();
   const windowTitle = () => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.getTitle());
@@ -96,21 +101,26 @@ try {
   const info = await win.evaluate(() => window.neuroloom.rpc('env_info')).catch(() => null);
   console.log(`info  torch in that interpreter: ${info?.torch ?? 'not installed'}`);
 
-  // A second launch with a file hands it to the running app and exits.
-  const exitCode = await new Promise((resolve) => {
-    const child = spawn(executablePath, [second], { env, stdio: 'ignore' });
+  // A second launch with a file hands it to the running app and exits. Its exit is the
+  // code, or the signal that ended it (a crash), and its stderr says why.
+  const launch = await new Promise((resolve) => {
+    const child = spawn(executablePath, [second], { env, stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    child.stderr.on('data', (chunk) => (stderr += chunk));
     const timer = setTimeout(() => {
       child.kill();
-      resolve('timeout');
+      resolve({ exit: 'timeout', stderr });
     }, 30_000);
-    child.on('exit', (code) => {
+    child.on('exit', (code, signal) => {
       clearTimeout(timer);
-      resolve(code);
+      resolve({ exit: code ?? signal, stderr });
     });
   });
   const handed = await waitForTitle('second — NeuroLoom');
   const windows = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
-  check('a second launch hands its file to the running app', exitCode === 0 && handed === 'second — NeuroLoom' && windows === 1, `exit ${exitCode}, ${handed}, ${windows} window(s)`);
+  const handedOver = launch.exit === 0 && handed === 'second — NeuroLoom' && windows === 1;
+  const stderrTail = handedOver ? '' : `; stderr: ${launch.stderr.trim().split('\n').slice(-3).join(' | ') || '(empty)'}`;
+  check('a second launch hands its file to the running app', handedOver, `exit ${launch.exit}, ${handed}, ${windows} window(s)${stderrTail}`);
 
   const screenshot = join(desktopRoot, 'dist', 'smoke-packaged.png');
   await win.screenshot({ path: screenshot });

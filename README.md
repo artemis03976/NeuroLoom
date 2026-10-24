@@ -27,6 +27,19 @@ NeuroLoom（织络）是一个可视化神经网络搭建工具：把 PyTorch �
 - **桌面版**：Windows / macOS / Linux 安装包，双击 .loom 打开。
 - **界面**：中文 / English，深浅色主题。
 
+## 安装包
+
+GitHub Release 提供：
+- Windows：`.exe` 安装程序；
+- macOS：x64 和 arm64 各一个 `.dmg`；
+- Linux：`.deb` 和 AppImage。
+
+Linux 上建议用 `.deb`：
+- 从 Ubuntu 24.04 起，系统限制了 Chromium 沙箱要用的非特权用户命名空间。
+- `.deb` 安装时会装上 NeuroLoom 的 AppArmor 配置（或者给 `chrome-sandbox` 设 setuid），沙箱可以正常工作。
+- AppImage 做不到这一点，在这些系统上直接运行会在启动时退出。可以加 `--no-sandbox` 启动，但那会关闭渲染进程的沙箱；更好的办法是改用 `.deb`。
+- 在其他发行版上，AppImage 可以正常使用。
+
 ## 快速开始
 
 需要 Node.js 22+ 与 Python 3.10+。

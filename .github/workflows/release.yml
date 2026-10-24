@@ -30,6 +30,8 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    # Packaging takes a few minutes; a hang must not hold a runner for GitHub's default 6 hours.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -66,7 +68,11 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
-            xvfb-run -a npm run smoke:packaged -w @neuroloom/desktop
+            # The app as users install it: Chromium's sandbox needs what the .deb sets up
+            # (an AppArmor profile on Ubuntu 24+, or a setuid chrome-sandbox), which the
+            # unpacked build and the AppImage cannot have.
+            sudo apt-get install -y ./apps/desktop/release/*.deb
+            xvfb-run -a npm run smoke:packaged -w @neuroloom/desktop -- /opt/NeuroLoom/neuroloom
           else
             npm run smoke:packaged -w @neuroloom/desktop
           fi
@@ -116,6 +122,7 @@ jobs:
     needs: package
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:

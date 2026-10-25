@@ -164,8 +164,8 @@ interface StudioState {
   setHyperparams(hyperparams: HyperParam[], renamed?: Record<string, string>): void;
   /** How the code is written (PRD F5.3); kept in the project, so it is an undoable edit. */
   setExportOptions(options: ExportOptions): void;
-  /** Free-text fields: the preamble, a module's __init__ tail, other members or opaque source. */
-  setText(field: 'preamble' | 'initCode' | 'members' | 'source', text: string): void;
+  /** Free-text fields: the preamble or epilogue, a module's __init__ tail, other members or opaque source. */
+  setText(field: 'preamble' | 'epilogue' | 'initCode' | 'members' | 'source', text: string): void;
 
   /** Replaces the document. `saved: false` marks it as never saved (e.g. imported code). */
   loadProject(project: LoomProject, doc?: { path?: string | null; name?: string; saved?: boolean; relayout?: boolean }): void;
@@ -470,7 +470,7 @@ export const useStudio = create<StudioState>()((set, get) => {
 
     setText(field, text) {
       const { project } = get();
-      if (field === 'preamble') return commit({ ...project, preamble: text }, { merge: 'preamble' });
+      if (field === 'preamble' || field === 'epilogue') return commit({ ...project, [field]: text }, { merge: field });
       commit(
         inView(project, (m) => (field === 'source' ? { ...m, opaque: { ...m.opaque, source: text } } : { ...m, [field]: text })),
         { merge: `${field}:${get().view.moduleId}` },

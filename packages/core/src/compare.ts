@@ -15,6 +15,7 @@ import { getSpec } from './specs';
 export function structuralSignature(project: LoomProject, analysis: ProjectAnalysis = analyzeProject(project)): string[] {
   const lines: string[] = [];
   if (project.preamble?.trim()) lines.push(`preamble ${JSON.stringify(project.preamble.trim())}`);
+  if (project.epilogue?.trim()) lines.push(`epilogue ${JSON.stringify(project.epilogue.trim())}`);
   lines.push(`entry ${project.modules[project.entry]?.className}`);
   // An inline nn.Sequential has no name in the code; it is known by where it is used.
   const names = new Map<ModuleId, string>();

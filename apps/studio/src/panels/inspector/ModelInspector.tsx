@@ -240,6 +240,18 @@ export function ModelInspector() {
         </Section>
       )}
 
+      {isEntry && project.epilogue !== undefined && (
+        <Section title={tr('文件尾代码', 'File epilogue')}>
+          <CodeArea value={project.epilogue} rows={3} onCommit={(v) => setText('epilogue', v)} />
+          <p className="mt-1 text-[11px] leading-relaxed text-muted">
+            {tr(
+              '写在导出文件末尾、所有类之后：导入时保留的、用到模型类的工厂函数等代码。',
+              'Written at the end of the exported file, after every class: code the import kept that names the model classes, such as factory functions.',
+            )}
+          </p>
+        </Section>
+      )}
+
       <Section title={tr('提示', 'Tips')}>
         <p className="text-[12px] leading-relaxed text-muted">
           {tr(

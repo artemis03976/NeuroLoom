@@ -59,14 +59,19 @@ export function parseProject(json: unknown): LoomProject {
     mod.id = moduleId;
     if (!Array.isArray(mod.hyperparams)) mod.hyperparams = [];
     for (const hp of mod.hyperparams as unknown[]) {
-      if (!isObject(hp) || typeof hp.name !== 'string' || (hp.default !== undefined && !isParamValue(hp.default))) {
+      if (
+        !isObject(hp) ||
+        typeof hp.name !== 'string' ||
+        (hp.default !== undefined && !isParamValue(hp.default)) ||
+        (hp.keywordOnly !== undefined && typeof hp.keywordOnly !== 'boolean')
+      ) {
         throw invalid(`模块 ${mod.className} 的超参数结构不完整`, `incomplete hyperparameter in ${mod.className}`);
       }
     }
     for (const c of (mod.constants ?? []) as unknown[]) {
       if (!isObject(c) || typeof c.name !== 'string' || typeof c.expr !== 'string') throw invalid('常量结构不完整', 'incomplete constant');
     }
-    for (const key of ['initCode', 'members'] as const) {
+    for (const key of ['initCode', 'members', 'kwargs'] as const) {
       if (mod[key] !== undefined && typeof mod[key] !== 'string') throw invalid(`${key} 必须是文本`, `${key} must be text`);
     }
     if (mod.opaque !== undefined && (!isObject(mod.opaque) || (mod.opaque.source !== undefined && typeof mod.opaque.source !== 'string'))) {

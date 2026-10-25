@@ -275,6 +275,7 @@ class _Child:
     outputs: list[str]
     call_style: bool = False  # opaque modules whose instances pass arguments verbatim
     optional: list[str] = field(default_factory=list)  # forward() arguments with defaults, made ports when a call passes them
+    keyword_only: list[str] = field(default_factory=list)  # hyperparameters callers must pass by name
 
 
 @dataclass
@@ -341,6 +342,7 @@ class _ClassConverter:
         self.cls = cls
         self.m = _Module(cls.name, cls.name)
         self.hp: list[str] = []
+        self.keyword_only: list[str] = []  # hyperparameters after `*` in __init__
         self.locals: dict[str, ast.expr] = {}
         self.local_stmts: dict[str, list[ast.stmt]] = {}  # every assignment, in order (n = 32; n = f(n))
         self.attrs: dict[str, str] = {}  # self.<attr> -> node id
@@ -389,22 +391,32 @@ class _ClassConverter:
             self.m.mod["interface"]["inputs"],
             [self.m.mod["nodes"][i]["name"] for i in self.m.mod["interface"]["inputs"]],
             self.m.mod["interface"]["outputs"],
+            keyword_only=self.keyword_only,
         )
 
     def _signature(self, init: ast.FunctionDef) -> None:
         args = init.args
-        if args.vararg or args.kwarg or args.kwonlyargs or args.posonlyargs:
-            raise Opaque(t("__init__ 使用了 *args、**kwargs 或仅限关键字的参数", "__init__ uses *args, **kwargs or keyword-only arguments"))
+        if args.vararg or args.posonlyargs:
+            raise Opaque(t("__init__ 使用了 *args 或仅限位置的参数", "__init__ uses *args or positional-only arguments"))
+        if args.kwarg and any(isinstance(n, ast.Name) and n.id == args.kwarg.arg for n in ast.walk(init)):
+            raise Opaque(t("__init__ 把 **kwargs 传给了别处", "__init__ passes **kwargs on"))
         params = args.args[1:]
         defaults = [None] * (len(params) - len(args.defaults)) + list(args.defaults)
-        for p, d in zip(params, defaults):
+        keyword_only = list(zip(args.kwonlyargs, args.kw_defaults))
+        for p, d in [*zip(params, defaults), *keyword_only]:
             hp: dict[str, Any] = {"name": p.arg}
             if p.annotation is not None:
                 hp["annotation"] = self.file.segment(p.annotation)
             if d is not None:
                 hp["default"] = self._literal_or_expr(d, raw=True)
+            if p in args.kwonlyargs:
+                hp["keywordOnly"] = True
+                self.keyword_only.append(p.arg)
             self.m.mod["hyperparams"].append(hp)
             self.hp.append(p.arg)
+        # A **kwargs that __init__ never reads is kept, so callers passing extra keywords still work.
+        if args.kwarg:
+            self.m.mod["kwargs"] = args.kwarg.arg
 
     # .................................................... expressions
 
@@ -678,9 +690,10 @@ class _ClassConverter:
                 params[kw.arg] = self._literal_or_expr(kw.value)
             self.imp.note_args(child, params)
             return params
-        if len(call.args) > len(child.hyperparams):
+        positional = [h for h in child.hyperparams if h not in child.keyword_only]
+        if len(call.args) > len(positional):
             raise Unsupported(t("构造参数过多", "too many constructor arguments"))
-        for name, arg in zip(child.hyperparams, call.args):
+        for name, arg in zip(positional, call.args):
             params[name] = self._literal_or_expr(arg)
         for kw in call.keywords:
             if kw.arg not in child.hyperparams:

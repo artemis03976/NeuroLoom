@@ -298,11 +298,32 @@
 - 达到 80% 需要再成功 20 个文件。
 - 修改时只看测量集，最后再用留出集检查。
 
+### 改进记录
+
+| 分支 | 改动 | 测量集 | 留出集 |
+| --- | --- | ---: | ---: |
+| `v1/import-corpus` | 第一次测量 | 20/50（40%） | 6/12 |
+| `v1/import-bool-kwonly` | `bool` 输入；`__init__` 的仅限关键字参数，以及没有用到的 `**kwargs` | 26/50（52%） | 7/12 |
+
+`v1/import-bool-kwonly` 的改动：
+- **`bool` 输入**：Input 节点的数据类型可以选 `bool`。动态导入、形状探测等实际运行模型的地方，会生成布尔掩码作为示例输入，不再只认 `int64`。
+- **仅限关键字参数**：变成超参数，并标记为只能按名传。生成的代码在它们前面写 `*`；创建实例时按名传参，位置参数不会对到这些超参数上。
+- **`**kwargs`**：
+  - `__init__` 没有读取的 `**kwargs` 原样写回签名，调用方多传的关键字参数仍然有效；
+  - 被传给别处的 `**kwargs` 仍然整类保留为源码。
+
+结果：
+- 测量集新增成功 6 个：官方 Swin-Transformer、DINO、SwinIR、BigGAN、Tramac 的 FCN（都是没有用到的 `**kwargs`），以及 EVA-01（`bool` 输入）。
+- 留出集新增 InternVideo。
+- 碰到下一层问题的有两个：
+  - **vit-pytorch**：仅限关键字参数已经解决，但 `forward()` 中途返回，仍然整类保留为源码。这是新的一类，留出集里的 PointNet 也属于这类。
+  - **timm 的 Swin**：已经能结构化，但生成的模块丢了 timm 注册的构造函数，加载失败。和 timm 的 ResNet 一样，属于“丢了模块级函数”（第 3 项）。
+
 ## 10. 文件
 
 - `python/tests/corpus/manifest.json`：每个文件的出处、提交、sha256、许可证、类别、入口类、构造方式、示例输入、导入时执行的同仓库文件，以及属于测量集还是留出集。
 - `python/tests/corpus/selection.json`：选取过程，包括搜索条件，以及走过的每个仓库的判断和原因。
 - `python/tests/corpus/fetch.py`：按提交下载文件并校验 sha256。`--update` 记录新的哈希，并重写 `THIRD_PARTY_NOTICES.md`。
 - `python/tests/corpus/realworld.py`：构造原模型，并与生成的代码比较。
-- `packages/core/test/realworld.test.ts`：计算指标，打印每个文件的结果和原因。下限是 20，只升不降。
+- `packages/core/test/realworld.test.ts`：计算指标，打印每个文件的结果和原因。下限只升不降，现在是 26。
 - 原来的 10 个自写文件移到了 `python/tests/corpus/handwritten/`。

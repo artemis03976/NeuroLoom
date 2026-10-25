@@ -13,7 +13,7 @@ import sys
 from typing import Any
 
 from .i18n import t
-from .importer import ImportFailure, parse_input
+from .importer import ImportFailure, example_tensor, parse_input
 
 # Values for the first, second, ... symbolic dimension in each run.
 RUNS = ((2, 3, 5, 7, 11, 13), (3, 5, 7, 11, 13, 17))
@@ -44,7 +44,7 @@ def probe(code: str, class_name: str, inputs: list[str]) -> dict[str, Any]:
                 tensors = []
                 for spec in specs:
                     size = [d if isinstance(d, int) else value[d] for d in spec.dims]
-                    tensors.append(torch.zeros(size, dtype=torch.long) if spec.dtype == "int64" else torch.randn(size))
+                    tensors.append(example_tensor(spec, size))
                 with torch.no_grad():
                     model(*tensors)
             except ImportFailure:

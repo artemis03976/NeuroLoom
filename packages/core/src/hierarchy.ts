@@ -204,7 +204,7 @@ export function packAsModule(
       kind: 'input',
       type: 'neuroloom.Input',
       name: isValidIdentifier(base) ? uniqueName(inner, base, 'bare') : uniqueName(inner, 'x', 'bare'),
-      params: { shape: { literal: t ? shapeText(t.shape) : '' }, dtype: { literal: t?.dtype === 'int64' ? 'int64' : 'float32' } },
+      params: { shape: { literal: t ? shapeText(t.shape) : '' }, dtype: { literal: t?.dtype === 'int64' || t?.dtype === 'bool' ? t.dtype : 'float32' } },
     };
     inner.layout[id] = { x: minX - 240, y: minY + i * 120 };
     inner.interface.inputs.push(id);

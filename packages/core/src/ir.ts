@@ -81,6 +81,8 @@ export interface HyperParam {
   annotation?: string;
   /** Absent: a required argument. */
   default?: { literal: Literal } | { expr: string };
+  /** Declared after `*` in __init__: callers pass it by name. */
+  keywordOnly?: boolean;
 }
 
 /** A plain attribute set in __init__ (`self.scale = head_dim ** -0.5`), usable by name in expressions. */
@@ -94,6 +96,8 @@ export interface ModuleDef {
   /** Class name; for a third-party class, the name the preamble imports (may be dotted). */
   className: string;
   hyperparams: HyperParam[];
+  /** Name of a `**kwargs` that __init__ accepts but never reads; written back so callers passing extra keywords still work. */
+  kwargs?: string;
   constants?: Constant[];
   nodes: Record<NodeId, NodeInst>;
   edges: Edge[];

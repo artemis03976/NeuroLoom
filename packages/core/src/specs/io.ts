@@ -12,7 +12,7 @@ export const input: NodeSpec = {
   summary: L('A forward() argument with a declared example shape.', 'forward() 的一个参数，需声明示例形状。'),
   params: [
     P.shape('shape', '形状', { initial: 'B, 784' }),
-    P.enum('dtype', '数据类型', { default: 'float32', options: ['float32', 'int64'] }),
+    P.enum('dtype', '数据类型', { default: 'float32', options: ['float32', 'int64', 'bool'] }),
   ],
   inputs: [],
   outputs: OUT,

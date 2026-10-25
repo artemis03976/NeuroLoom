@@ -18,7 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { attempt } from '../commands';
 import { benchEnabled } from '../lib/bench';
 import { computeLayout } from '../lib/layout';
-import { useSelectedNodeId, useStudio, type FlowNode, type PortLink } from '../store';
+import { useNewerSchema, useSelectedNodeId, useStudio, type FlowNode, type PortLink } from '../store';
 import { useUi } from '../ui';
 import { flowMode, lineage, LOD_ZOOM, useFlow } from './flowMode';
 import { nodeBadge } from './glyph';
@@ -111,6 +111,9 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
     if (useFlow.getState().mode !== mode) useFlow.getState().set({ mode });
   }, [mod.edges, getViewport]);
   useEffect(updateFlowMode, [updateFlowMode]);
+
+  // A file from a newer NeuroLoom is read-only: nodes stay where they are, and nothing connects or deletes.
+  const readOnly = !!useNewerSchema();
 
   // Data lineage: with one node selected, only the edges into and out of it move.
   const selectedId = useSelectedNodeId();
@@ -230,7 +233,9 @@ export function FlowCanvas({ colorMode }: { colorMode: 'light' | 'dark' | 'syste
         }}
         onlyRenderVisibleElements={cull}
         colorMode={colorMode}
-        deleteKeyCode={['Backspace', 'Delete']}
+        deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
+        nodesDraggable={!readOnly}
+        nodesConnectable={!readOnly}
         snapToGrid={snapToGrid}
         snapGrid={[GRID, GRID]}
         fitView

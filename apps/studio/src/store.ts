@@ -19,6 +19,7 @@ import {
   generateCode,
   insertModuleFrom,
   makeUnique,
+  newerSchema,
   packAsModule,
   pasteClip,
   portsOf,
@@ -52,9 +53,11 @@ import {
 import { applyNodeChanges, type Connection, type EdgeChange, type Node, type NodeChange } from '@xyflow/react';
 import { create } from 'zustand';
 import { nodeFaces, type NodeFace } from './canvas/face';
+import { tr } from './i18n';
 import { alignPositions, type AlignMode } from './lib/align';
 import { sampleProject } from './lib/sample';
 import { BLOCKS } from './templates';
+import { notify } from './ui';
 
 export type FlowNode = Node<Record<string, never>, 'layer'>;
 
@@ -83,6 +86,13 @@ export interface View {
 const HISTORY_LIMIT = 200;
 /** Consecutive edits to the same field within this window become one undo step. */
 const MERGE_WINDOW_MS = 1200;
+
+/** A refused edit in a read-only document says why at most this often. */
+const READ_ONLY_NOTICE_MS = 4000;
+let readOnlyNoticeAt = 0;
+
+/** Why a document from a newer NeuroLoom cannot be changed. */
+export const readOnlyReason = () => tr('这个文件来自更新版本的 NeuroLoom，只能查看；升级后才能编辑和保存', 'This file comes from a newer NeuroLoom and is read-only; upgrade to edit and save it');
 
 export interface DocState {
   /** File on disk (desktop) or last saved name (web); null for an unsaved document. */
@@ -229,6 +239,12 @@ export const useStudio = create<StudioState>()((set, get) => {
   /** Applies an edit as one undo step (or merges it into the previous one). */
   const commit = (next: LoomProject, options: { flowNodes?: FlowNode[]; merge?: string; view?: View; select?: NodeId[] } = {}) => {
     const { project: before, history } = get();
+    // A file from a newer NeuroLoom is read-only: every edit comes through here.
+    if (newerSchema(before)) {
+      if (Date.now() - readOnlyNoticeAt > READ_ONLY_NOTICE_MS) notify(readOnlyReason());
+      readOnlyNoticeAt = Date.now();
+      return;
+    }
     const project = pruneDanglingEdges(next);
     if (project === before && !options.view) return;
     const view = fixView(project, options.view ?? get().view);
@@ -538,3 +554,5 @@ export const useCurrentModule = () => useStudio((s) => s.project.modules[s.view.
 export const useSelectedNodeId = () => useStudio((s) => s.flowNodes.find((n) => n.selected)?.id ?? null);
 export const useSelectionCount = () => useStudio((s) => s.flowNodes.reduce((n, f) => n + (f.selected ? 1 : 0), 0));
 export const useDirty = () => useStudio((s) => s.doc.saved !== s.project);
+/** The schema version of a document from a newer NeuroLoom, which is read-only. */
+export const useNewerSchema = () => useStudio((s) => newerSchema(s.project));

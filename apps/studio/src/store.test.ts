@@ -1,7 +1,8 @@
-import { entryModule, literal } from '@neuroloom/core';
+import { entryModule, literal, parseProject } from '@neuroloom/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { blankProject, sampleProject } from './lib/sample';
 import { useStudio } from './store';
+import { useUi } from './ui';
 
 const s = () => useStudio.getState();
 const outFeatures = () => entryModule(s().project).nodes.n_fc1!.params.out_features;
@@ -94,6 +95,29 @@ describe('dirty tracking', () => {
     s().applyLayout({ n_x: { x: 50, y: 10 } }, true);
     expect(dirty()).toBe(true);
     expect(s().history.past).toHaveLength(1);
+  });
+});
+
+describe('a file from a newer NeuroLoom', () => {
+  beforeEach(() => s().loadProject(parseProject({ ...sampleProject(), schemaVersion: '9.9' })));
+
+  it('can be looked at but not changed', () => {
+    s().selectNode('n_fc1');
+    expect(s().flowNodes.find((n) => n.selected)?.id).toBe('n_fc1');
+    s().setParam('n_fc1', 'out_features', literal(128));
+    s().rename('n_fc1', 'encoder');
+    s().applyLayout({ n_x: { x: 50, y: 10 } }, true);
+    expect(outFeatures()).toEqual(literal(256));
+    expect(entryModule(s().project).nodes.n_fc1!.name).not.toBe('encoder');
+    expect(s().history.past).toHaveLength(0);
+    expect(dirty()).toBe(false);
+    expect(useUi.getState().toasts.at(-1)?.message).toMatch(/newer|更新版本/);
+  });
+
+  it('is laid out when it opens, and stays clean', () => {
+    s().applyLayout({ n_x: { x: 10, y: 10 } }, false);
+    expect(entryModule(s().project).layout.n_x).toEqual({ x: 10, y: 10 });
+    expect(dirty()).toBe(false);
   });
 });
 

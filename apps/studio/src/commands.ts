@@ -1,12 +1,23 @@
 // Document and editor commands, shared by keyboard shortcuts, the native menu
 // (desktop), the top bar and the canvas context menu.
-import { EditError, generateFiles, isValidClassName, parseProjectText, serializeProject, snakeCase, uniqueClassName, type ModuleId, type NodeId } from '@neuroloom/core';
+import {
+  EditError,
+  generateFiles,
+  isValidClassName,
+  newerSchema,
+  parseProjectText,
+  serializeProject,
+  snakeCase,
+  uniqueClassName,
+  type ModuleId,
+  type NodeId,
+} from '@neuroloom/core';
 import type { MenuCommand } from '@neuroloom/host-api';
 import { useReplay } from './canvas/replay';
 import { errorMessage, host } from './host';
 import { tr, useLocale } from './i18n';
 import { probeShapes } from './lib/probe';
-import { useStudio } from './store';
+import { readOnlyReason, useStudio } from './store';
 import { notify, useUi } from './ui';
 
 const isDirty = () => {
@@ -55,6 +66,11 @@ export async function openDocument(path?: string): Promise<void> {
 /** Returns true when the document ended up saved. */
 export async function saveDocument(saveAs = false): Promise<boolean> {
   const { project, doc } = useStudio.getState();
+  // Saving would drop what the newer version wrote and this one does not know.
+  if (newerSchema(project)) {
+    notify(readOnlyReason(), 'error');
+    return false;
+  }
   try {
     const where = await host.saveFile({
       path: saveAs ? undefined : (doc.path ?? undefined),
@@ -113,6 +129,7 @@ export function discardRecovery(): void {
  * shapes of code blocks and opaque modules, which inference cannot see.
  */
 export async function fillShapesByRunning(): Promise<void> {
+  if (newerSchema(useStudio.getState().project)) return notify(readOnlyReason());
   try {
     const observed = await probeShapes(useStudio.getState().project);
     useStudio.getState().applyShapes(observed);

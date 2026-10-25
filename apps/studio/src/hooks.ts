@@ -3,7 +3,8 @@ import type { MenuCommand } from '@neuroloom/host-api';
 import { useEffect } from 'react';
 import { runCommand } from './commands';
 import { host } from './host';
-import { useDirty, useStudio } from './store';
+import { tr, useLocale } from './i18n';
+import { useDirty, useNewerSchema, useStudio } from './store';
 import { useUi } from './ui';
 
 const AUTOSAVE_MS = 30_000;
@@ -132,8 +133,10 @@ export function useClipboard(): void {
 export function useDocumentLifecycle(): void {
   const dirty = useDirty();
   const name = useStudio((s) => s.doc.name);
+  const readOnly = !!useNewerSchema();
+  const locale = useLocale((s) => s.locale);
 
-  useEffect(() => host.setDocState({ dirty, title: name }), [dirty, name]);
+  useEffect(() => host.setDocState({ dirty, title: readOnly ? `${name}${tr('（只读）', ' (read-only)')}` : name }), [dirty, name, readOnly, locale]);
 
   useEffect(() => {
     if (host.kind !== 'web' || !dirty) return;

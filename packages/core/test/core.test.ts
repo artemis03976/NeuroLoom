@@ -9,6 +9,7 @@ import {
   entryModule,
   generateCode,
   literal,
+  newerSchema,
   parseProject,
   parseProjectText,
   parseShape,
@@ -197,10 +198,17 @@ describe('.loom serialization', () => {
     expect(entryModule(parseProject(p)).interface).toEqual({ inputs: ['b', 'a'], outputs: ['output', 'output_1'] });
   });
 
-  it('rejects files from a newer schema', () => {
+  it('reads a file from a newer schema as written, for viewing only', () => {
     const p = JSON.parse(JSON.stringify(mlp()));
-    p.schemaVersion = '9.0';
-    expect(() => parseProject(p)).toThrow('9.0');
+    p.schemaVersion = '0.9';
+    p.addedLater = { kept: true };
+    const loaded = parseProject(p);
+    expect(loaded.schemaVersion).toBe('0.9');
+    expect((loaded as unknown as { addedLater: unknown }).addedLater).toEqual({ kept: true });
+    expect(newerSchema(loaded)).toBe('0.9');
+    expect(newerSchema(mlp())).toBeUndefined();
+    expect(newerSchema({ schemaVersion: '0.2' })).toBeUndefined();
+    expect(() => parseProject({ ...JSON.parse(JSON.stringify(mlp())), schemaVersion: 'next' })).toThrow('next');
   });
 });
 
@@ -210,6 +218,31 @@ describe('parseProject', () => {
     const bad = JSON.parse(JSON.stringify(mlp()));
     bad.modules.main.nodes.fc1.type = 'torch.nn.Mystery';
     expect(() => parseProject(bad)).toThrow('torch.nn.Mystery');
+  });
+
+  it('shows node types it does not know in a newer file as placeholders', () => {
+    const p = JSON.parse(JSON.stringify(mlp()));
+    p.schemaVersion = '0.9';
+    p.modules.main.nodes.fc1.type = 'torch.nn.Mystery';
+    const loaded = parseProject(p);
+    const node = loaded.modules.main!.nodes.fc1!;
+    expect(node.kind).toBe('code');
+    expect(node.code!.source).toContain('torch.nn.Mystery');
+    // Its ports come from its edges, as Python names (`in` is a keyword).
+    expect([node.code!.inputs, node.code!.outputs]).toEqual([['in_'], ['out']]);
+    expect(loaded.modules.main!.edges.find((e) => e.target.node === 'fc1')!.target.port).toBe('in_');
+    // The rest of the model still analyzes and generates, for the read-only view.
+    expect(analyzeModule(loaded, 'main').nodes.act1).toBeDefined();
+    const code = generateCode(loaded).code;
+    expect(code).toContain('# torch.nn.Mystery');
+    expect(code).toContain('self.fc2 = nn.Linear(');
+  });
+
+  it('asks for an upgrade when a newer file cannot be shown', () => {
+    const p = JSON.parse(JSON.stringify(mlp()));
+    p.schemaVersion = '0.9';
+    p.modules.main.nodes.fc1.params = { in_features: { reference: 'x' } };
+    expect(() => parseProject(p)).toThrow(/0\.9.*fc1.*(升级|Upgrade)/);
   });
 });
 

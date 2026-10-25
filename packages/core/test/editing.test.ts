@@ -147,9 +147,9 @@ describe('modules in a project', () => {
 });
 
 describe('opening files', () => {
-  it('refuses a file from a newer NeuroLoom and says so', () => {
-    const file = { ...nested(), schemaVersion: '9.9' };
-    expect(() => parseProject(file)).toThrow(/newer|更新/);
+  it('opens a file from a newer NeuroLoom as it is, and one it cannot show with the upgrade', () => {
+    expect(parseProject({ ...nested(), schemaVersion: '9.9' }).schemaVersion).toBe('9.9');
+    expect(() => parseProject({ ...nested(), schemaVersion: '9.9', entry: 'missing' })).toThrow(/newer|更新/);
     expect(parseProject({ ...nested(), schemaVersion: SCHEMA_VERSION }).entry).toBe('main');
   });
 

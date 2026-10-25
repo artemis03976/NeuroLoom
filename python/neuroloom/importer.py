@@ -29,7 +29,7 @@ BATCH_PROBE = 2
 
 INPUT = "neuroloom.Input"
 OUTPUT = "neuroloom.Output"
-DTYPES = ("float32", "int64")
+DTYPES = ("float32", "int64", "bool")
 
 
 class ImportFailure(Exception):
@@ -69,6 +69,19 @@ def parse_input(text: str) -> InputSpec:
     if dtype not in DTYPES:
         raise ImportFailure(t(f"不支持的数据类型 {dtype}（可用：{'、'.join(DTYPES)}）", f"unsupported dtype {dtype} (available: {', '.join(DTYPES)})"))
     return InputSpec(parse_dims(dims), dtype)
+
+
+def example_tensor(spec: InputSpec, size: list[int], device: Any = "cpu", *, values: bool = True) -> Any:
+    """An example input: zeros for integer ids and boolean masks, random floats otherwise
+    (uninitialized when only the shape matters, and always on the meta device)."""
+    import torch
+
+    if spec.dtype == "int64":
+        return torch.zeros(size, dtype=torch.long, device=device)
+    if spec.dtype == "bool":
+        return torch.zeros(size, dtype=torch.bool, device=device)
+    meta = torch.device(device).type == "meta"
+    return torch.randn(size, device=device) if values and not meta else torch.empty(size, device=device)
 
 
 def _shape_text(dims: Dims) -> str:
@@ -554,10 +567,7 @@ def _probe_shapes(gm, cls, graph, placeholders, inputs: dict[str, InputSpec], g:
         for node, _ in placeholders:
             spec = inputs[str(node.target)]
             size = [d if isinstance(d, int) else BATCH_PROBE for d in spec.dims]
-            if spec.dtype == "int64":
-                tensors.append(torch.zeros(size, dtype=torch.long, device=device))
-            else:
-                tensors.append(torch.randn(size, device=device) if device == "cpu" else torch.empty(size, device=device))
+            tensors.append(example_tensor(spec, size, device))
         return tensors
 
     try:

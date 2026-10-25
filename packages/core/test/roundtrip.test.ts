@@ -29,7 +29,7 @@ inputs = []
 for spec in p["inputs"]:
     dims, _, dtype = spec.partition(":")
     size = [int(d) if d.isdigit() else 2 for d in dims.split(",")]
-    inputs.append(torch.randint(0, 10, size) if dtype == "int64" else torch.randn(size))
+    inputs.append(torch.randint(0, 10, size) if dtype == "int64" else torch.rand(size) > 0.5 if dtype == "bool" else torch.randn(size))
 with torch.no_grad():
     out = model(*inputs)
 out = out if isinstance(out, tuple) else (out,)
@@ -276,7 +276,7 @@ inputs = []
 for spec in p["inputs"]:
     dims, _, dtype = spec.partition(":")
     size = [int(d) if d.isdigit() else 3 for d in dims.split(",")]
-    inputs.append(torch.randint(0, 10, size) if dtype == "int64" else torch.randn(size))
+    inputs.append(torch.randint(0, 10, size) if dtype == "int64" else torch.rand(size) > 0.5 if dtype == "bool" else torch.randn(size))
 with torch.no_grad():
     oa, ob = a(*inputs), b(*inputs)
 oa = oa if isinstance(oa, tuple) else (oa,)

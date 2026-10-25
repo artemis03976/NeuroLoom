@@ -30,7 +30,7 @@ from typing import Any
 
 from . import SCHEMA_VERSION
 from .i18n import t
-from .importer import BATCH_PROBE, INPUT, OUTPUT, ImportFailure, InputSpec, _catalog, _describe, _layer_params, _op_params, _outputs, _state_node
+from .importer import BATCH_PROBE, INPUT, OUTPUT, ImportFailure, InputSpec, _catalog, _describe, _layer_params, _op_params, _outputs, _state_node, example_tensor
 from .probe import RUNS
 from .static import import_static
 
@@ -169,10 +169,7 @@ def _observe(model, specs: list[tuple[str, InputSpec]]) -> _Observation:
             tensors = []
             for _, spec in specs:
                 size = [d if isinstance(d, int) else value[d] for d in spec.dims]
-                if spec.dtype == "int64":
-                    tensors.append(torch.zeros(size, dtype=torch.long, device=device))
-                else:
-                    tensors.append(torch.empty(size, device=device) if device.type == "meta" else torch.randn(size, device=device))
+                tensors.append(example_tensor(spec, size, device))
             with torch.no_grad(), contextlib.redirect_stdout(sys.stderr):
                 model(*tensors)
     finally:
@@ -880,7 +877,7 @@ def _observed_root(builder: _Builder, model, specs: list[tuple[str, InputSpec]])
         tensors = []
         for _, spec in specs:
             size = [d if isinstance(d, int) else BATCH_PROBE for d in spec.dims]
-            tensors.append(torch.zeros(size, dtype=torch.long, device=device) if spec.dtype == "int64" else torch.empty(size, device=device))
+            tensors.append(example_tensor(spec, size, device, values=False))
         with torch.no_grad(), contextlib.redirect_stdout(sys.stderr):
             ShapeProp(gm).propagate(*tensors)
     except Exception:

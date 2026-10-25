@@ -5,7 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from neuroloom.importer import InputSpec
+from neuroloom.dynamic import import_dynamic
+from neuroloom.importer import InputSpec, parse_input
 from neuroloom.static import import_static
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -207,6 +208,27 @@ class Net(nn.Module):
     assert by_name(mods["Net"])["gate"]["params"] == {"#0": {"literal": 4}, "#1": {"literal": 4}}
     assert result["report"][0]["level"] == "L3"
     assert result["project"]["preamble"] == "from timm.layers import DropPath"
+
+
+def test_boolean_inputs():
+    assert parse_input("B,8:bool").dtype == "bool"
+    source = """
+from torch import nn
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(8, 8)
+
+    def forward(self, x, mask):
+        return self.fc(x).masked_fill(mask, 0.0)
+"""
+    # The run behind dynamic import needs a real mask: masked_fill rejects a float one.
+    result = import_dynamic(source, "Net", {"x": InputSpec(["B", 8]), "mask": InputSpec(["B", 8], "bool")})
+    entry = modules(result)[result["project"]["entry"]]
+    mask = by_name(entry)["mask"]
+    assert mask["params"]["dtype"] == {"literal": "bool"}
 
 
 def test_never_runs_the_code():

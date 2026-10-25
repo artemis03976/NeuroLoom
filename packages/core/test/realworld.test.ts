@@ -18,7 +18,7 @@ const corpus = join(pythonDir, 'tests/corpus');
 const hasCorpus = hasTorch && canImport('timm, transformers, diffusers, einops, scipy');
 
 /** Measured files that pass today; the test fails if fewer do. */
-const FLOOR = 26;
+const FLOOR = 31;
 
 interface Entry {
   id: string;

@@ -304,6 +304,7 @@
 | --- | --- | ---: | ---: |
 | `v1/import-corpus` | 第一次测量 | 20/50（40%） | 6/12 |
 | `v1/import-bool-kwonly` | `bool` 输入；`__init__` 的仅限关键字参数，以及没有用到的 `**kwargs` | 26/50（52%） | 7/12 |
+| `v1/forward-defaults` | `forward()` 的默认参数；生成的代码把 `from __future__` 放到最前面 | 31/50（62%） | 7/12 |
 
 `v1/import-bool-kwonly` 的改动：
 - **`bool` 输入**：Input 节点的数据类型可以选 `bool`。动态导入、形状探测等实际运行模型的地方，会生成布尔掩码作为示例输入，不再只认 `int64`。
@@ -319,11 +320,30 @@
   - **vit-pytorch**：仅限关键字参数已经解决，但 `forward()` 中途返回，仍然整类保留为源码。这是新的一类，留出集里的 PointNet 也属于这类。
   - **timm 的 Swin**：已经能结构化，但生成的模块丢了 timm 注册的构造函数，加载失败。和 timm 的 ResNet 一样，属于“丢了模块级函数”（第 3 项）。
 
+`v1/forward-defaults` 的改动：
+- **`forward()` 的默认参数**（`targets=None`、`return_h=False`）：
+  - 导入后成为可选输入，默认值按源码原样记在模块接口上（`interface.defaults`）。生成的代码原样写回 `targets=None`。
+  - 调用方可以不传；没连线的可选端口不会出现在调用里。
+  - 依赖这些参数的分支（`if targets is not None:`）保留为代码块。
+  - 入口模型的可选参数不需要示例形状。形状探测和导出的自测片段都不传这个参数，让它取默认值。
+- **`from __future__`**：原文件的 `from __future__` 导入现在写在生成文件的最前面，以前放在其他 import 之后，Python 会报语法错误。
+
+结果：
+- 测量集新增成功 5 个：nanoGPT、minGPT、ConvLSTM、deepvoice3，以及 wavenet_vocoder（`from __future__` 的问题）。
+- 碰到下一层问题的有 4 个：
+  - **attention-is-all-you-need、awd-lstm-lm、RNN 时间序列异常检测**：默认参数解决了，但这些开关控制的是中途 `return`（`if return_h: return ...`），所以仍然整类保留为源码。
+  - **timm 的 ViT**：能结构化了，但和 timm 的 ResNet、Swin 一样丢了注册的构造函数。
+
+测量集剩下 19 个失败：
+- “丢了模块级函数”6 个：timm 的 ResNet、Swin、ViT，gen-efficientnet，CycleGAN，DETR。
+- 入口类的基类不是 `nn.Module`：9 个。
+- “`forward()` 中途返回”4 个：vit-pytorch 和上面 3 个。
+
 ## 10. 文件
 
 - `python/tests/corpus/manifest.json`：每个文件的出处、提交、sha256、许可证、类别、入口类、构造方式、示例输入、导入时执行的同仓库文件，以及属于测量集还是留出集。
 - `python/tests/corpus/selection.json`：选取过程，包括搜索条件，以及走过的每个仓库的判断和原因。
 - `python/tests/corpus/fetch.py`：按提交下载文件并校验 sha256。`--update` 记录新的哈希，并重写 `THIRD_PARTY_NOTICES.md`。
 - `python/tests/corpus/realworld.py`：构造原模型，并与生成的代码比较。
-- `packages/core/test/realworld.test.ts`：计算指标，打印每个文件的结果和原因。下限只升不降，现在是 26。
+- `packages/core/test/realworld.test.ts`：计算指标，打印每个文件的结果和原因。下限只升不降，现在是 31。
 - 原来的 10 个自写文件移到了 `python/tests/corpus/handwritten/`。

@@ -5,7 +5,7 @@ import { analyzeModule, analyzeProject, sequentialChain, usedByCode, variadicEdg
 import { asOperand, renameInExpr, subtractOne } from './expr';
 import { consumers, incomingByPort, interfaceOrder, portKey } from './graph';
 import { msg } from './i18n';
-import { exprOf, literalOf, type ExportOptions, type Literal, type LoomProject, type ModuleDef, type ModuleId, type NodeId, type NodeInst, type ParamValue } from './ir';
+import { exprOf, literalOf, type ExportOptions, type HyperParam, type Literal, type LoomProject, type ModuleDef, type ModuleId, type NodeId, type NodeInst, type ParamValue } from './ir';
 import { defaultSymbolValue, shapeValue } from './profile';
 import { dependencyOrder, portsOf, snakeCase } from './project';
 import { formatShape, type TensorType } from './shape';
@@ -281,6 +281,9 @@ class ClassWriter {
         if (v) args.push(this.value(v, 'init', float));
       } else if (verbatim) {
         if (v) args.push(`${hp.name}=${this.value(v, 'init', float)}`);
+      } else if (hp.keywordOnly && !hp.default) {
+        if (!v) missing.push(hp.name);
+        args.push(`${hp.name}=${v ? this.value(v, 'init', float) : 'None'}`);
       } else if (!hp.default) {
         if (!v) missing.push(hp.name);
         args.push(v ? this.value(v, 'init', float) : 'None');
@@ -386,13 +389,21 @@ class ClassWriter {
     if (gen.opts.docstrings) gen.emit(`${I1}"""${this.docstring()}"""`);
 
     const hints = gen.opts.typeHints !== false;
-    const signature = ['self', ...mod.hyperparams.map((hp) => {
+    const parameter = (hp: HyperParam) => {
       const annotation = hints ? hp.annotation : undefined;
       const head = annotation ? `${hp.name}: ${annotation}` : hp.name;
       if (!hp.default) return head;
       const value = this.value(hp.default, 'init', hp.annotation === 'float');
       return annotation ? `${head} = ${value}` : `${head}=${value}`;
-    })];
+    };
+    // Keyword-only hyperparameters follow a bare `*`; an unused **kwargs goes last.
+    const keywordOnly = mod.hyperparams.filter((hp) => hp.keywordOnly);
+    const signature = [
+      'self',
+      ...mod.hyperparams.filter((hp) => !hp.keywordOnly).map(parameter),
+      ...(keywordOnly.length > 0 ? ['*', ...keywordOnly.map(parameter)] : []),
+      ...(mod.kwargs ? [`**${mod.kwargs}`] : []),
+    ];
     gen.emit(`${I1}def __init__(${signature.join(', ')}):`);
     gen.emit(`${I2}super().__init__()`);
     for (const name of this.storedHyperparams()) gen.emit(`${I2}self.${name} = ${name}`);

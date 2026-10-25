@@ -210,6 +210,59 @@ class Net(nn.Module):
     assert result["project"]["preamble"] == "from timm.layers import DropPath"
 
 
+def test_keyword_only_arguments_and_unused_kwargs():
+    source = """
+from torch import nn
+
+
+class Block(nn.Module):
+    def __init__(self, dim, *, hidden, act=True, **kwargs):
+        super().__init__()
+        self.fc = nn.Linear(dim, hidden)
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+class Passes(nn.Module):
+    def __init__(self, dim, **kwargs):
+        super().__init__()
+        self.fc = nn.Linear(dim, dim, **kwargs)
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.block = Block(8, hidden=16)
+        self.passes = Passes(16)
+
+    def forward(self, x):
+        return self.passes(self.block(x))
+"""
+    result = import_static(source, inputs={"x": InputSpec(["B", 8])})
+    levels = {r["className"]: r["level"] for r in result["report"]}
+    # Keyword-only arguments are hyperparameters; a **kwargs __init__ never reads is kept by name.
+    assert levels["Block"] == "L1" and levels["Net"] == "L1"
+    block = modules(result)["Block"]
+    assert block["hyperparams"] == [
+        {"name": "dim"},
+        {"name": "hidden", "keywordOnly": True},
+        {"name": "act", "default": {"literal": True}, "keywordOnly": True},
+    ]
+    assert block["kwargs"] == "kwargs"
+    assert by_name(modules(result)["Net"])["block"]["params"] == {"dim": {"literal": 8}, "hidden": {"literal": 16}}
+    # A **kwargs that is passed on cannot be followed.
+    assert levels["Passes"] == "L3"
+
+    # A keyword-only argument cannot be given by position.
+    positional = import_static(source.replace("Block(8, hidden=16)", "Block(8, 16)"), inputs={"x": InputSpec(["B", 8])})
+    net = modules(positional)["Net"]
+    assert "block" not in by_name(net) and "Block(8, 16)" in net["initCode"]
+
+
 def test_boolean_inputs():
     assert parse_input("B,8:bool").dtype == "bool"
     source = """

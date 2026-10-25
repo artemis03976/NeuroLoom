@@ -246,6 +246,35 @@ class Block(nn.Module):
         return self.scale * self.fc(x) + self.offset
 `,
   },
+  // Keyword-only __init__ arguments (vit-pytorch), a **kwargs __init__ never reads
+  // (DINO, SwinIR) and a boolean mask input (EVA).
+  keywordOnlyAndMask: {
+    inputs: { x: 'B,8', mask: 'B,8:bool' },
+    source: `import torch
+from torch import nn
+
+
+class Gated(nn.Module):
+    def __init__(self, dim, *, hidden, scale=2.0, **kwargs):
+        super().__init__()
+        self.fc = nn.Linear(dim, hidden)
+        self.out = nn.Linear(hidden, dim)
+        self.scale = scale
+
+    def forward(self, x, mask):
+        h = torch.relu(self.fc(x)) * self.scale
+        return self.out(h) * mask
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.block = Gated(8, hidden=16, scale=0.5)
+
+    def forward(self, x, mask):
+        return self.block(x, mask)
+`,
+  },
 };
 
 /** Places nodes in reverse creation order, so every layout-based tie-break flips. */

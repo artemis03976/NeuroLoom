@@ -62,9 +62,9 @@ function HyperParamRow({ hp, onChange, onRemove }: { hp: HyperParam; onChange: (
         value={hp.default}
         placeholder={tr('默认值（留空 = 必填）', 'default (empty = required)')}
         onCommit={(v) => {
-          const next: HyperParam = { name: hp.name, ...(hp.annotation ? { annotation: hp.annotation } : {}) };
-          if (v && !('auto' in v)) next.default = v;
-          onChange(next);
+          // Everything but the default stays as it was (annotation, keyword-only).
+          const { default: _, ...next }: HyperParam = hp;
+          onChange(v && !('auto' in v) ? { ...next, default: v } : next);
         }}
       />
     </div>

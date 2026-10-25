@@ -18,6 +18,7 @@ chosen class by class:
 
 from __future__ import annotations
 
+import ast
 import contextlib
 import copy
 import inspect
@@ -32,7 +33,7 @@ from . import SCHEMA_VERSION
 from .i18n import t
 from .importer import BATCH_PROBE, INPUT, OUTPUT, ImportFailure, InputSpec, _catalog, _describe, _layer_params, _op_params, _outputs, _state_node, example_tensor
 from .probe import RUNS
-from .static import import_static
+from .static import bound_names, import_static
 
 USER_MODULE = "neuroloom_user_code"
 
@@ -820,6 +821,14 @@ def _verbatim_text(builder: _Builder, preamble: str) -> str:
     return "\n".join(parts)
 
 
+def _epilogue(builder: _Builder, static_project: dict) -> str:
+    """The static epilogue, when code kept as written uses something it defines."""
+    epilogue = static_project.get("epilogue", "")
+    names = set().union(*(bound_names(stmt) for stmt in ast.parse(epilogue).body))
+    text = _verbatim_text(builder, static_project.get("preamble", ""))
+    return epilogue if any(re.search(rf"\b{re.escape(name)}\b", text) for name in names) else ""
+
+
 def _define_referenced_classes(builder: _Builder, static_project: dict) -> None:
     """
     Code kept as written calls the user's classes by their original names and
@@ -830,7 +839,7 @@ def _define_referenced_classes(builder: _Builder, static_project: dict) -> None:
     user_classes = [k for k, m in static_project["modules"].items() if k == m["className"] and not m.get("sequential")]
     done: set[str] = set()
     while True:
-        text = _verbatim_text(builder, static_project.get("preamble", ""))
+        text = _verbatim_text(builder, static_project.get("preamble", "")) + "\n" + _epilogue(builder, static_project)
         missing = [
             c
             for c in user_classes
@@ -996,6 +1005,9 @@ def import_dynamic(
         preamble = "\n".join([*missing, preamble] if preamble else missing)
     if preamble:
         project["preamble"] = preamble
+    epilogue = _epilogue(builder, static_project)
+    if epilogue:
+        project["epilogue"] = epilogue
     observed = _observed_root(builder, model, specs)
     report = list(builder.report.values())
     return {

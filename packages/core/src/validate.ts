@@ -121,7 +121,16 @@ export function parseProject(json: unknown): LoomProject {
       for (const n of Object.values(nodes)) if (n.kind === kind && !unique.includes(n.id as string)) unique.push(n.id as string);
       return unique;
     };
-    mod.interface = { inputs: fix('input', declared.inputs), outputs: fix('output', declared.outputs) };
+    const inputs = fix('input', declared.inputs);
+    // Defaults of optional forward() arguments: kept for inputs that still exist.
+    const defaults = isObject(declared.defaults)
+      ? Object.fromEntries(Object.entries(declared.defaults).filter(([id, v]) => inputs.includes(id) && typeof v === 'string'))
+      : {};
+    mod.interface = {
+      inputs,
+      outputs: fix('output', declared.outputs),
+      ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
+    };
   }
   return json as unknown as LoomProject;
 }

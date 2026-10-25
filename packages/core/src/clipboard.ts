@@ -115,7 +115,7 @@ export function pasteClip(project: LoomProject, moduleId: ModuleId, clip: Clip, 
     nodes: { ...mod.nodes },
     layout: { ...mod.layout },
     edges: [...mod.edges],
-    interface: { inputs: [...mod.interface.inputs], outputs: [...mod.interface.outputs] },
+    interface: { ...mod.interface, inputs: [...mod.interface.inputs], outputs: [...mod.interface.outputs] },
   };
 
   for (const node of clip.nodes) {

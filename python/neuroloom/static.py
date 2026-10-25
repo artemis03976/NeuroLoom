@@ -781,11 +781,17 @@ class _ClassConverter:
 
     def _forward(self, fn: ast.FunctionDef) -> None:
         args = fn.args
-        if args.vararg or args.kwarg or args.kwonlyargs or args.posonlyargs or args.defaults:
-            raise Opaque(t("forward 有默认参数或可变参数", "forward has default or variadic arguments"))
-        for a in args.args[1:]:
+        if args.vararg or args.kwarg or args.kwonlyargs or args.posonlyargs:
+            raise Opaque(t("forward 有可变参数或仅限关键字的参数", "forward has variadic or keyword-only arguments"))
+        # An argument with a default (targets=None, return_h=False) is an optional input:
+        # callers may leave it out, and statements that branch on it become code blocks.
+        params = args.args[1:]
+        defaults = [None] * (len(params) - len(args.defaults)) + list(args.defaults)
+        for a, default in zip(params, defaults):
             node = self.m.add("input", INPUT, a.arg, {"shape": {"literal": ""}, "dtype": {"literal": "float32"}})
             self.m.mod["interface"]["inputs"].append(node)
+            if default is not None:
+                self.m.mod["interface"].setdefault("defaults", {})[node] = self.file.segment(default)
             self.values[a.arg] = _Value(node, "out")
         body = [s for i, s in enumerate(fn.body) if not (i == 0 and _is_docstring(s))]
         for i, stmt in enumerate(body):
@@ -1480,8 +1486,11 @@ def import_static(
 
     entry_mod = modules[entry]
     inputs = dict(inputs or {})
+    defaults = entry_mod["interface"].get("defaults", {})
     for input_id in entry_mod["interface"]["inputs"]:
         node = entry_mod["nodes"][input_id]
+        if node["name"] not in inputs and input_id in defaults:
+            continue  # an optional argument nobody gave a shape: the model is called without it
         spec = inputs.get(node["name"]) or _guess_input(entry_mod, input_id, imp.warnings)
         node["params"]["shape"] = {"literal": ", ".join(str(d) for d in spec.dims)}
         node["params"]["dtype"] = {"literal": spec.dtype}

@@ -22,7 +22,9 @@ export interface ObservedShape {
 export function probeRequest(project: LoomProject): { code: string; className: string; inputs: string[] } {
   const { code } = generateCode(project, analyzeProject(project), { probe: true });
   const entry = project.modules[project.entry]!;
-  const inputs = entry.interface.inputs.map((id) => {
+  // An optional forward() argument without an example shape is left at its default.
+  const given = entry.interface.inputs.filter((id) => !(entry.interface.defaults?.[id] !== undefined && !String(literalOf(entry.nodes[id]!.params.shape) ?? '').trim()));
+  const inputs = given.map((id) => {
     const node = entry.nodes[id]!;
     const dtype = String(literalOf(node.params.dtype) ?? 'float32');
     return `${String(literalOf(node.params.shape) ?? '').replace(/\s/g, '')}${dtype === 'float32' ? '' : `:${dtype}`}`;

@@ -449,7 +449,13 @@ class ClassWriter {
     const returnType =
       outputs.length === 0 ? 'None' : outputs.length === 1 ? 'torch.Tensor' : `tuple[${outputs.map(() => 'torch.Tensor').join(', ')}]`;
     const hints = gen.opts.typeHints !== false;
-    const signature = ['self', ...inputs.map((n) => (hints ? `${n.name}: torch.Tensor` : n.name))].join(', ');
+    // An optional argument keeps its default as written (`targets=None`, `return_h=False`).
+    const argument = (n: NodeInst) => {
+      const fallback = mod.interface.defaults?.[n.id];
+      if (fallback !== undefined) return `${n.name}=${fallback}`;
+      return hints ? `${n.name}: torch.Tensor` : n.name;
+    };
+    const signature = ['self', ...inputs.map(argument)].join(', ');
     gen.emit(hints ? `${I1}def forward(${signature}) -> ${returnType}:` : `${I1}def forward(${signature}):`);
     const bodyStart = gen.lines.length;
 
@@ -810,7 +816,14 @@ class Generator {
     this.emit('');
     this.emit('if __name__ == "__main__":');
     this.emit(`${I1}${model} = ${entry.className}()`);
-    for (const node of inputs) {
+    // An optional argument without an example shape is left at its default; later ones go by name.
+    const passed = inputs.filter((n) => entry.interface.defaults?.[n.id] === undefined || analysis.nodes[n.id]?.outputs?.[0]);
+    const args: string[] = [];
+    for (const n of inputs) {
+      if (!passed.includes(n)) continue;
+      args.push(args.length < inputs.indexOf(n) ? `${n.name}=${n.name}` : n.name);
+    }
+    for (const node of passed) {
       const t = analysis.nodes[node.id]?.outputs?.[0];
       const sizes = sizesOf(t);
       const dtype = t?.dtype ?? 'float32';
@@ -821,10 +834,10 @@ class Generator {
       else this.emit(`${I1}${node.name} = torch.zeros(${shape}, dtype=torch.${dtype})${todo}`);
     }
     if (outputs.length === 0) {
-      this.emit(`${I1}${model}(${inputs.map((n) => n.name).join(', ')})`);
+      this.emit(`${I1}${model}(${args.join(', ')})`);
       return;
     }
-    this.emit(`${I1}${results.join(', ')} = ${model}(${inputs.map((n) => n.name).join(', ')})`);
+    this.emit(`${I1}${results.join(', ')} = ${model}(${args.join(', ')})`);
     let checked = false;
     outputs.forEach((o, i) => {
       const sizes = sizesOf(analysis.outputs[i]);

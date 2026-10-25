@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '@neuroloom/core';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useState } from 'react';
 import { FlowCanvas } from './canvas/FlowCanvas';
@@ -19,7 +20,7 @@ import { PromptDialog } from './panels/PromptDialog';
 import { QuickAdd } from './panels/QuickAdd';
 import { TemplateDialog } from './panels/TemplateDialog';
 import { TopBar } from './panels/TopBar';
-import { useStudio } from './store';
+import { useNewerSchema, useStudio } from './store';
 import { useUi } from './ui';
 
 function Toasts() {
@@ -61,6 +62,28 @@ function RecoveryBanner() {
   );
 }
 
+const RELEASES_URL = 'https://github.com/artemis03976/NeuroLoom/releases';
+
+/** A file from a newer NeuroLoom opens read-only and asks for an upgrade (PRD, compatibility). */
+function ReadOnlyBanner() {
+  const newer = useNewerSchema();
+  if (!newer) return null;
+  return (
+    <div role="status" className="absolute inset-x-3 top-14 z-20 flex items-center gap-3 rounded-lg border border-warning/50 bg-surface px-4 py-2 text-[12.5px] shadow-lg">
+      <span className="size-2 flex-none rounded-full bg-warning" />
+      <span className="flex-1">
+        {tr(
+          `只读：这个文件来自更新版本的 NeuroLoom（文件格式 ${newer}，当前版本支持 ${SCHEMA_VERSION}），新加入的内容可能显示不全。升级后才能编辑和保存。`,
+          `Read-only: this file comes from a newer NeuroLoom (file format ${newer}; this version reads ${SCHEMA_VERSION}), and what it added may not show. Upgrade to edit and save it.`,
+        )}
+      </span>
+      <a href={RELEASES_URL} target="_blank" rel="noreferrer" className="flex-none rounded-md bg-primary px-3 py-1 text-primary-fg hover:bg-primary-hover">
+        {tr('获取新版本', 'Get the new version')}
+      </a>
+    </div>
+  );
+}
+
 export function App() {
   const [theme, setTheme] = useState<ThemeChoice>(loadTheme);
   const locale = useLocale((s) => s.locale);
@@ -97,6 +120,7 @@ export function App() {
             <SourceView />
             <ReplayBar />
             <RecoveryBanner />
+            <ReadOnlyBanner />
             <Toasts />
           </main>
           <Inspector />

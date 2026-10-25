@@ -164,7 +164,8 @@ export interface ExportOptions {
 }
 
 export interface LoomProject {
-  schemaVersion: typeof SCHEMA_VERSION;
+  /** SCHEMA_VERSION; a newer one when the file comes from a newer NeuroLoom (opened read-only). */
+  schemaVersion: string;
   name: string;
   entry: ModuleId;
   modules: Record<ModuleId, ModuleDef>;

@@ -23,7 +23,7 @@ import { attempt, unpackSelection } from '../commands';
 import { pick, tr } from '../i18n';
 import { formatFlops } from '../lib/format';
 import { fallbackValue } from '../lib/paramText';
-import { useCurrentModule, useSelectedNodeId, useStudio } from '../store';
+import { useCurrentModule, useNewerSchema, useSelectedNodeId, useStudio } from '../store';
 import { useSymbols } from './AnalysisPanel';
 import { CodeArea, ExprParam, field, NamesField, Section, TextParam, ValueField } from './inspector/fields';
 import { ModelInspector } from './inspector/ModelInspector';
@@ -461,9 +461,13 @@ function NodeInspector({ nodeId }: { nodeId: string }) {
 
 export function Inspector() {
   const selected = useSelectedNodeId();
+  const readOnly = !!useNewerSchema();
   return (
     <aside className="min-h-0 overflow-y-auto border-l border-line bg-surface">
-      {selected ? <NodeInspector key={selected} nodeId={selected} /> : <ModelInspector />}
+      {/* A file from a newer NeuroLoom can be read here but not changed. */}
+      <fieldset disabled={readOnly} className="contents">
+        {selected ? <NodeInspector key={selected} nodeId={selected} /> : <ModelInspector />}
+      </fieldset>
     </aside>
   );
 }

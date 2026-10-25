@@ -759,7 +759,11 @@ class Generator {
   run(): void {
     const { project } = this;
     const modules = dependencyOrder(project).map((id) => project.modules[id]!);
-    const verbatim = [project.preamble, ...modules.flatMap((m) => [m.opaque?.source, m.initCode, m.members, ...Object.values(m.nodes).map((n) => n.code?.source)])].join('\n');
+    const verbatim = [
+      project.preamble,
+      project.epilogue,
+      ...modules.flatMap((m) => [m.opaque?.source, m.initCode, m.members, ...Object.values(m.nodes).map((n) => n.code?.source)]),
+    ].join('\n');
     const usesF =
       /\bF\./.test(verbatim) ||
       modules.some((m) => Object.values(m.nodes).some((n) => n.kind === 'op' && getSpec(n.type)?.codegen.fn?.startsWith('F.')));
@@ -802,6 +806,11 @@ class Generator {
         new ClassWriter(this, mod, this.analysesOf(mod.id)).write();
       }
       this.ranges[mod.id] = [start, this.lines.length];
+    }
+    if (project.epilogue?.trim()) {
+      this.emit('');
+      this.emit('');
+      for (const line of project.epilogue.trimEnd().split('\n')) this.emit(line);
     }
     if (this.opts.selfTest) this.writeSelfTest();
   }
@@ -876,7 +885,8 @@ export interface GeneratedFile {
  * The code as a Python package (export option "one file per class"): a module
  * per class, named after it in snake_case, importing the classes it mentions
  * from its siblings, and an __init__.py that exports the entry model. The
- * self-test, if any, goes with the entry class (run it with `python -m`).
+ * epilogue, which names the classes, and the self-test, if any, go with the
+ * entry class, whose module imports all the others (run it with `python -m`).
  */
 export function generateFiles(project: LoomProject, analysis: ProjectAnalysis = analyzeProject(project), options: CodegenOptions = {}): GeneratedFile[] {
   const gen = new Generator(project, analysis, options);
@@ -895,9 +905,10 @@ export function generateFiles(project: LoomProject, analysis: ProjectAnalysis = 
   const header = gen.opts.header ? [gen.lines[0]!, ''] : [];
   const { future, rest } = futureFirst(project.preamble);
   const preamble = rest.trim() ? ['', ...rest.trimEnd().split('\n')] : [];
+  const epilogue = project.epilogue?.trim() ? ['', '', ...project.epilogue.trimEnd().split('\n')] : [];
   const files = ids.map((id): GeneratedFile => {
     const [start, end] = gen.ranges[id]!;
-    const body = gen.lines.slice(start, end);
+    const body = [...gen.lines.slice(start, end), ...(id === project.entry ? epilogue : [])];
     const text = body.join('\n');
     const siblings = ids
       .filter((other) => other !== id && new RegExp(`\\b${className(other)}\\b`).test(text))

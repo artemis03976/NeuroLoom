@@ -156,7 +156,8 @@ function evalDefault(value: { literal: Literal } | { expr: string }, env: Env): 
 
 /**
  * Module-level constants from the preamble (`HIDDEN = 128`), which every
- * expression can use. Other preamble names are in scope with unknown values.
+ * expression can use. Other preamble names are in scope with unknown values,
+ * and so are the epilogue's, which code can use once the file has run.
  */
 export function preambleEnv(project: LoomProject): Env {
   const env: Env = {};
@@ -169,6 +170,10 @@ export function preambleEnv(project: LoomProject): Env {
       const def = /^(?:def|class)\s+([A-Za-z_]\w*)/.exec(line);
       if (def) env[def[1]!] = undefined;
     }
+  }
+  for (const line of project.epilogue?.split('\n') ?? []) {
+    const m = /^(?:(?:async\s+)?def|class)\s+([A-Za-z_]\w*)/.exec(line) ?? /^([A-Za-z_]\w*)\s*(?::[^=]+)?=(?!=)/.exec(line);
+    if (m && !(m[1]! in env)) env[m[1]!] = undefined;
   }
   return env;
 }

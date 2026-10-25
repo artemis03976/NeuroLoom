@@ -19,6 +19,9 @@ const VARIANTS: Record<string, ExportOptions> = {
 
 const code = (p: LoomProject, options: ExportOptions) => generateCode({ ...p, exportOptions: options }).code;
 
+/** A ResNet with factory code after the classes, as an import keeps it. */
+const withEpilogue = (): LoomProject => ({ ...resnet(), epilogue: 'def res_net_small():\n    return ResNet()\n\n\nBLOCKS = {"res": ResBlock}' });
+
 describe('export options', () => {
   it('leave the code as it was when absent or default', () => {
     for (const make of Object.values(FIXTURES)) {
@@ -76,6 +79,14 @@ describe('export options', () => {
     expect(code(p, {}).split('\n')[0]).toBe('from __future__ import annotations');
     const files = generateFiles({ ...p, exportOptions: { splitFiles: true } });
     for (const f of files.filter((f) => f.name !== '__init__.py')) expect(f.text.split('\n')[0]).toBe('from __future__ import annotations');
+  });
+
+  it('write the epilogue after the classes, and in a package with the entry class', () => {
+    const text = code(withEpilogue(), { selfTest: true });
+    expect(text.indexOf('def res_net_small')).toBeGreaterThan(text.lastIndexOf('\nclass '));
+    expect(text.indexOf('def res_net_small')).toBeLessThan(text.indexOf('if __name__'));
+    const files = generateFiles({ ...withEpilogue(), exportOptions: { splitFiles: true } });
+    expect(files.filter((f) => f.text.includes('def res_net_small')).map((f) => f.name)).toEqual(['res_net.py']);
   });
 
   it('split into a package with sibling imports', () => {
@@ -140,6 +151,7 @@ describe.skipIf(!hasTorch)('export options keep the model the same', () => {
     ...Object.entries(VARIANTS).map(([variant, options]) => ({ name: `${fixture} ${variant}`, project: make(), options, split: false })),
     { name: `${fixture} split`, project: make(), options: { splitFiles: true, selfTest: true } as ExportOptions, split: true },
   ]);
+  cases.push({ name: 'resnet with an epilogue, split', project: withEpilogue(), options: { splitFiles: true, selfTest: true }, split: true });
   let results: (boolean | string)[] = [];
 
   beforeAll(() => {

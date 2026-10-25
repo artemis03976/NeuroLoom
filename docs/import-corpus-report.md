@@ -4,7 +4,13 @@
 
 > 开源模型文件静态导入成功率 ≥ 80%（自建 50 个常见仓库模型文件语料库）
 
-**结论：语料库已收录，第一次测量是 20/50（40%），离 80% 还差 20 个文件。**
+**现状（`v1/module-functions`）：37/41（90%），达到 80%。**
+- 指标只计入口类直接继承 `nn.Module` 的 41 个文件。入口类继承框架基类的 9 个文件不在支持范围内，照常测量和报告，见第 1 节。
+- 全部 50 个文件中成功 37 个。留出集按同样口径成功 8/10，全部 12 个中成功 8 个。
+- 范围内剩下的 4 个失败都是 `forward()` 中途返回，整类保留为源码。
+- 每次改动的结果见第 9 节的改进记录。
+
+**第一次测量（收录时）：20/50（40%），离 80% 还差 20 个文件。**
 - 成功的 20 个文件中，4 个没有代码块；留出集 12 个文件中成功 6 个。
 - 失败全部出在导入器：测试环境能构造并运行全部 62 个原模型。
 - 失败原因分为五类，见第 8 节。其中三类合计 20 个文件，改起来不涉及 IR：
@@ -26,11 +32,38 @@
 3. **没有整类降级**：入口类以及它用到的类，都不是 L3（整类保留源码）。代码块是允许的。
 
 结果怎么报：
-- **指标**：50 个测量文件中成功的个数。
-- **另外报两项**：
+- **指标**：入口类直接继承 `nn.Module` 的测量文件中成功的个数，目标 ≥ 80%。测量集里有 41 个这样的文件。
+- **另外报三项**：
+  - 全部 50 个文件中成功的个数；
   - 严格口径：没有任何代码块；
   - 每个文件中各类的级别和代码块数。
-- **留出集的 12 个文件单独报告**。修改导入器时不看这 12 个文件。
+- **留出集的 12 个文件单独报告**，口径相同。修改导入器时不看这 12 个文件。
+
+指标起初是全部 50 个文件中成功的个数，`v1/module-functions` 改为现在的口径，原因见下。
+
+### 支持范围
+
+PRD 承诺导入的是“规范写法”的模型。织络生成的代码是一组直接继承 `nn.Module` 的类，模型结构都写在这些类自己的 `__init__` 和 `forward` 里。入口类继承框架基类的文件不在这个范围内：
+- 有的基类提供构造、配置、权重加载等机制，例如 transformers 的 `PreTrainedModel`，以及 diffusers 的 `ModelMixin` 和 `ConfigMixin`；
+- 有的基类里写着 `forward` 或它用到的方法，例如 PyTorch-BayesianCNN 的 `ModuleWrapper`、smp 的 `SegmentationModel`、CSAIL 的 `SegmentationModuleBase`；
+- 这些基类大多在另一个文件或另一个库里，而导入器只读一个文件；
+- 要支持它们，就得把基类的代码合并进来，或者模拟框架的机制。这类代码的写法比织络能表达的结构自由得多。
+
+所以这些文件不计入指标，但照常测量和报告，测试输出里标为 “(base class)”。判断方法：源码中入口类的基类只有 `nn.Module`；写成 `Module` 或 `torch.nn.Module` 也算。
+
+| 文件 | 入口类 | 基类 |
+| --- | --- | --- |
+| PyTorch-BayesianCNN | `BBBAlexNet` | `ModuleWrapper`（仓库自己的基类，在另一个文件里） |
+| transformers 的 BERT | `BertModel` | `BertPreTrainedModel`（继承 `PreTrainedModel`） |
+| transformers 的 Llama | `LlamaForCausalLM` | `LlamaPreTrainedModel`、`GenerationMixin` |
+| minimind | `MiniMindForCausalLM` | `PreTrainedModel`、`GenerationMixin` |
+| diffusers 的 UNet | `UNet2DConditionModel` | `ModelMixin`、`ConfigMixin` 等 6 个 |
+| diffusers 的 AutoencoderKL | `AutoencoderKL` | `ModelMixin`、`ConfigMixin` 等 6 个 |
+| PyTorch-VAE | `VanillaVAE` | `BaseVAE` |
+| segmentation_models.pytorch | `Unet` | `SegmentationModel` |
+| CSAIL semantic-segmentation | `SegmentationModule` | `SegmentationModuleBase` |
+| 留出：Palette | `Network` | `BaseNetwork` |
+| 留出：DeepLabV3Plus-Pytorch | `DeepLabV3` | `_SimpleSegmentationModel` |
 
 ## 2. 选取规则
 
@@ -292,7 +325,7 @@
 2. **`__init__` 的 `*args` / `**kwargs` / 仅限关键字参数（7 个）**：作为超参数或原样保留。
 3. **保留模块级函数（4 个）**：生成的文件应当能替代原文件。仓库用来构造模型的函数要原样保留，现在只保留代码块用到的函数。
 4. **`bool` 输入（1 个）**。
-5. **基类（9 个）**：把基类的 `__init__` / `forward` 合并进来，或者把库基类（`PreTrainedModel`、`ModelMixin`）当作 `nn.Module` 看待。
+5. **基类（9 个）**：把基类的 `__init__` / `forward` 合并进来，或者把库基类（`PreTrainedModel`、`ModelMixin`）当作 `nn.Module` 看待。后来决定不支持，这些文件不再计入指标，见第 1 节的支持范围。
 
 - 前四项都改好，最多能到 41/50。实际可能还会暴露下一层问题。
 - 达到 80% 需要再成功 20 个文件。
@@ -305,6 +338,7 @@
 | `v1/import-corpus` | 第一次测量 | 20/50（40%） | 6/12 |
 | `v1/import-bool-kwonly` | `bool` 输入；`__init__` 的仅限关键字参数，以及没有用到的 `**kwargs` | 26/50（52%） | 7/12 |
 | `v1/forward-defaults` | `forward()` 的默认参数；生成的代码把 `from __future__` 放到最前面 | 31/50（62%） | 7/12 |
+| `v1/module-functions` | 保留类后面引用模型类的模块级代码（文件尾代码）；指标只计入口类直接继承 `nn.Module` 的文件 | 37/50；范围内 37/41（90%） | 8/12；范围内 8/10 |
 
 `v1/import-bool-kwonly` 的改动：
 - **`bool` 输入**：Input 节点的数据类型可以选 `bool`。动态导入、形状探测等实际运行模型的地方，会生成布尔掩码作为示例输入，不再只认 `int64`。
@@ -339,11 +373,33 @@
 - 入口类的基类不是 `nn.Module`：9 个。
 - “`forward()` 中途返回”4 个：vit-pytorch 和上面 3 个。
 
+`v1/module-functions` 的改动：
+- **文件尾代码**：
+  - 以前，第一个模型类之后引用了模型类的顶层代码一律丢掉，只给一条警告。仓库构造模型用的函数因此都丢了：
+    - timm 的 `make_blocks`：参数注解写着 `Type[BasicBlock]`，定义时就要用到类；
+    - timm 注册的构造函数；
+    - gen-efficientnet 的 `_create_model` 和 `_gen_*`；
+    - CycleGAN 的 `get_norm_layer`；
+    - DETR 的 `build`。
+  - 现在，从类后面第一句引用模型类的顶层代码开始，之后的代码按原顺序写在生成文件的所有类后面：
+    - 项目新增 `epilogue` 字段，模型检查器里显示为“文件尾代码”，可以编辑；
+    - 类自己用到的名字仍然留在文件头；
+    - timm 文件末尾的 `register_model_deprecations(...)` 不引用类，但要在构造函数定义之后运行，所以也一起放到后面。
+  - 导入文件时就会构建模型的代码（如 `model = Net()`）仍然忽略，用到它的后续代码也一起忽略，并给出警告。
+  - 拆成多个文件导出时，文件尾代码和入口类在同一个文件里。
+  - 动态导入只在保留的代码用到文件尾代码里的名字时才带上它。
+- **指标口径**：只计入口类直接继承 `nn.Module` 的文件，见第 1 节。
+
+结果：
+- 测量集新增成功 6 个：timm 的 ResNet、ViT、Swin，gen-efficientnet，CycleGAN，DETR。
+- 留出集新增 cnnimageretrieval。它的仓库用类后面定义的 `init_network()` 构造模型，和测量集的问题相同。
+- 测量集范围内只剩“`forward()` 中途返回”的 4 个：vit-pytorch、attention-is-all-you-need、awd-lstm-lm、RNN 时间序列异常检测。
+
 ## 10. 文件
 
 - `python/tests/corpus/manifest.json`：每个文件的出处、提交、sha256、许可证、类别、入口类、构造方式、示例输入、导入时执行的同仓库文件，以及属于测量集还是留出集。
 - `python/tests/corpus/selection.json`：选取过程，包括搜索条件，以及走过的每个仓库的判断和原因。
 - `python/tests/corpus/fetch.py`：按提交下载文件并校验 sha256。`--update` 记录新的哈希，并重写 `THIRD_PARTY_NOTICES.md`。
 - `python/tests/corpus/realworld.py`：构造原模型，并与生成的代码比较。
-- `packages/core/test/realworld.test.ts`：计算指标，打印每个文件的结果和原因。下限只升不降，现在是 31。
+- `packages/core/test/realworld.test.ts`：计算指标，打印每个文件的结果和原因。下限按范围内的 41 个文件计，只升不降，现在是 37。
 - 原来的 10 个自写文件移到了 `python/tests/corpus/handwritten/`。

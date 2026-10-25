@@ -210,6 +210,61 @@ class Net(nn.Module):
     assert result["project"]["preamble"] == "from timm.layers import DropPath"
 
 
+def test_code_after_the_classes_that_names_them_goes_to_the_epilogue():
+    source = """
+from torch import nn
+
+
+class Block(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.fc = nn.Linear(dim, dim)
+
+    def forward(self, x):
+        return self.fc(x) * SCALE
+
+
+class Net(nn.Module):
+    def __init__(self, depth=2):
+        super().__init__()
+        self.blocks = make_blocks(Block, depth)
+
+    def forward(self, x):
+        return self.blocks(x)
+
+
+WIDTH = 8
+
+
+def make_blocks(block: type[Block], depth):
+    return nn.Sequential(*[block(WIDTH) for _ in range(depth)])
+
+
+def net_small(**kwargs):
+    return Net(depth=1, **kwargs)
+
+
+SCALE = 0.5
+MODELS = {"small": net_small, "net": Net}
+registry.register(__name__)
+model = net_small()
+model.eval()
+"""
+    result = import_static(source, inputs={"x": InputSpec(["B", 8])})
+    project = result["project"]
+    # The annotation needs Block when the function is defined, and net_small names
+    # Net. What follows stays after the classes unless they use it. Building a
+    # model at import time is left out, with what uses it.
+    assert project["preamble"] == "WIDTH = 8\nSCALE = 0.5"
+    assert project["epilogue"].startswith("def make_blocks(block: type[Block], depth):")
+    assert "\n\n\ndef net_small(**kwargs):" in project["epilogue"]
+    assert project["epilogue"].endswith('MODELS = {"small": net_small, "net": Net}\nregistry.register(__name__)')
+    assert [w for w in result["warnings"] if "模型" in w] == [
+        "第 37 行的顶层代码在导入文件时就要用到模型，已忽略",
+        "第 38 行的顶层代码在导入文件时就要用到模型，已忽略",
+    ]
+
+
 def test_keyword_only_arguments_and_unused_kwargs():
     source = """
 from torch import nn

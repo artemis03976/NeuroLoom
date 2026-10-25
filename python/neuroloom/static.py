@@ -1381,44 +1381,101 @@ def _pick_entry(file: _File, class_name: str | None) -> str:
     return (candidates or names)[-1]
 
 
-def _preamble(file: _File, warnings: list[str]) -> str:
-    """Top-level code other than the standard imports and the module classes, verbatim."""
-    text = ""
-    previous: ast.stmt | None = None  # the last statement kept, when it was also the last one seen
-    last: ast.stmt | None = None  # the last statement kept
-    seen_class = False
-    for stmt in file.tree.body:
-        module_class = isinstance(stmt, ast.ClassDef) and stmt.name in file.classes
-        drop = _is_standard_import(stmt) or module_class
-        if _is_main_guard(stmt):
-            warnings.append(t("已忽略 if __name__ == '__main__' 中的测试代码", "ignored the test code under if __name__ == '__main__'"))
-            drop = True
-        elif not drop and seen_class and _loaded_names(stmt) & set(file.classes):
-            warnings.append(
-                t(f"第 {stmt.lineno} 行的顶层代码引用了模型类，已忽略", f"ignored the top-level code on line {stmt.lineno}, which refers to a model class")
-            )
-            drop = True
-        seen_class |= module_class
-        if drop:
-            previous = None
-            continue
-        body = file.statements([stmt])
-        if text and previous is not None:
+def bound_names(stmt: ast.stmt) -> set[str]:
+    """The module-level names a top-level statement binds (not the locals of a function it defines)."""
+    if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        return {stmt.name}
+    if isinstance(stmt, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+        targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target]
+        return set().union(*(_stored_names(target) for target in targets))
+    return _stored_names(stmt)
+
+
+def _calls_any(node: ast.AST, names: set[str]) -> bool:
+    """Whether running the statement calls one of the names; lambdas run later."""
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in names:
+            return True
+        stack += [c for c in ast.iter_child_nodes(n) if not isinstance(c, ast.Lambda)]
+    return False
+
+
+class _Verbatim:
+    """Top-level statements copied in order."""
+
+    def __init__(self, file: _File):
+        self.file = file
+        self.text = ""
+        self.previous: ast.stmt | None = None  # the last statement kept, when it was also the last one seen
+        self.last: ast.stmt | None = None  # the last statement kept
+
+    def add(self, stmt: ast.stmt) -> None:
+        body = self.file.statements([stmt])
+        if self.text and self.previous is not None:
             # Neighbours in the original keep the blank lines and comments between them.
             start = min([stmt.lineno, *(d.lineno for d in getattr(stmt, "decorator_list", []))])
-            gap = file.lines[(previous.end_lineno or previous.lineno) : start - 1]
-            text += "\n" + "".join(f"{line}\n" for line in gap) + body
-        elif text:
+            gap = self.file.lines[(self.previous.end_lineno or self.previous.lineno) : start - 1]
+            self.text += "\n" + "".join(f"{line}\n" for line in gap) + body
+        elif self.text:
             if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                text += "\n\n\n" + body
+                self.text += "\n\n\n" + body
             else:
                 # A blank line after the imports, as the original most likely had one.
-                after_imports = isinstance(last, (ast.Import, ast.ImportFrom)) and not isinstance(stmt, (ast.Import, ast.ImportFrom))
-                text += ("\n\n" if after_imports else "\n") + body
+                after_imports = isinstance(self.last, (ast.Import, ast.ImportFrom)) and not isinstance(stmt, (ast.Import, ast.ImportFrom))
+                self.text += ("\n\n" if after_imports else "\n") + body
         else:
-            text = body
-        previous = last = stmt
-    return text
+            self.text = body
+        self.previous = self.last = stmt
+
+    def skip(self) -> None:
+        self.previous = None
+
+
+def _top_level(file: _File, warnings: list[str]) -> tuple[str, str]:
+    """
+    Top-level code other than the standard imports and the module classes,
+    verbatim: the preamble, which generated code puts before the classes, and
+    the epilogue after them. From the first statement after a class that names
+    a model class (a factory function, a registry), the code stays after the
+    classes in its order, except what the classes use. Code that would build a
+    model when the file is imported is left out, with what depends on it.
+    """
+    preamble, epilogue = _Verbatim(file), _Verbatim(file)
+    classes = set(file.classes)
+    used = set().union(*(_loaded_names(c) for c in file.classes.values()))
+    later: set[str] = set()  # names that exist only after the classes
+    dropped: set[str] = set()  # names that code left out would bind
+    seen_class = False
+    for stmt in file.tree.body:
+        module_class = isinstance(stmt, ast.ClassDef) and stmt.name in classes
+        part: _Verbatim | None = None if _is_standard_import(stmt) or module_class else preamble
+        loads, binds = _loaded_names(stmt), bound_names(stmt)
+        if _is_main_guard(stmt):
+            warnings.append(t("已忽略 if __name__ == '__main__' 中的测试代码", "ignored the test code under if __name__ == '__main__'"))
+            part = None
+        elif part is not None and seen_class and (loads & (classes | later | dropped) or (epilogue.text and not binds & used)):
+            builds = not isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and _calls_any(stmt, classes | later)
+            if loads & dropped or builds:
+                warnings.append(
+                    t(
+                        f"第 {stmt.lineno} 行的顶层代码在导入文件时就要用到模型，已忽略",
+                        f"ignored the top-level code on line {stmt.lineno}, which needs a model when the file is imported",
+                    )
+                )
+                part = None
+                dropped |= binds
+            else:
+                part = epilogue
+                later |= binds
+        seen_class |= module_class
+        for p in (preamble, epilogue):
+            if p is part:
+                p.add(stmt)
+            else:
+                p.skip()
+    return preamble.text, epilogue.text
 
 
 def _guess_input(module: dict, input_id: str, warnings: list[str]) -> InputSpec:
@@ -1496,8 +1553,10 @@ def import_static(
         node["params"]["dtype"] = {"literal": spec.dtype}
 
     project: dict[str, Any] = {"schemaVersion": SCHEMA_VERSION, "name": entry, "entry": entry, "modules": modules}
-    preamble = _preamble(file, imp.warnings)
+    preamble, epilogue = _top_level(file, imp.warnings)
     if preamble:
         project["preamble"] = preamble
+    if epilogue:
+        project["epilogue"] = epilogue
     report = sorted(imp.report, key=lambda r: list(file.classes).index(r["className"]))
     return {"project": project, "report": report, "warnings": imp.warnings, "observedShapes": {}, "batchProbe": BATCH_PROBE}

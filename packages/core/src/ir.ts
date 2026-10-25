@@ -170,6 +170,8 @@ export interface LoomProject {
   modules: Record<ModuleId, ModuleDef>;
   /** Top-of-file Python that code blocks and opaque classes need (imports, helpers), verbatim. */
   preamble?: string;
+  /** Python after the classes, verbatim: what names them (factory functions, registries). */
+  epilogue?: string;
   exportOptions?: ExportOptions;
 }
 

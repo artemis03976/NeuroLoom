@@ -6,8 +6,11 @@
 //      original as its repository does and the generated code beside it, loads the
 //      original weights with strict=True and compares the outputs;
 //   3. no class the entry uses is kept as source (L3). Code blocks are allowed.
-// The rate over the 50 measured files must not fall below the baseline; the 12
-// held-out files, which importer changes are not tuned on, are reported apart.
+// The metric covers the files whose entry class inherits nn.Module directly (41 of
+// the 50 measured): a framework base class (transformers' PreTrainedModel,
+// diffusers' ModelMixin, …) is outside what NeuroLoom reads, and those files are
+// reported but not counted. The in-scope rate must not fall below the baseline;
+// the 12 held-out files, which importer changes are not tuned on, are reported apart.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -17,8 +20,8 @@ import { canImport, hasTorch, importMany, pythonDir, runPython, type ImportResul
 const corpus = join(pythonDir, 'tests/corpus');
 const hasCorpus = hasTorch && canImport('timm, transformers, diffusers, einops, scipy');
 
-/** Measured files that pass today; the test fails if fewer do. */
-const FLOOR = 31;
+/** In-scope measured files that pass today; the test fails if fewer do. */
+const FLOOR = 37;
 
 interface Entry {
   id: string;
@@ -32,6 +35,8 @@ interface Entry {
 
 interface Outcome {
   entry: Entry;
+  /** The entry class inherits nn.Module directly, so the file counts toward the metric. */
+  inScope: boolean;
   /** Where the file failed; undefined when it passes. */
   stage?: 'import' | 'generate' | 'L3' | 'original' | 'load' | 'build' | 'state_dict' | 'run' | 'outputs';
   detail?: string;
@@ -39,6 +44,12 @@ interface Outcome {
   classes: string[];
   /** No code blocks either. */
   strict: boolean;
+}
+
+/** Whether the class's bases are nn.Module alone, as written in the source. */
+function inheritsModule(source: string, className: string): boolean {
+  const bases = new RegExp(`^class\\s+${className}\\s*\\(([^)]*)\\)`, 'm').exec(source)?.[1];
+  return bases !== undefined && bases.split(',').every((b) => /^(?:(?:torch\.)?nn\.)?Module$/.test(b.trim()));
 }
 
 /** The classes the entry module uses, itself included, by className. */
@@ -66,8 +77,9 @@ describe.skipIf(!hasCorpus)('third-party import corpus (PRD 13)', () => {
     const generated: { id: string; generated: string }[] = [];
     entries.forEach((entry, i) => {
       const result = imported[i]!;
+      const inScope = inheritsModule(sources[i]!, entry.entry);
       if (result.error) {
-        outcomes.push({ entry, stage: 'import', detail: result.error.message, classes: [], strict: false });
+        outcomes.push({ entry, inScope, stage: 'import', detail: result.error.message, classes: [], strict: false });
         return;
       }
       const project = parseProject(result.project);
@@ -79,13 +91,13 @@ describe.skipIf(!hasCorpus)('third-party import corpus (PRD 13)', () => {
       try {
         generated.push({ id: entry.id, generated: generateCode(project).code });
       } catch (e) {
-        outcomes.push({ entry, stage: 'generate', detail: String(e), classes, strict });
+        outcomes.push({ entry, inScope, stage: 'generate', detail: String(e), classes, strict });
         return;
       }
       outcomes.push(
         kept.length > 0
-          ? { entry, stage: 'L3', detail: kept.map((r) => `${r.className}: ${r.notes[0] ?? ''}`).join('; '), classes, strict }
-          : { entry, classes, strict },
+          ? { entry, inScope, stage: 'L3', detail: kept.map((r) => `${r.className}: ${r.notes[0] ?? ''}`).join('; '), classes, strict }
+          : { entry, inScope, classes, strict },
       );
     });
     // Every file that imported is checked, so a kept class (L3) still shows whether its code runs.
@@ -104,11 +116,13 @@ describe.skipIf(!hasCorpus)('third-party import corpus (PRD 13)', () => {
   afterAll(() => {
     if (outcomes.length === 0) return;
     const line = (o: Outcome) =>
-      `${o.stage ? '·' : '✓'} ${o.entry.id.padEnd(28)} ${(o.stage ?? (o.strict ? 'pass' : 'pass, code blocks')).padEnd(18)} ${o.classes.join(' ').slice(0, 90)}${o.detail ? `\n      ${o.detail.slice(0, 200)}` : ''}`;
+      `${o.stage ? '·' : '✓'} ${o.entry.id.padEnd(28)} ${(o.stage ?? (o.strict ? 'pass' : 'pass, code blocks')).padEnd(18)} ${o.inScope ? '' : '(base class) '}${o.classes.join(' ').slice(0, 90)}${o.detail ? `\n      ${o.detail.slice(0, 200)}` : ''}`;
     const summary = (set: Entry['set']) => {
-      const rows = outcomes.filter((o) => o.entry.set === set);
+      const all = outcomes.filter((o) => o.entry.set === set);
+      const rows = all.filter((o) => o.inScope);
       const passed = rows.filter((o) => !o.stage);
-      return `${passed.length}/${rows.length} pass (${Math.round((100 * passed.length) / rows.length)}%), ${passed.filter((o) => o.strict).length} without code blocks`;
+      const rate = `${passed.length}/${rows.length} pass (${Math.round((100 * passed.length) / rows.length)}%)`;
+      return `${rate} of the files whose entry inherits nn.Module, ${passed.filter((o) => o.strict).length} without code blocks; ${all.filter((o) => !o.stage).length}/${all.length} of all files`;
     };
     const order = (set: Entry['set']) => outcomes.filter((o) => o.entry.set === set).map(line).join('\n');
     console.log(`\nthird-party corpus, measured: ${summary('measure')}\n${order('measure')}\n\nheld out: ${summary('heldout')}\n${order('heldout')}`);
@@ -118,8 +132,10 @@ describe.skipIf(!hasCorpus)('third-party import corpus (PRD 13)', () => {
     expect(outcomes.filter((o) => o.stage === 'original').map((o) => `${o.entry.id}: ${o.detail}`)).toEqual([]);
   });
 
-  it(`imports at least ${FLOOR} of the 50 measured files`, () => {
+  it(`imports at least ${FLOOR} of the 41 measured files whose entry inherits nn.Module`, () => {
     expect(entries.filter((e) => e.set === 'measure')).toHaveLength(50);
-    expect(outcomes.filter((o) => o.entry.set === 'measure' && !o.stage).length).toBeGreaterThanOrEqual(FLOOR);
+    const inScope = outcomes.filter((o) => o.entry.set === 'measure' && o.inScope);
+    expect(inScope).toHaveLength(41);
+    expect(inScope.filter((o) => !o.stage).length).toBeGreaterThanOrEqual(FLOOR);
   });
 });

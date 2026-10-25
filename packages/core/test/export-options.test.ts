@@ -71,6 +71,13 @@ describe('export options', () => {
     expect(text).not.toContain('targets = torch');
   });
 
+  it('put from __future__ imports first, in one file and in a package', () => {
+    const p = { ...mlp(), preamble: 'import math\nfrom __future__ import annotations' };
+    expect(code(p, {}).split('\n')[0]).toBe('from __future__ import annotations');
+    const files = generateFiles({ ...p, exportOptions: { splitFiles: true } });
+    for (const f of files.filter((f) => f.name !== '__init__.py')) expect(f.text.split('\n')[0]).toBe('from __future__ import annotations');
+  });
+
   it('split into a package with sibling imports', () => {
     const files = generateFiles({ ...resnet(), exportOptions: { splitFiles: true } });
     expect(files.map((f) => f.name)).toEqual(['__init__.py', 'res_block.py', 'res_net.py']);

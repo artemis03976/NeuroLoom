@@ -55,7 +55,8 @@ export const inputArg = (shape: string, dtype?: string) => `${shape.replace(/\s/
 export const inputShapesOf = (p: LoomProject): Record<string, string> =>
   Object.fromEntries(
     Object.values(entryModule(p).nodes)
-      .filter((n) => n.kind === 'input')
+      // An optional forward() argument without an example shape is left at its default.
+      .filter((n) => n.kind === 'input' && String(literalOf(n.params.shape) ?? '').trim() !== '')
       .map((n) => [n.name, inputArg(String(literalOf(n.params.shape)), literalOf(n.params.dtype) as string | undefined)]),
   );
 

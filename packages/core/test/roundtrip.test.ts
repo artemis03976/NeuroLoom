@@ -246,6 +246,39 @@ class Block(nn.Module):
         return self.scale * self.fc(x) + self.offset
 `,
   },
+  // forward() arguments with defaults (nanoGPT's targets=None): a call may leave them
+  // out, a branch on them stays code, and a scalar default is used as written.
+  optionalArguments: {
+    inputs: { x: 'B,8' },
+    source: `from torch import nn
+
+
+class Head(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(8, 4)
+
+    def forward(self, x, bias=None, scale=2.0):
+        y = self.fc(x) * scale
+        if bias is not None:
+            y = y + bias
+        return y
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.head = Head()
+        self.again = Head()
+
+    def forward(self, x, targets=None):
+        y = self.head(x)
+        z = self.again(x, y)
+        if targets is not None:
+            z = z - targets
+        return z
+`,
+  },
   // Keyword-only __init__ arguments (vit-pytorch), a **kwargs __init__ never reads
   // (DINO, SwinIR) and a boolean mask input (EVA).
   keywordOnlyAndMask: {

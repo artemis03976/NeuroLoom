@@ -29,7 +29,9 @@ export function portsOf(project: LoomProject, node: NodeInst, params?: Params): 
     const def = project.modules[node.type];
     if (!def) return undefined;
     const port = (id: NodeId) => ({ name: id, label: def.nodes[id]?.name ?? id });
-    return { inputs: def.interface.inputs.map(port), outputs: def.interface.outputs.map(port) };
+    // A forward() argument with a default may stay unconnected.
+    const input = (id: NodeId) => ({ ...port(id), ...(def.interface.defaults?.[id] !== undefined ? { optional: true } : {}) });
+    return { inputs: def.interface.inputs.map(input), outputs: def.interface.outputs.map(port) };
   }
   if (node.kind === 'code') {
     return {

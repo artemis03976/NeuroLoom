@@ -263,6 +263,44 @@ class Net(nn.Module):
     assert "block" not in by_name(net) and "Block(8, 16)" in net["initCode"]
 
 
+def test_forward_arguments_with_defaults_are_optional_inputs():
+    source = """
+from torch import nn
+
+
+class Head(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Linear(8, 4)
+
+    def forward(self, x, bias=None, scale=2.0):
+        y = self.fc(x) * scale
+        if bias is not None:
+            y = y + bias
+        return y
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.head = Head()
+
+    def forward(self, x, targets=None):
+        return self.head(x)
+"""
+    result = import_static(source, inputs={"x": InputSpec(["B", 8])})
+    assert all(r["level"] != "L3" for r in result["report"])
+    head = modules(result)["Head"]
+    defaults = {head["nodes"][i]["name"]: v for i, v in head["interface"]["defaults"].items()}
+    assert defaults == {"bias": "None", "scale": "2.0"}
+    # The call leaves bias and scale out: only x is connected.
+    net = modules(result)["Net"]
+    assert [p for (_, _, n, p) in edges_by_name(net) if n == "head"] == [head["interface"]["inputs"][0]]
+    # An optional entry argument without a declared shape is left at its default, not guessed.
+    targets = by_name(net)["targets"]
+    assert targets["params"]["shape"] == {"literal": ""} and not result["warnings"]
+
+
 def test_boolean_inputs():
     assert parse_input("B,8:bool").dtype == "bool"
     source = """

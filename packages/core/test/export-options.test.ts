@@ -60,6 +60,24 @@ describe('export options', () => {
     expect(text).toContain('if __name__ == "__main__":\n    model = ResNet()\n    x = torch.randn(1, 3, 32, 32)\n    out = model(x)\n    assert tuple(out.shape) == (1, 10), out.shape');
   });
 
+  it('call the self-test without an optional argument that has no example shape', () => {
+    const p = mlp();
+    const entry = entryModule(p);
+    entry.nodes.targets = { id: 'targets', kind: 'input', type: 'neuroloom.Input', name: 'targets', params: { shape: { literal: '' } } };
+    entry.interface = { ...entry.interface, inputs: [...entry.interface.inputs, 'targets'], defaults: { targets: 'None' } };
+    const text = code(p, { selfTest: true });
+    expect(text).toContain('def forward(self, x: torch.Tensor, targets=None)');
+    expect(text).toMatch(/out = model\(x\)\n/);
+    expect(text).not.toContain('targets = torch');
+  });
+
+  it('put from __future__ imports first, in one file and in a package', () => {
+    const p = { ...mlp(), preamble: 'import math\nfrom __future__ import annotations' };
+    expect(code(p, {}).split('\n')[0]).toBe('from __future__ import annotations');
+    const files = generateFiles({ ...p, exportOptions: { splitFiles: true } });
+    for (const f of files.filter((f) => f.name !== '__init__.py')) expect(f.text.split('\n')[0]).toBe('from __future__ import annotations');
+  });
+
   it('split into a package with sibling imports', () => {
     const files = generateFiles({ ...resnet(), exportOptions: { splitFiles: true } });
     expect(files.map((f) => f.name)).toEqual(['__init__.py', 'res_block.py', 'res_net.py']);

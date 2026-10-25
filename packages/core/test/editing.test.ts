@@ -76,6 +76,21 @@ describe('editing a module', () => {
     expect(ports).toEqual(['a->in0', 'c->in1']);
   });
 
+  it('keeps the defaults of optional forward() arguments through edits and saving', () => {
+    const plain = moduleOf(
+      'main',
+      'Net',
+      [['x', 'Input', { shape: literal('B, 8') }], ['mask', 'Input', { shape: literal('') }], ['fc', 'Linear', linear], ['output', 'Output']],
+      ['x -> fc', 'fc -> output'],
+    );
+    let mod: ModuleDef = { ...plain, interface: { ...plain.interface, defaults: { mask: 'None' } } };
+    mod = addNode(mod, 'torch.nn.ReLU', { x: 0, y: 0 }).mod;
+    expect(mod.interface.defaults).toEqual({ mask: 'None' });
+    const reread = parseProject(JSON.parse(JSON.stringify(projectOf('main', [mod]))));
+    expect(reread.modules.main!.interface.defaults).toEqual({ mask: 'None' });
+    expect(removeNodes(mod, ['mask']).interface.defaults).toEqual({});
+  });
+
   it('sets a parameter, and returns it to its default when set to undefined', () => {
     const mod = moduleOf('main', 'Net', [['a', 'Linear', linear]], []);
     const set = setParam(mod, 'a', 'bias', literal(false));

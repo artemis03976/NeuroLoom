@@ -108,7 +108,16 @@ export interface ModuleDef {
    * Explicit, because neither canvas position nor JSON key order may change a model's interface.
    * For module nodes these are also the ports: the input and output node ids.
    */
-  interface: { inputs: NodeId[]; outputs: NodeId[] };
+  interface: {
+    inputs: NodeId[];
+    outputs: NodeId[];
+    /**
+     * Defaults of optional forward() arguments, as Python source (`targets=None` is
+     * { [targets]: "None" }). Callers may leave these ports unconnected, and an entry
+     * input with a default needs no example shape.
+     */
+    defaults?: Record<NodeId, string>;
+  };
   /**
    * Exported inline as nn.Sequential(...) of its nodes in chain order instead
    * of as a class. Has no hyperparameters: its expressions are in the scope of

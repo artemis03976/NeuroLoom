@@ -330,7 +330,8 @@ class Analyzer {
           continue;
         }
         const text = String(literalOf(node.params.shape) ?? '').trim();
-        if (text === '' && !isEntry) {
+        // No example shape: a module's input typed by its callers, or an optional argument left at its default.
+        if (text === '' && (!isEntry || mod.interface.defaults?.[nodeId] !== undefined)) {
           nodes[nodeId] = { inputs: [], outputs: [undefined], paramCount: 0 };
           continue;
         }

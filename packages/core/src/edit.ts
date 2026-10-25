@@ -19,6 +19,7 @@ export function addNode(mod: ModuleDef, type: string, position: { x: number; y: 
       nodes: { ...mod.nodes, [id]: { id, kind: spec.kind, type, name, params: initialParams(spec) } },
       layout: { ...mod.layout, [id]: position },
       interface: {
+        ...mod.interface,
         inputs: spec.kind === 'input' ? [...inputs, id] : inputs,
         outputs: spec.kind === 'output' ? [...outputs, id] : outputs,
       },
@@ -42,6 +43,7 @@ export function removeNodes(mod: ModuleDef, ids: NodeId[]): ModuleDef {
     interface: {
       inputs: mod.interface.inputs.filter((id) => !drop.has(id)),
       outputs: mod.interface.outputs.filter((id) => !drop.has(id)),
+      ...(mod.interface.defaults ? { defaults: Object.fromEntries(Object.entries(mod.interface.defaults).filter(([id]) => !drop.has(id))) } : {}),
     },
   });
 }

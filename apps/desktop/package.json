@@ -1,7 +1,7 @@
 {
   "name": "@neuroloom/desktop",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "NeuroLoom desktop app (Electron shell around the studio UI)",
   "author": {

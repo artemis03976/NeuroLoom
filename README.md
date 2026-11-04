@@ -4,7 +4,7 @@
 
 NeuroLoom（织络）是一个可视化神经网络搭建工具：把 PyTorch 模型变成可编辑、带数据流动画的节点图，并在图与代码之间双向转换。完整需求见 [PRD v0.1](https://claude.ai/artifact/VfcmRSKrMMfVHtPBmHVE2R)。
 
-**当前阶段：M3 动态导入与打磨。** 进展与遗留问题见 [docs/m3-report.md](docs/m3-report.md)（之前的阶段：[M2](docs/m2-report.md)、[M1](docs/m1-report.md)、[M0](docs/m0-report.md)）。
+**当前版本：v1.0。** 安装包在 GitHub Releases，更新内容见 [docs/releases/v1.0.0.md](docs/releases/v1.0.0.md)。开发过程的阶段报告：[M3](docs/m3-report.md)、[M2](docs/m2-report.md)、[M1](docs/m1-report.md)、[M0](docs/m0-report.md)。
 
 - **搭建**：
   - 84 个层与算子节点，以及 7 个可展开的复合模块（残差块、多头注意力、Transformer 块……）。
@@ -40,6 +40,12 @@ Linux 上建议用 `.deb`：
 - `.deb` 安装时会装上 NeuroLoom 的 AppArmor 配置（或者给 `chrome-sandbox` 设 setuid），沙箱可以正常工作。
 - AppImage 做不到这一点，在这些系统上直接运行会在启动时退出。可以加 `--no-sandbox` 启动，但那会关闭渲染进程的沙箱；更好的办法是改用 `.deb`。
 - 在其他发行版上，AppImage 可以正常使用。
+
+安装包没有代码签名，第一次打开时系统会拦一下：
+- Windows：出现“Windows 已保护你的电脑”时，点“更多信息”，再点“仍要运行”。
+- macOS：提示无法验证开发者时，在“系统设置 → 隐私与安全性”里点“仍要打开”；提示“已损坏”时，运行 `xattr -dr com.apple.quarantine /Applications/NeuroLoom.app` 后再打开。
+
+编辑、形状推断和导出代码不需要 Python。导入代码和运行模型需要本机的 Python 3.10+ 与 PyTorch，可以在“文件 → Python 环境”里选择已有环境，或一键创建一个。
 
 ## 快速开始
 
@@ -105,7 +111,7 @@ apps/studio              编辑器界面（React + React Flow）；templates/ �
 apps/desktop             Electron 壳：窗口、菜单、文件、图片导出、Python 进程管理、安装包配置
 python/neuroloom         Python 后端：静态导入（ast）、动态导入（保留层级的 torch.fx 追踪）、形状探测、JSON-RPC stdio 服务、CLI
 brand                    logo、配色与生成脚本，见 brand/README.md
-docs                     阶段报告
+docs                     阶段报告；releases/ 是各版本的发布说明，发布工作流按标签取用
 ```
 
 后端也可以单独当命令行用（默认静态解析；`--mode dynamic` 执行一次代码并保留层级，`--mode trace` 是展平的 torch.fx 追踪）：

@@ -126,12 +126,18 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: docs/releases
+
       - uses: actions/download-artifact@v4
         with:
           pattern: installers-*
           merge-multiple: true
           path: installers
 
+      # The notes are docs/releases/<version>.md when it exists (v1.0.0-rc.1 uses v1.0.0.md),
+      # followed by GitHub's list of merged pull requests. A tag with a suffix is a prerelease.
       - name: Attach installers to a draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -141,5 +147,9 @@ jobs:
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release upload "$TAG" installers/* --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$TAG" installers/* --repo "$GITHUB_REPOSITORY" --draft --title "NeuroLoom $TAG" --generate-notes --verify-tag
+            args=(--draft --title "NeuroLoom $TAG" --generate-notes --verify-tag)
+            notes="docs/releases/${TAG%%-*}.md"
+            if [ -f "$notes" ]; then args+=(--notes-file "$notes"); fi
+            if [[ "$TAG" == *-* ]]; then args+=(--prerelease); fi
+            gh release create "$TAG" installers/* --repo "$GITHUB_REPOSITORY" "${args[@]}"
           fi

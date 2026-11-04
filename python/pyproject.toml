@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neuroloom"
-version = "0.0.1"
+version = "1.0.0"
 description = "NeuroLoom backend: imports PyTorch code into NeuroLoom graphs"
 requires-python = ">=3.10"
 # torch comes from the user's own environment; it is only needed for import/trace.
